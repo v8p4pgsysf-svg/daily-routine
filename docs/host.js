@@ -17,51 +17,56 @@ if(!C.supabaseUrl||!C.supabaseAnonKey||/YOUR-/.test(C.supabaseUrl)){
 }
 const sb=window.supabase.createClient(C.supabaseUrl,C.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:"routine-auth"}});
 
-/* ---------- sign in: email and password (default), or a code by email if config says authMode:"code" ---------- */
+/* ---------- sign in: email and password (default), or a code by email if config says authMode:"code" ----------
+   Both forms stay on the page (one hidden) so password managers always find a stable sign-in form. */
+let errT={};
+function flashErr(id,msg){const el=$(id);if(!el)return;clearTimeout(errT[id]);el.classList.remove("fade");el.textContent=msg||"";el.hidden=!msg;
+  if(msg)errT[id]=setTimeout(()=>{el.classList.add("fade");errT[id]=setTimeout(()=>{el.hidden=true;el.textContent="";el.classList.remove("fade")},350)},5000)}
 function showLogin(note){
-  const box=$("login");box.hidden=false;let email="";
+  const box=$("login");box.hidden=false;
   if(C.authMode==="code")return codeLogin(note);
-  const form=n=>{box.innerHTML=`<form class="lg-card" id="lg-fp" novalidate>
+  box.innerHTML=`<form class="lg-card" id="lg-fp" method="post" action="#" novalidate>
       <h1>Daily Routine</h1><p class="lg-sub">Sign in to continue.</p>
-      ${n?`<p class="lg-err" role="alert">${esc(n)}</p>`:""}
-      <label for="lg-email">Email</label><input id="lg-email" name="email" type="email" autocomplete="username" inputmode="email" required value="${esc(email)}">
+      <p class="lg-err" id="lg-err" role="alert" hidden></p>
+      <label for="lg-email">Email</label><input id="lg-email" name="email" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" required>
       <label for="lg-pass">Password</label><input id="lg-pass" name="password" type="password" autocomplete="current-password" required>
-      <button class="lg-btn" type="submit">Sign in</button>
-      <button class="lg-link" type="button" id="lg-new">New here? Create an account</button></form>`;
-    $("lg-new").onclick=()=>signup();
-    $("lg-fp").onsubmit=async e=>{e.preventDefault();email=$("lg-email").value.trim().toLowerCase();const password=$("lg-pass").value;
-      if(!/^\S+@\S+\.\S+$/.test(email)||!password){form("Enter your email and password.");return}
-      const b=box.querySelector(".lg-btn");b.disabled=true;b.textContent="Signing in…";
-      let res;try{res=await sb.auth.signInWithPassword({email,password})}catch(err){res={error:err}}
-      if(res.error||!res.data||!res.data.session){const m=String(res.error&&res.error.message||"");
-        form(/invalid|credentials|password/i.test(m)?"That email and password don't match. Check them, or ask whoever set up your account to reset it.":/rate|too many/i.test(m)?"Too many attempts. Wait a minute, then try again.":"Couldn't sign in. Check your connection and try again.");return}
-      box.hidden=true;start(res.data.session)};
-    setTimeout(()=>$(email?"lg-pass":"lg-email").focus(),50)};
-  // create your own account (only works for emails on the invite list; the database enforces it)
-  const signup=n=>{box.innerHTML=`<form class="lg-card" id="lg-fs" novalidate>
+      <button class="lg-btn" id="lg-btn" type="submit">Sign in</button>
+      <button class="lg-link" type="button" id="lg-new">New here? Create an account</button></form>
+    <form class="lg-card" id="lg-fs" method="post" action="#" novalidate hidden>
       <h1>Create your account</h1><p class="lg-sub">Use the email you were invited with and choose a password.</p>
-      ${n?`<p class="lg-err" role="alert">${esc(n)}</p>`:""}
-      <label for="lg-email">Email</label><input id="lg-email" name="email" type="email" autocomplete="username" inputmode="email" required value="${esc(email)}">
-      <label for="lg-pass">Password</label><input id="lg-pass" name="new-password" type="password" autocomplete="new-password" placeholder="At least 8 characters" required>
-      <label for="lg-pass2">Password again</label><input id="lg-pass2" type="password" autocomplete="new-password" required>
-      <button class="lg-btn" type="submit">Create account</button>
+      <p class="lg-err" id="lg-serr" role="alert" hidden></p>
+      <label for="lg-semail">Email</label><input id="lg-semail" name="new-email" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" required>
+      <label for="lg-spass">Password</label><input id="lg-spass" name="new-password" type="password" autocomplete="new-password" placeholder="At least 8 characters" required>
+      <label for="lg-spass2">Password again</label><input id="lg-spass2" name="new-password-confirm" type="password" autocomplete="new-password" required>
+      <button class="lg-btn" id="lg-sbtn" type="submit">Create account</button>
       <button class="lg-link" type="button" id="lg-have">Already have an account? Sign in</button></form>`;
-    $("lg-have").onclick=()=>form();
-    $("lg-fs").onsubmit=async e=>{e.preventDefault();email=$("lg-email").value.trim().toLowerCase();const p1=$("lg-pass").value,p2=$("lg-pass2").value;
-      if(!/^\S+@\S+\.\S+$/.test(email)){signup("Enter a valid email address.");return}
-      if(p1.length<8){signup("Choose a password of at least 8 characters.");return}
-      if(p1!==p2){signup("The two passwords don't match.");return}
-      const b=box.querySelector(".lg-btn");b.disabled=true;b.textContent="Creating…";
-      let res;try{res=await sb.auth.signUp({email,password:p1})}catch(err){res={error:err}}
-      const m=String(res.error&&res.error.message||"");
-      if(res.error){signup(/not_invited|database error|saving new user|signups not allowed|not allowed/i.test(m)?"This email isn't on the invite list. Ask whoever shared the app to add it, then try again."
-        :/already|registered|exists/i.test(m)?"There's already an account for this email. Sign in instead."
-        :/weak|password/i.test(m)?"That password is too weak. Make it longer.":/rate|too many/i.test(m)?"Too many attempts. Wait a minute, then try again.":"Couldn't create the account. Check your connection and try again.");return}
-      if(res.data&&res.data.session){box.hidden=true;start(res.data.session);return}
-      // email confirmation is switched on in Supabase: they confirm, then sign in
-      form("Account created. Check your email for a confirmation link, then sign in here.")};
-    setTimeout(()=>$("lg-email").focus(),50)};
-  form(note);
+  const fp=$("lg-fp"),fs=$("lg-fs");
+  const toSignIn=()=>{fs.hidden=true;fp.hidden=false;flashErr("lg-serr","");if($("lg-semail").value)$("lg-email").value=$("lg-semail").value;setTimeout(()=>$($("lg-email").value?"lg-pass":"lg-email").focus(),30)};
+  const toSignUp=()=>{fp.hidden=true;fs.hidden=false;flashErr("lg-err","");$("lg-semail").value=$("lg-email").value;setTimeout(()=>$("lg-semail").focus(),30)};
+  $("lg-new").onclick=toSignUp;$("lg-have").onclick=toSignIn;
+  if(note)flashErr("lg-err",note);
+  fp.onsubmit=async e=>{e.preventDefault();const email=$("lg-email").value.trim().toLowerCase(),password=$("lg-pass").value;
+    if(!/^\S+@\S+\.\S+$/.test(email)||!password){flashErr("lg-err","Enter your email and password.");return}
+    const b=$("lg-btn");b.disabled=true;b.textContent="Signing in…";
+    let res;try{res=await sb.auth.signInWithPassword({email,password})}catch(err){res={error:err}}
+    b.disabled=false;b.textContent="Sign in";
+    if(res.error||!res.data||!res.data.session){const m=String(res.error&&res.error.message||"");
+      flashErr("lg-err",/invalid|credentials|password/i.test(m)?"That email and password don't match. Check them, or ask whoever set up your account to reset it.":/rate|too many/i.test(m)?"Too many attempts. Wait a minute, then try again.":"Couldn't sign in. Check your connection and try again.");return}
+    box.hidden=true;start(res.data.session)};
+  fs.onsubmit=async e=>{e.preventDefault();const email=$("lg-semail").value.trim().toLowerCase(),p1=$("lg-spass").value,p2=$("lg-spass2").value;
+    if(!/^\S+@\S+\.\S+$/.test(email)){flashErr("lg-serr","Enter a valid email address.");return}
+    if(p1.length<8){flashErr("lg-serr","Choose a password of at least 8 characters.");return}
+    if(p1!==p2){flashErr("lg-serr","The two passwords don't match.");return}
+    const b=$("lg-sbtn");b.disabled=true;b.textContent="Creating…";
+    let res;try{res=await sb.auth.signUp({email,password:p1})}catch(err){res={error:err}}
+    b.disabled=false;b.textContent="Create account";
+    const m=String(res.error&&res.error.message||"");
+    if(res.error){flashErr("lg-serr",/not_invited|database error|saving new user|signups not allowed|not allowed/i.test(m)?"This email isn't on the invite list. Ask whoever shared the app to add it, then try again."
+      :/already|registered|exists/i.test(m)?"There's already an account for this email. Sign in instead."
+      :/weak|password/i.test(m)?"That password is too weak. Make it longer.":/rate|too many/i.test(m)?"Too many attempts. Wait a minute, then try again.":"Couldn't create the account. Check your connection and try again.");return}
+    if(res.data&&res.data.session){box.hidden=true;start(res.data.session);return}
+    toSignIn();flashErr("lg-err","Account created. Check your email for a confirmation link, then sign in here.")};
+  setTimeout(()=>$("lg-email").focus(),50);
 }
 function codeLogin(note){
   const box=$("login");box.hidden=false;let email="";

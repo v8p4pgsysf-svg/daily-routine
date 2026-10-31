@@ -34,6 +34,7 @@ body:not(.in)>:not(#login):not(script){{display:none!important}}
 .lg-btn{{margin-top:6px;font:inherit;font-weight:650;font-size:1rem;padding:12px;border-radius:10px;border:0;background:#2E7650;color:#fff;cursor:pointer}}.lg-btn:disabled{{opacity:.6}}
 .lg-link{{border:0;background:none;color:#6A726C;text-decoration:underline;font:inherit;font-size:.9rem;cursor:pointer;padding:6px}}
 .lg-err{{margin:0;color:#A33A2E;background:#F6E5E2;border-radius:10px;padding:10px 12px;font-size:.9rem}}
+.lg-err{{transition:opacity .35s ease}}.lg-err.fade{{opacity:0}}@media (prefers-reduced-motion:reduce){{.lg-err{{transition:none}}}}
 @media (prefers-color-scheme:dark){{#login{{background:#111412;color:#E7EBE8}}.lg-card{{background:#191D1A;border-color:#272D29}}.lg-card input{{background:#191D1A;border-color:#353C37}}.lg-btn{{background:#5DBA88;color:#0E1A13}}.lg-sub,.lg-link{{color:#929B95}}.lg-err{{background:#3A1F1B;color:#E07B6E}}}}
 </style>
 <script src="config.js"></script>
