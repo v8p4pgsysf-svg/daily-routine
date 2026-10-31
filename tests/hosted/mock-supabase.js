@@ -11,6 +11,7 @@ function createClient(){
   const auth={_cbs:[],
     async getSession(){const s=JSON.parse(localStorage.getItem("routine-auth")||"null");return {data:{session:s}}},
     async signInWithOtp({email}){window.__lastOtpEmail=email;
+      if(window.__mockSmtpFail)return {error:{message:"Error sending magic link email",status:500}};
       if(window.__mockOtpRate)return {error:{message:"For security purposes, you can only request this after 60 seconds."}};
       if(email.startsWith("stranger")||JSON.parse(localStorage.getItem("mock-deleted")||"[]").includes(email))return {error:{message:"Signups not allowed for otp"}};
       window.__otpSent=(window.__otpSent||0)+1;return {error:null}},

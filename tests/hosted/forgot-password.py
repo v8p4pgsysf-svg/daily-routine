@@ -40,10 +40,12 @@ try:
         check("Unknown email: says there's no account", "no account" in err(pg) and pg.locator("#lg-fr1").is_visible())
         pg.evaluate("window.__mockOtpRate=true"); pg.fill("#lg-femail", "Jack@Example.com "); pg.click("#lg-fsend"); pg.wait_for_timeout(200)
         check("Too soon: asks to wait a minute", "Wait a minute" in err(pg))
-        pg.evaluate("window.__mockOtpRate=false"); pg.click("#lg-fsend"); pg.wait_for_timeout(200)
+        pg.evaluate("window.__mockOtpRate=false;window.__mockSmtpFail=true"); pg.click("#lg-fsend"); pg.wait_for_timeout(200)
+        check("Email service failing: says so, without blaming the connection", "right now" in err(pg) and "connection" not in err(pg))
+        pg.evaluate("window.__mockSmtpFail=false"); pg.click("#lg-fsend"); pg.wait_for_timeout(200)
         check("Code sent: step 2 names the email (lower-cased) and focuses the code box",
               pg.locator("#lg-fr2").is_visible() and "jack@example.com" in pg.inner_text("#lg-frsub") and pg.evaluate("document.activeElement.id") == "lg-fcode"
-              and pg.evaluate("window.__lastOtpEmail") == "jack@example.com")
+              and pg.evaluate("window.__lastOtpEmail") == "jack@example.com" and "junk folder" in pg.inner_text("#lg-frsub"))
 
         # step 2: checks before the code is tried
         pg.fill("#lg-fcode", "12"); pg.fill("#lg-fp1", "New-pass-77"); pg.fill("#lg-fp2", "New-pass-77"); pg.click("#lg-fset"); pg.wait_for_timeout(100)
