@@ -381,6 +381,7 @@ w.close();
 // --- kg / lb
 store={};w=boot("2026-10-28T09:00:00");
 click(w,$(w,'#setcog'));ok(!!$(w,'[data-sunit="kg"]')&&$(w,'[data-sunit="kg"]').getAttribute("aria-pressed")==="true","U1. Settings has a Units row, kg by default");
+{const secs=[...w.document.querySelectorAll("#setbody .sset")];ok(secs[secs.length-1].contains($(w,'[data-sunit="kg"]'))&&secs[0].querySelector("h3").textContent==="Daily habits","   Units sit in the last section, habits come first");}
 click(w,$(w,'[data-sunit="lb"]'));click(w,$(w,'[data-st="set-save"]'));
 click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="type"][data-type="A"]'));setDate(w,$(w,"#st-date"),"2026-10-27");click(w,$(w,'[data-st="start"]'));
 ok(/lb/.test($(w,"#w-0-0").getAttribute("aria-label")),"U2. Workout weight boxes are in lb");

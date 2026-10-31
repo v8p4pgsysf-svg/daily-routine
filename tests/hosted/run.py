@@ -1,7 +1,7 @@
 import subprocess,time,json,sys
 from playwright.sync_api import sync_playwright
 srv=subprocess.Popen([sys.executable,"-m","http.server","8765","-d","site"],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);time.sleep(1)
-MOCK=open("mock-supabase.js").read();JSZIP=open("/tmp/claude-0/zz/node_modules/jszip/dist/jszip.min.js").read()
+MOCK=open("mock-supabase.js").read();JSZIP=open("node_modules/jszip/dist/jszip.min.js").read()
 res=[]
 def ok(c,m):res.append(("PASS " if c else "FAIL ")+m);print(res[-1])
 def routes(ctx):
@@ -34,7 +34,7 @@ try:
   pg.screenshot(path="h-code.png")
   pg.fill("#lg-pass","Start-1234");pg.click("#lg-btn");pg.wait_for_selector("#setsheet",state="visible");pg.wait_for_timeout(300)
   ok(pg.locator("#login").is_hidden() and "Welcome" in pg.inner_text("#setbody") and pg.locator("#setbody [data-shab]").count()==6,"H4. First sign-in opens setup at the welcome step, habits listed from the catalog")
-  ok(pg.is_checked('[data-shab="protein"]') and pg.is_checked('[data-shab="sleep"]') and not pg.is_checked('[data-shab="water"]') and not pg.locator('[data-st="set-back"]').count(),"   Neutral defaults (protein and sleep on, others off), no Back on step 1")
+  ok(pg.is_checked('[data-shab="protein"]') and pg.is_checked('[data-shab="sleep"]') and not pg.is_checked('[data-shab="steps"]') and not pg.locator('[data-st="set-back"]').count(),"   Neutral defaults (protein and sleep on, others off), no Back on step 1")
   pg.click('[data-st="set-next"]');pg.wait_for_selector("#seterr",state="visible")
   ok("Enter your weight" in pg.inner_text("#seterr"),"W1. Step 1 needs a weight")
   pg.fill("#su-weight","80");pg.wait_for_timeout(100)
@@ -97,7 +97,7 @@ try:
   ok(any(r["data"].get("sleep",[0,0,0])[2] for r in db.values() if r["user_id"]==uid),"H14. Back online: it syncs")
   # signing out with changes not yet synced asks first
   pg.click("#tab-week");pg.evaluate("window.__mockOffline=true");pg.locator('[id^="d-sleep-"]').nth(3).check();pg.wait_for_timeout(1500)
-  pg.click("#setcog");pg.click('[data-st="sign-out"]');pg.wait_for_timeout(300)
+  pg.click("#setcog");pg.click('[data-st="acct"]');pg.click('[data-st="sign-out"]');pg.wait_for_timeout(300)
   ok("Not synced yet" in pg.inner_text('[data-st="sign-out"]') and pg.locator("#login").is_hidden(),"SO1. Signing out with unsynced changes asks first, and doesn't sign out")
   pg.click('[data-st="set-cancel"]');pg.evaluate("window.__mockOffline=false");pg.evaluate("dispatchEvent(new Event('online'))");pg.wait_for_timeout(16500)
   db=pg.evaluate("JSON.parse(localStorage.getItem('mock-db')||'{}')")
@@ -105,7 +105,7 @@ try:
   # signing out from another tab, then back in, starts on Today
   pg.click("#tab-progress");pg.wait_for_timeout(100)
   # change password, sign out, sign back in with it
-  pg.click("#setcog");pg.click('[data-st="pw-open"]');pg.fill("#pw1","short");pg.fill("#pw2","short");pg.click('[data-st="pw-save"]')
+  pg.click("#setcog");pg.click('[data-st="acct"]');pg.click('[data-st="pw-open"]');pg.fill("#pw1","short");pg.fill("#pw2","short");pg.click('[data-st="pw-save"]')
   ok("at least 8" in pg.inner_text("#pwmsg"),"H15a. Too-short new password is refused")
   pg.fill("#pw1","New-pass-99");pg.fill("#pw2","New-pass-99");pg.click('[data-st="pw-save"]');pg.wait_for_timeout(300)
   ok("Password changed" in pg.inner_text("#setbody"),"H15b. Password can be changed in settings")
@@ -118,14 +118,14 @@ try:
   ok(pg.locator("#setsheet").is_hidden(),"S7. Signing back in doesn't show setup again")
   ok(pg.get_attribute("#tab-week","aria-selected")=="true","H15e. After signing out and back in, the app opens on Today")
   ok(pg.locator('[id^="d-protein-"]').nth(0).is_checked(),"H15d. New password signs in and the data comes back from the cloud")
-  pg.click("#setcog");pg.click('[data-st="sign-out"]');pg.wait_for_selector("#lg-email")
+  pg.click("#setcog");pg.click('[data-st="acct"]');pg.click('[data-st="sign-out"]');pg.wait_for_selector("#lg-email")
   # someone else on the same database
   pg.fill("#lg-email","partner@example.com");pg.fill("#lg-pass","Start-1234");pg.click("#lg-btn")
   do_setup(pg,"fullbody");pg.wait_for_timeout(500)
   ok(pg.locator("#daily input[type=checkbox]:checked").count()==0 and pg.locator("#st-history .hrow").count()==0,"H16. A second person starts empty and can't see Jack's data")
   pg.click("#tab-strength");pg.wait_for_timeout(200);ok(pg.locator("#st-history .hrow").count()==0,"   (no workouts in their history)")
   # self sign-up with the invite list
-  pg.click("#setcog");pg.click('[data-st="sign-out"]');pg.wait_for_selector("#lg-email")
+  pg.click("#setcog");pg.click('[data-st="acct"]');pg.click('[data-st="sign-out"]');pg.wait_for_selector("#lg-email")
   pg.click("#lg-new");pg.fill("#lg-semail","newfriend@example.com");pg.fill("#lg-spass","Own-pass-77");pg.fill("#lg-spass2","Own-pass-77");pg.click("#lg-sbtn");pg.wait_for_selector("#lg-serr",state="visible")
   ok("Enter the invite code" in pg.inner_text("#lg-serr"),"H18. Someone not invited can't create an account")
   pg.wait_for_timeout(5600);ok(pg.locator("#lg-serr").is_hidden(),"   The message fades away after about 5 seconds")
@@ -138,15 +138,15 @@ try:
   pg.fill("#lg-scode"," routine-2026 ");pg.click("#lg-sbtn");do_setup(pg,weights=0);pg.wait_for_timeout(600)
   ok(pg.locator('[data-ct="strength"]').count()==0,"S6. Setting up with 0 weights works (no Strength row)")
   ok(pg.locator("#today").is_visible() and pg.locator("#daily input[type=checkbox]:checked").count()==0,"H19. Once invited, they create their own account with their own password and start fresh")
-  pg.click("#setcog");pg.click('[data-st="sign-out"]');pg.wait_for_selector("#lg-email")
+  pg.click("#setcog");pg.click('[data-st="acct"]');pg.click('[data-st="sign-out"]');pg.wait_for_selector("#lg-email")
   pg.fill("#lg-email","newfriend@example.com");pg.fill("#lg-pass","Own-pass-77");pg.click("#lg-btn");pg.wait_for_selector("#tab-week",state="visible")
   ok(True,"H20. They can sign back in with the password they chose")
-  pg.click("#setcog");pg.click('[data-st="sign-out"]');pg.wait_for_selector("#lg-email")
+  pg.click("#setcog");pg.click('[data-st="acct"]');pg.click('[data-st="sign-out"]');pg.wait_for_selector("#lg-email")
   pg.click("#lg-new");pg.fill("#lg-semail","newfriend@example.com");pg.fill("#lg-spass","Other-pass-1");pg.fill("#lg-spass2","Other-pass-1");pg.click("#lg-sbtn");pg.wait_for_selector("#lg-serr",state="visible")
   pg.wait_for_timeout(300);ok("already an account" in pg.inner_text("#lg-serr"),"H21. Signing up twice says to sign in instead: "+pg.inner_text("#lg-serr"))
   # delete my account
   pg.click("#lg-have");pg.fill("#lg-email","newfriend@example.com");pg.fill("#lg-pass","Own-pass-77");pg.click("#lg-btn");pg.wait_for_selector("#tab-week",state="visible")
-  pg.click("#setcog");pg.click('[data-st="del-open"]');pg.click('[data-st="del-go"]')
+  pg.click("#setcog");pg.click('[data-st="acct"]');pg.click('[data-st="del-open"]');pg.click('[data-st="del-go"]')
   ok("Type DELETE" in pg.inner_text("#delmsg"),"D1. Delete needs DELETE typed first")
   pg.fill("#del-confirm","delete");pg.click('[data-st="del-go"]');pg.wait_for_selector("#lg-email",timeout=10000);pg.wait_for_timeout(300)
   ok("have been deleted" in pg.inner_text("#lg-err"),"D2. After deleting, the sign-in screen confirms it")

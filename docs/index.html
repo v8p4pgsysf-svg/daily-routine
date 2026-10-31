@@ -726,6 +726,10 @@ details.swk[open]>summary::after{transform:rotate(-135deg)}
 details.swk>summary .muted{margin-left:auto;font-size:.84rem}
 details.swk:not([open]){gap:0}
 .presets{display:flex;flex-direction:column;gap:10px}
+.dhead{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:0;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
+.dhead .muted{margin-left:auto;font-size:.84rem}.dhead .dchev{flex:none;color:var(--muted);transition:transform .15s}.dhead[aria-expanded="true"] .dchev{transform:rotate(180deg)}
+.dhead.acct{padding:12px 0}.dhead.acct .grow{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prcard{padding:14px;display:flex;flex-direction:column;gap:10px}.prcard .preset{padding:4px 0}.prcard .preset .grow{flex:1 1 auto;min-width:0}.prnote{margin:0}
 .preset{display:flex;align-items:center;gap:12px;padding:14px}
 .preset .ts{margin-top:2px}
 .preset .btn{flex:none}
@@ -2113,12 +2117,16 @@ function secLists(D,openAll){let h="";
   });
   return h}
 function secPresets(D){let h="";
-  h+=`<button type="button" class="linkbtn" data-st="set-presets" aria-expanded="${!!SD.presets}">Use a suggested programme</button>
-    ${SD.presets?`<div class="presets">${PRESETS.map(p=>`<div class="panel preset"><div class="grow"><b>${esc(p.name)}</b></div><button type="button" class="btn${setArmed===p.id?" primary":""}" data-preset="${p.id}">${setArmed===p.id?"Tap to replace":"Use this"}</button></div>`).join("")}</div>`:""}`;
+  h+=`<div class="panel prcard"><button type="button" class="dhead" data-st="set-presets" aria-expanded="${!!SD.presets}"><b>Suggested programmes</b><span class="muted">${PRESETS.length} to choose from</span><svg class="dchev" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+    ${SD.presets?`<p class="ts prnote">Using one replaces your current workouts. Your logged history stays.</p><div class="presets">${PRESETS.map(p=>`<div class="preset"><div class="grow"><b>${esc(p.name)}</b><div class="muted">${p.workouts.length} workouts</div></div><button type="button" class="btn${setArmed===p.id?" primary":""}" data-preset="${p.id}">${setArmed===p.id?"Tap to replace":"Use this"}</button></div>`).join('<div class="shsep"></div>')}</div>`:""}</div>`;
   return h}
 function secAccount(D){let h="";
-  if(HOST&&HOST.email)h+=`<section class="sset"><h3>Account</h3><div class="panel shab">
-    <div class="shrow"><div class="grow">Signed in as <b>${esc(HOST.email)}</b></div></div>
+  const units=`<div class="shrow"><div class="grow"><b>Weights</b> <span class="muted">in</span></div>${unitSeg(D)}</div>`;
+  if(!(HOST&&HOST.email))return `<section class="sset"><h3>Units</h3><div class="panel shab">${units}</div></section>`;
+  const open=!!(SD.acct||SD.pw||SD.del||SD.pwDone);
+  h+=`<section class="sset"><h3>Account</h3><div class="panel shab">${units}<div class="shsep"></div>
+    <button type="button" class="dhead acct" data-st="acct" aria-expanded="${open}"><span class="grow">Signed in as <b>${esc(HOST.email)}</b></span><svg class="dchev" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+    ${open?`
     ${HOST.canChangePassword?(SD.pw?`<div class="shsep"></div><div class="pwform"><input type="password" id="pw1" autocomplete="new-password" placeholder="New password (8+ characters)" aria-label="New password"><input type="password" id="pw2" autocomplete="new-password" placeholder="Type it again" aria-label="Type the new password again">
       <div class="pwrow"><button type="button" class="btn primary" data-st="pw-save">Change password</button><button type="button" class="btn ghost" data-st="pw-cancel">Cancel</button></div><div class="ts" id="pwmsg" role="status"></div></div>`
       :`<div class="shsep"></div><div class="shrow"><button type="button" class="linkbtn" data-st="pw-open">Change password</button>${SD.pwDone?`<span class="ts" style="color:var(--green);margin-left:auto">Password changed</span>`:""}</div>`):""}
@@ -2128,7 +2136,7 @@ function secAccount(D){let h="";
       <input type="text" id="del-confirm" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Type DELETE to confirm" aria-label="Type DELETE to confirm">
       <div class="pwrow"><button type="button" class="btn danger" data-st="del-go">Delete everything</button><button type="button" class="btn ghost" data-st="del-cancel">Cancel</button></div>
       <div class="ts" id="delmsg" role="status"></div></div>`
-      :`<div class="shsep"></div><div class="shrow"><button type="button" class="linkbtn delink" data-st="del-open">Delete my account</button></div>`):""}
+      :`<div class="shsep"></div><div class="shrow"><button type="button" class="linkbtn delink" data-st="del-open">Delete my account</button></div>`):""}`:""}
   </div></section>`;
   return h}
 const unitSeg=D=>`<div class="seg sseg" role="group" aria-label="Weight unit">${["kg","lb"].map(u=>`<button aria-pressed="${D.unit===u}" data-sunit="${u}">${u}</button>`).join("")}</div>`;
@@ -2200,7 +2208,6 @@ function renderSettings(){
   const D=SD;let h="";
   if(SD.setup){renderSetup();return}
   setBar("Cancel","set-cancel","Your routine","Save","set-save");
-  h+=`<section class="sset"><h3>Units</h3><div class="panel shab"><div class="shrow"><div class="grow"><b>Weights</b> <span class="muted">in</span></div>${unitSeg(D)}</div></div></section>`;
   h+=`<section class="sset"><h3>Daily habits</h3><div class="panel shab">${habitRows(D)}</div></section>`;
   h+=`<section class="sset"><h3>Prep and review</h3>${secPrep(D)}</section>`;
   h+=`<section class="sset"><h3>Workouts</h3><div class="panel shab">${secCounts(D)}<div class="shsep"></div>${secGrid(D)}</div>`;
@@ -2264,6 +2271,7 @@ document.addEventListener("click",e=>{
   const dc=t.closest("[data-sday]");if(dc){const g=dc.dataset.sday,d=+dc.dataset.d;
     if(g==="cardio")toggleDay(SD.cardio.days,d);else toggleDay(SD.prep[g].days,d);renderSettings();return}
   const st=t.closest("[data-st]");if(!st)return;
+  if(st.dataset.st==="acct"){SD.acct=!(SD.acct||SD.pw||SD.del||SD.pwDone);SD.pw=false;SD.del=false;SD.pwDone=false;renderSettings();return}
   if(st.dataset.st==="set-presets"){SD.presets=!SD.presets;setArmed=false;renderSettings();
     const pl=$("setbody").querySelector(".presets");if(pl&&pl.scrollIntoView)pl.scrollIntoView({block:"nearest",behavior:reducedMotion()?"auto":"smooth"});return}
 });
@@ -2479,7 +2487,7 @@ function stAction(a){
     if(SD.custom.some(c=>c.name.toLowerCase()===nm.toLowerCase())||HABIT_CATALOG.some(c=>c.name.toLowerCase()===nm.toLowerCase())){$("ch-name").select();return}
     const k="x_"+Math.random().toString(36).slice(2,10).replace(/[^a-z0-9]/g,"a").padEnd(8,"a");
     SD.custom.push({k,name:nm.slice(0,24),sub:"",target:7,on:true});renderSettings();const f=$(`[data-scsub="${SD.custom.length-1}"]`);if(f)f.focus()}
-  else if(act==="pw-open"&&SD){SD.pw=true;renderSettings();const f=$("pw1");if(f)f.focus()}
+  else if(act==="pw-open"&&SD){SD.pw=true;SD.acct=true;renderSettings();const f=$("pw1");if(f)f.focus()}
   else if(act==="pw-cancel"&&SD){SD.pw=false;renderSettings()}
   else if(act==="pw-save"&&HOST&&HOST.changePassword){const p1=$("pw1").value,p2=$("pw2").value,m=$("pwmsg");
     if(p1.length<8){m.textContent="Use at least 8 characters.";return}if(p1!==p2){m.textContent="The two passwords don't match.";return}

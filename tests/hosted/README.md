@@ -13,5 +13,5 @@
 ## To run
 
 1. Make a folder `site/` from `docs/`, then replace `site/supabase.js` with `mock-supabase.js` and set `site/config.js` to any URL and key.
-2. Put a backup zip at `routine-export.zip`, and JSZip in `node_modules/jszip`.
+2. Copy `run.py` and `routine-export.zip` (a made-up backup: 22 sessions, 1 photo) next to `site/`, and run `npm i jszip` there.
 3. Run `python3 run.py`.
