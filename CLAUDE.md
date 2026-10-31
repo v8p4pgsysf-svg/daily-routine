@@ -12,11 +12,11 @@ A personal health and fitness tracker (daily check-ins, weekly review, strength 
   - The `public.docs` table has one row per record. It has RLS, and each person sees only their own rows.
   - Photos live in a private `photos` bucket, under `<user id>/<photo id>`.
   - `supabase/schema.sql` sets all of this up and is safe to re-run.
-- Accounts: people sign up themselves in the app (email + their own password), but only if their email is in `public.invites`. A `before insert` trigger on `auth.users` enforces this, so it can't be bypassed (`supabase/invites.sql`). Email confirmation is off; the app sends no emails. The page hides hosted-only UI (import, account section) unless `window.__routineHost` exists.
+- Accounts: people sign up themselves in the app (email + their own password), but only if their email is in `public.invites`. A `before insert` trigger on `auth.users` enforces this, so it can't be bypassed (`supabase/invites.sql`). An invite code also works: it's kept in `public.app_config` (`invite_code`), the app sends it as sign-up metadata, and the same trigger checks it (`supabase/accounts.sql`, which also adds `delete_my_account()`). Email confirmation is off; the app sends no emails. The page hides hosted-only UI (import, account section) unless `window.__routineHost` exists.
 
 ## Single sources: add things in one place
 Each of these lives in one list in `src/weekly-routine.html`; everything else is derived from it. Never change an existing id or key once people have used it.
-- `HABIT_CATALOG`: daily habits. These feed setup, settings, the check-ins grid, counts, the review summary and exports.
+- `HABIT_CATALOG`: daily habits (protein, fruit & veg, sleep, water, steps, no alcohol, no nicotine). People can add up to 8 of their own (`settings.custom`, keys `x_…`). These feed setup, settings, the check-ins grid, counts, the review summary and exports.
 - `EXERCISE_CATALOG`: exercises, each with a name, a short name for the key-lifts table, its weight step, and whether it's assisted. These feed the exercise picker, programmes, workouts, the progress dropdown, key lifts, lift status and exports. People's own exercises are stored in `settings.exNames`.
 - `PRESETS`: suggested programmes. Jack's default programme is `DEFAULT_SETTINGS.workouts`, which is also the "3-day full body" preset.
 - `CARDIO_CATALOG`: cardio types offered as chips. `counts:false` means a type is logged but not counted toward the weekly target (Walk).
@@ -24,6 +24,8 @@ Each of these lives in one list in `src/weekly-routine.html`; everything else is
 - `DAYS` / `DAYS_LONG` and `LETTERS` hold day names and workout letters.
 
 ## Habits, setup and settings
+- Weights are stored in kg. `settings.unit` (kg/lb) only changes display and input; use `liftU`/`fromU`/`fmtLift`/`fmtBody`. Exports stay in kg.
+- Setup asks for a weight first. It's saved as that week's weigh-in and sets the protein target (1.6 g per kg, rounded to 5 g).
 - The settings page and the first-time setup share pieces: `habitRows`, `secCounts`, `secGrid`, `secLists`, `secPrep` and `secPresets`.
 - Setup runs once, in the hosted app only. It starts after cloud data has loaded, and only when the person has no saved settings, no data and no `setupDone` marker. Finishing setup saves `setupDone: true` with their settings.
   - New people start from neutral defaults (`newcomerDraft`). Jack's routine stays the default only for the Claude version.
