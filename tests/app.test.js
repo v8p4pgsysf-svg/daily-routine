@@ -396,7 +396,7 @@ type(w,$(w,"#weight"),"176.4");{const wk=JSON.parse(w.localStorage.getItem("week
 w.close();
 // --- more habits and your own
 store={};w=boot("2026-10-28T09:00:00");
-click(w,$(w,'#setcog'));ok(["water","steps","stretch","daylight","screens","reading","supps"].every(k=>$(w,`[data-shab="${k}"]`)&&!$(w,`[data-shab="${k}"]`).checked),"H1. Seven new habits are offered, all off");
+click(w,$(w,'#setcog'));ok(["water","steps","nic"].every(k=>$(w,`[data-shab="${k}"]`)&&!$(w,`[data-shab="${k}"]`).checked),"H1. Water, steps and no nicotine are offered, all off");
 chg(w,$(w,'[data-shab="water"]'),true);
 click(w,$(w,'[data-st="ch-open"]'));type(w,$(w,"#ch-name"),"Meditate");type(w,$(w,"#ch-sub"),"10 minutes");chg(w,$(w,"#ch-days"),5);click(w,$(w,'[data-st="ch-add"]'));
 ok(/Meditate/.test($(w,"#setbody").textContent)&&$(w,'[data-scsub="0"]').value==="10 minutes","H2. Add your own habit: Meditate, 10 minutes, 5 days");

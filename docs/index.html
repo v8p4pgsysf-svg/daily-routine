@@ -773,7 +773,7 @@ details.swk:not([open]){gap:0}
 .preset.pick.on{border-color:var(--green);background:var(--green-soft)}
 .ttip{display:flex;align-items:center;gap:10px;font-size:.86rem;color:var(--muted);background:var(--bg);border-radius:10px;padding:8px 10px;margin-bottom:10px}
 .ttip span{flex:1}.ttipx{border:0;background:none;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:0 4px}
-.wrow{display:flex;gap:10px;align-items:center}.wrow input{flex:1;min-width:0;padding:9px 11px;font-size:1rem}
+.suw{display:flex;gap:10px;align-items:center}.suw input{flex:1;min-width:0;padding:9px 11px;font-size:1rem}
 .hnote{margin:-6px 0 0 56px!important;font-size:.78rem}
 .crow{grid-template-columns:44px 92px minmax(0,1fr) 22px}
 .addh{display:flex;flex-direction:column;gap:8px}.addh input{width:100%;padding:9px 11px;font-size:.95rem}
@@ -1052,12 +1052,8 @@ const HABIT_CATALOG=[
   {k:"sleep",name:"Sleep",long:"Sleep",grid:"Sleep",sub:"7–9 hours",ph:"e.g. 7–9 hours",jack:true,start:true},
   {k:"water",name:"Water",long:"Water",grid:"Water",sub:"2 litres",ph:"e.g. 2 litres",jack:false,start:false},
   {k:"steps",name:"Steps",long:"Steps",grid:"Steps",sub:"10,000",ph:"e.g. 10,000",jack:false,start:false},
-  {k:"stretch",name:"Stretching",long:"Stretching or mobility",grid:"Stretching",sub:"10 minutes",ph:"e.g. 10 minutes",jack:false,start:false},
-  {k:"daylight",name:"Daylight",long:"Daylight outside",grid:"Daylight",sub:"15 min outside",ph:"e.g. 15 min outside",jack:false,start:false},
-  {k:"screens",name:"No screens in bed",long:"No screens in bed",grid:"No screens",sub:"In bed",ph:"e.g. off by 10:30",jack:false,start:false},
-  {k:"reading",name:"Reading",long:"Reading",grid:"Reading",sub:"10 pages",ph:"e.g. 10 pages",jack:false,start:false},
-  {k:"supps",name:"Supplements",long:"Supplements",grid:"Supplements",sub:"",ph:"e.g. creatine 5 g",jack:false,start:false},
-  {k:"af",name:"No alcohol",long:"Alcohol-free",grid:"No alcohol",daysTarget:6,summary:"Alcohol",jack:true,start:false}
+  {k:"af",name:"No alcohol",long:"Alcohol-free",grid:"No alcohol",daysTarget:6,summary:"Alcohol",jack:true,start:false},
+  {k:"nic",name:"No nicotine",long:"Nicotine-free",grid:"No nicotine",daysTarget:7,summary:"Nicotine",jack:false,start:false}
 ];
 const habitDefaults=pick=>Object.fromEntries(HABIT_CATALOG.map(c=>[c.k,c.daysTarget?{on:!!c[pick],target:c.daysTarget}:{on:!!c[pick],sub:c.sub||""}]));
 DEFAULT_SETTINGS.habits=habitDefaults("jack");
@@ -2153,7 +2149,7 @@ function renderSetup(){
   const D=SD,n=D.setup,last=n===SETUP_STEPS;let h=setupDots(n);
   setBar(n>1?"Back":"","set-back","Set up",last?"Start":"Next",last?"set-start":"set-next");
   if(n===1)h+=`<section class="sset"><h3>Welcome</h3><p class="ts sintro">Set up your routine in a few quick steps. You can change any of it later from the settings cog.</p>
-      <h3>Your weight</h3><div class="panel shab"><div class="shrow wrow"><input type="text" inputmode="decimal" id="su-weight" value="${esc(D.weight)}" placeholder="${D.unit==="lb"?"e.g. 175":"e.g. 80"}" aria-label="Your weight in ${D.unit}" autocomplete="off">${unitSeg(D)}</div>
+      <h3>Your weight</h3><div class="panel shab"><div class="shrow suw"><input type="text" inputmode="decimal" id="su-weight" value="${esc(D.weight)}" placeholder="${D.unit==="lb"?"e.g. 175":"e.g. 80"}" aria-label="Your weight in ${D.unit}" autocomplete="off">${unitSeg(D)}</div>
       <div class="ts" style="margin:0">Your first weigh-in. It starts your weight trend and sets your protein target.</div></div>
       <h3>What do you want to track each day?</h3><div class="panel shab">${habitRows(D)}</div></section>`;
   else if(n===2){
