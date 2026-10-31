@@ -12,6 +12,8 @@
 
 ## To run
 
+Also: `python3 settings-workouts.py` checks the Settings Workouts box (Programme + Workouts A–C in one box) at 390px in light and dark, saving shots to `shots/`.
+
 Also: `python3 home-screen.py` (same `site/` folder) checks the Add to Home Screen card on iPhone Safari, Instagram's browser, the Home Screen app, desktop and Android, at 390px.
 
 1. Make a folder `site/` from `docs/`, then replace `site/supabase.js` with `mock-supabase.js` and set `site/config.js` to any URL and key.

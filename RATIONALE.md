@@ -25,3 +25,7 @@
 - **Revised the same day: one experience on every phone.** Android now also shows the steps first with the form behind "Continue in the browser instead", rather than both at once: the form underneath competed with "open it from your Home Screen" and its auto-focus opened the keyboard over the steps. Android without an install prompt (Firefox, or Chrome before it offers one) gets the ⋮ menu steps instead of nothing.
 - **Steps worded for any iOS version, not iOS 26.** "If you can't see it, tap ⋯ first" and "If you see Open as Web App, leave it on" cover old and new Safari without naming a version.
 - **Dropped the separate-sign-in explanation and the "full screen, one tap away, stays signed in" pitch** (Jack). The order of the steps already gets people to sign in from the Home Screen app; the extra lines read as plumbing and sales copy.
+
+## 31 Oct 2026 (Settings: one Workouts box)
+
+- **Programme and Workouts A–C now share one box** (Jack). Separate panels made four boxes for one idea; the Programme row heads the box and the workouts are collapsible rows under it. While Change is open the workout rows step aside so the switcher has the box to itself. First-time setup keeps its own layout ("My own" shows the grids as separate panels), since it has its own programme step.

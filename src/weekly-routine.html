@@ -780,6 +780,7 @@ details,.hitem,.panel,section{scroll-margin:16px 0 20px}
 .sset h3{margin:0;font-size:1.05rem}
 .sset .ts{font-size:.84rem;color:var(--muted);margin-top:-6px}
 .swk{display:flex;flex-direction:column;gap:12px;padding:14px}
+.swkin{padding:0}details.swk.swkin>summary{min-height:34px;align-items:center}
 .swkh{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .swkh b{font-size:1rem}
 .swkh select{width:auto;padding:6px 10px;font-size:.88rem}
@@ -2079,10 +2080,10 @@ function secGrid(D){const ct=D.cardio.target,dayOf=d=>D.workouts.slice(0,D.nw).f
       return SD.gymMsg?`<div class="ts gmsg" style="margin-top:0">${esc(SD.gymMsg)}</div>`
         :`<div class="ts pcount" style="margin-top:0">${D.nw>0?`<span class="${okG?"":"gmsg"}">Gym days <span class="num">${g}/${D.nw}</span></span>`:""}${D.nw>0&&ct>0?" · ":""}${ct>0?`<span class="${okC?"":"gmsg"}">Cardio days <span class="num">${c}/${ct}</span></span>`:""}</div>`})()}
 `}
-function secLists(D,openAll){let h="";
+function secLists(D,openAll,grouped){let h=""; // grouped: rows inside the Programme box, not panels of their own
   D.workouts.slice(0,D.nw).forEach((w,i)=>{
     const n=w.items.filter(r=>String(r.name).trim()).length;
-    h+=`<details class="panel swk" data-swk="${i}" ${openAll||SD.open.has(i)?"open":""}><summary><b>Workout ${LETTERS[i]}</b><span class="muted">${n} exercise${n===1?"":"s"}</span></summary>`;
+    h+=`${grouped?'<div class="shsep"></div>':""}<details class="${grouped?"swk swkin":"panel swk"}" data-swk="${i}" ${openAll||SD.open.has(i)?"open":""}><summary><b>Workout ${LETTERS[i]}</b><span class="muted">${n} exercise${n===1?"":"s"}</span></summary>`;
     h+=`<div class="sgh" aria-hidden="true"><span></span><span>Exercise</span><span>Sets</span><span class="sgrh">Reps</span><span></span></div><div class="sglist" data-sglist="${i}">`;
     w.items.forEach((r,j)=>{
       const id=`${i}-${j}`,nm=String(r.name||"").trim();
@@ -2103,7 +2104,7 @@ function currentPreset(D){return PRESETS.find(P=>{const W=P.workouts||[];if(!W.l
     return rows.length===items.length&&items.every(([ex,sets,lo,hi],j)=>{const r=rows[j];return String(r.name).trim().toLowerCase()===presetExName(ex)&&+r.sets===sets&&+r.lo===lo&&+r.hi===hi})})})||null}
 // keep the Programme name current while workouts are being edited
 const refreshPrName=()=>{const n=document.querySelector("#setbody .prline .prname");if(n&&SD&&!SD.setup){const c=currentPreset(SD);n.textContent=c?c.name:"Custom"}};
-function secPresets(D){
+function secPresets(D,after=""){ // after: the workout rows, shown below the Programme row unless the switcher is open
   const cur=currentPreset(D);
   let h=`<div class="panel shab prpanel"><div class="shrow prline"><b>Programme</b><span class="prname">${cur?esc(cur.name):"Custom"}</span>
     <button type="button" class="btn sm" data-st="set-presets" aria-expanded="${!!SD.presets}">${SD.presets?"Close":"Change"}</button></div>`;
@@ -2114,7 +2115,7 @@ function secPresets(D){
       <details class="prex"><summary>See exercises</summary>${W.map((items,i)=>`<div class="prwk"><b>${LETTERS[i]}</b> ${items.map(([ex])=>esc(EXERCISES[ex]||BASE_EXERCISES[ex]||ex)).join(", ")}</div>`).join("")}</details>
       ${armed?`<div class="prconfirm"><p class="ts">This replaces Workouts ${LETTERS[0]}–${LETTERS[W.length-1]}. Your logged history stays.</p>
         <div class="pwrow"><button type="button" class="btn primary" data-preset="${P.id}">Switch to ${esc(P.name)}</button><button type="button" class="btn ghost" data-st="pr-cancel">Cancel</button></div></div>`:""}</div>`}).join("");
-  return h+`</div>`}
+  return h+(SD.presets?"":after)+`</div>`}
 function secAccount(D){let h="";
   const units=`<div class="shrow"><div class="grow"><b>Weights</b> <span class="muted">in</span></div>${unitSeg(D)}</div>`;
   if(!(HOST&&HOST.email))return `<section class="sset"><h3>Units</h3><div class="panel shab">${units}</div></section>`;
@@ -2206,7 +2207,7 @@ function renderSettings(){
   h+=`<section class="sset"><h3>Daily habits</h3><div class="panel shab">${habitRows(D)}</div></section>`;
   h+=`<section class="sset"><h3>Prep and review</h3>${secPrep(D)}</section>`;
   h+=`<section class="sset"><h3>Workouts</h3><div class="panel shab">${secCounts(D)}<div class="shsep"></div>${secGrid(D)}</div>`;
-  h+=secPresets(D)+secLists(D,false)+`</section>`;
+  h+=secPresets(D,secLists(D,false,true))+`</section>`;
   h+=secAccount(D);
   $("setbody").innerHTML=h;
 }
