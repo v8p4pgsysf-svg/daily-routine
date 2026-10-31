@@ -12,7 +12,7 @@ A personal health and fitness tracker (daily check-ins, weekly review, strength 
   - The `public.docs` table has one row per record. It has RLS, and each person sees only their own rows.
   - Photos live in a private `photos` bucket, under `<user id>/<photo id>`.
   - `supabase/schema.sql` sets all of this up and is safe to re-run.
-- New users are created by Jack in the Supabase dashboard; sign-ups are off. The page hides hosted-only UI (import, account section) unless `window.__routineHost` exists.
+- Accounts: people sign up themselves in the app (email + their own password), but only if their email is in `public.invites`. A `before insert` trigger on `auth.users` enforces this, so it can't be bypassed (`supabase/invites.sql`). Email confirmation is off; the app sends no emails. The page hides hosted-only UI (import, account section) unless `window.__routineHost` exists.
 
 ## Making a change
 1. Edit `src/weekly-routine.html`.

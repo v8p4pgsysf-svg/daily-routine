@@ -26,7 +26,9 @@ function showLogin(note){
       ${n?`<p class="lg-err" role="alert">${esc(n)}</p>`:""}
       <label for="lg-email">Email</label><input id="lg-email" name="email" type="email" autocomplete="username" inputmode="email" required value="${esc(email)}">
       <label for="lg-pass">Password</label><input id="lg-pass" name="password" type="password" autocomplete="current-password" required>
-      <button class="lg-btn" type="submit">Sign in</button></form>`;
+      <button class="lg-btn" type="submit">Sign in</button>
+      <button class="lg-link" type="button" id="lg-new">New here? Create an account</button></form>`;
+    $("lg-new").onclick=()=>signup();
     $("lg-fp").onsubmit=async e=>{e.preventDefault();email=$("lg-email").value.trim().toLowerCase();const password=$("lg-pass").value;
       if(!/^\S+@\S+\.\S+$/.test(email)||!password){form("Enter your email and password.");return}
       const b=box.querySelector(".lg-btn");b.disabled=true;b.textContent="Signing in…";
@@ -35,6 +37,30 @@ function showLogin(note){
         form(/invalid|credentials|password/i.test(m)?"That email and password don't match. Check them, or ask whoever set up your account to reset it.":/rate|too many/i.test(m)?"Too many attempts. Wait a minute, then try again.":"Couldn't sign in. Check your connection and try again.");return}
       box.hidden=true;start(res.data.session)};
     setTimeout(()=>$(email?"lg-pass":"lg-email").focus(),50)};
+  // create your own account (only works for emails on the invite list; the database enforces it)
+  const signup=n=>{box.innerHTML=`<form class="lg-card" id="lg-fs" novalidate>
+      <h1>Create your account</h1><p class="lg-sub">Use the email you were invited with and choose a password.</p>
+      ${n?`<p class="lg-err" role="alert">${esc(n)}</p>`:""}
+      <label for="lg-email">Email</label><input id="lg-email" name="email" type="email" autocomplete="username" inputmode="email" required value="${esc(email)}">
+      <label for="lg-pass">Password</label><input id="lg-pass" name="new-password" type="password" autocomplete="new-password" placeholder="At least 8 characters" required>
+      <label for="lg-pass2">Password again</label><input id="lg-pass2" type="password" autocomplete="new-password" required>
+      <button class="lg-btn" type="submit">Create account</button>
+      <button class="lg-link" type="button" id="lg-have">Already have an account? Sign in</button></form>`;
+    $("lg-have").onclick=()=>form();
+    $("lg-fs").onsubmit=async e=>{e.preventDefault();email=$("lg-email").value.trim().toLowerCase();const p1=$("lg-pass").value,p2=$("lg-pass2").value;
+      if(!/^\S+@\S+\.\S+$/.test(email)){signup("Enter a valid email address.");return}
+      if(p1.length<8){signup("Choose a password of at least 8 characters.");return}
+      if(p1!==p2){signup("The two passwords don't match.");return}
+      const b=box.querySelector(".lg-btn");b.disabled=true;b.textContent="Creating…";
+      let res;try{res=await sb.auth.signUp({email,password:p1})}catch(err){res={error:err}}
+      const m=String(res.error&&res.error.message||"");
+      if(res.error){signup(/not_invited|database error|saving new user|signups not allowed|not allowed/i.test(m)?"This email isn't on the invite list. Ask whoever shared the app to add it, then try again."
+        :/already|registered|exists/i.test(m)?"There's already an account for this email. Sign in instead."
+        :/weak|password/i.test(m)?"That password is too weak. Make it longer.":/rate|too many/i.test(m)?"Too many attempts. Wait a minute, then try again.":"Couldn't create the account. Check your connection and try again.");return}
+      if(res.data&&res.data.session){box.hidden=true;start(res.data.session);return}
+      // email confirmation is switched on in Supabase: they confirm, then sign in
+      form("Account created. Check your email for a confirmation link, then sign in here.")};
+    setTimeout(()=>$("lg-email").focus(),50)};
   form(note);
 }
 function codeLogin(note){
@@ -126,13 +152,13 @@ function start(session){
   window.__routineHost={email:user.email,photoUrl,canChangePassword:C.authMode!=="code",
     changePassword:async pw=>{const {error}=await sb.auth.updateUser({password:pw});if(error)throw new Error(/same|different/i.test(error.message)?"same":/weak|short|least/i.test(error.message)?"weak":"failed")},
     importPhoto:(id,blob)=>put(id,blob,true),
-    signOut:async()=>{try{await sb.auth.signOut()}catch(e){}clearLocal();try{localStorage.removeItem("routine-owner")}catch(e){}location.reload()}};
+    signOut:async()=>{try{await sb.auth.signOut()}catch(e){}clearLocal();try{localStorage.removeItem("routine-owner")}catch(e){}location.replace(location.pathname)}};
   // run the app
   document.body.classList.add("in");
   const src=$("app-src").textContent,sc=document.createElement("script");sc.textContent=src;document.body.appendChild(sc);
 }
 
-sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT"&&window.__routineHost)location.reload()});
+sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT"&&window.__routineHost)location.replace(location.pathname)});
 sb.auth.getSession().then(({data})=>{if(data&&data.session)start(data.session);else showLogin()}).catch(()=>showLogin());
 if("serviceWorker" in navigator&&location.protocol==="https:")addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 })();

@@ -85,11 +85,29 @@ From here on, use the new app. The Claude version keeps working, but the two don
 
 ## Inviting your girlfriend or friends
 
-- Add them in Supabase (step 6) with a starting password, and send it to them privately.
-- Send them the address and steps 14 and 16. They don't need to import anything.
-- They can change their password in the app: **cog → Account → Change password**.
-- They start with your routine as the default. Tell them to tap the **cog** to set their own, or to choose **Use a suggested programme**.
-- Each person's data is completely separate. You, as the owner, can see the raw database in the Supabase dashboard, so tell them that.
+People create their own account and choose their own password. You only add their email to an **invite list**. The database refuses sign-ups from anyone not on it, even if they find the address.
+
+**One-time setup** (about 2 minutes):
+
+1. **Create the invite list.** In Supabase, open **SQL Editor → New query**, paste in the whole of `supabase/invites.sql` and **Run**.
+2. **Allow sign-ups.** Go to **Authentication → Sign In / Providers**:
+   - switch **on** **Allow new users to sign up** (the invite list now guards it)
+   - under **Email**, switch **off** **Confirm email**, then **Save**. The app doesn't send emails, and the invite list already controls who can join.
+
+**To invite someone:**
+
+1. **Add their email.** In Supabase, go to **Table Editor → invites → Insert row**, type their email in **lower case**, and **Save**. Or run this in the SQL Editor:
+
+   ```sql
+   insert into public.invites (email) values ('name@example.com');
+   ```
+
+2. **Send them the address** (https://v8p4pgsysf-svg.github.io/daily-routine/). They tap **New here? Create an account**, enter that email and a password of their choice, and they're in. Then they add the app to their home screen (step 16).
+3. **Tell them about the defaults.** They start with your routine as the default. Tell them to tap the **cog** to set their own, or to choose **Use a suggested programme**.
+
+They can change their password later under **cog → Account → Change password**. Each person's data is completely separate. You, as the owner, can see the raw database in the Supabase dashboard, so tell them that.
+
+To stop someone new signing up with an email, delete its row from **invites**. Existing accounts are managed under **Authentication → Users**.
 
 ## Updates
 
@@ -123,4 +141,5 @@ If the GitHub connection is ever lost, Claude can send the `docs/` files as a zi
 | `src/weekly-routine.html` | The app's source: the same page as the Claude version |
 | `tools/build.py` | Turns `src/` into `docs/index.html` and `docs/sw.js` |
 | `supabase/schema.sql` | Database tables and security rules (step 4) |
+| `supabase/invites.sql` | The invite list that lets people create their own accounts |
 | `tests/app.test.js` | Automated checks for the app (`node tests/app.test.js src/weekly-routine.html`, needs jsdom) |
