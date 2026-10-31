@@ -80,11 +80,13 @@ try:
   ok("Signed in as jack@example.com" in pg.inner_text("#setbody"),"H8. Settings shows who's signed in, with Sign out")
   pg.click('[data-st="set-cancel"]');pg.click("#tab-progress");pg.wait_for_timeout(200)
   ok(pg.locator("#imp-btn").is_visible(),"H9. Progress has Import a backup")
-  pg.set_input_files("#imp-file","routine-export.zip");pg.wait_for_function("document.getElementById('imp-msg').textContent.startsWith('Imported')",timeout=15000)
+  pg.set_input_files("#imp-file","routine-export.zip")
+  pg.wait_for_selector("#pk-saved",timeout=15000);pg.click("#pk-saved")  # first photo: save the recovery code
+  pg.wait_for_function("document.getElementById('imp-msg').textContent.startsWith('Imported')",timeout=15000)
   msg=pg.inner_text("#imp-msg");ok("22 sessions" in msg and "1 photo" in msg,"H10. Import brings in history and photos ("+msg+")")
   pg.wait_for_timeout(800)
   src=pg.get_attribute("#gallery img","src") or "";
-  ok(src.startswith("data:image/jpeg"),"H11. The imported photo shows in the gallery (from private storage)")
+  ok(src.startswith("blob:"),"H11. The imported photo shows in the gallery (decrypted on the device)")
   pg.screenshot(path="h-progress.png",full_page=False)
   st=pg.evaluate("Object.keys(JSON.parse(localStorage.getItem('mock-storage')||'{}'))")
   ok(all(k.startswith(uid+"/") for k in st) and len(st)==1,"H12. The photo is stored in your own folder")

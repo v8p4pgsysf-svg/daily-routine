@@ -7,7 +7,7 @@
 const C=window.ROUTINE_CONFIG||{};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const LOCAL_KEYS=["weekly-routine.v1","weekly-routine.workouts.v1","weekly-routine.settings.v1","routine-photo-urls"];
+const LOCAL_KEYS=["weekly-routine.v1","weekly-routine.workouts.v1","weekly-routine.settings.v1","routine-photo-urls","routine-pk"];
 const clearLocal=()=>LOCAL_KEYS.forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});
 
 if(!C.supabaseUrl||!C.supabaseAnonKey||/YOUR-/.test(C.supabaseUrl)){
@@ -16,6 +16,27 @@ if(!C.supabaseUrl||!C.supabaseAnonKey||/YOUR-/.test(C.supabaseUrl)){
   return;
 }
 const sb=window.supabase.createClient(C.supabaseUrl,C.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:"routine-auth"}});
+
+/* ---------- photo encryption helpers ----------
+   Photos are encrypted with AES-GCM before upload. A person's photo key is random; it is stored only locked,
+   once with a key made from their password (PBKDF2) and once with a key made from their recovery code. */
+const te=new TextEncoder();
+const b64=u=>{u=new Uint8Array(u);let s="";for(let i=0;i<u.length;i++)s+=String.fromCharCode(u[i]);return btoa(s)};
+const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const MAGIC=[0x52,0x50,0x45,0x31],PW_ITER=310000,RC_ITER=100000; // "RPE1" starts every encrypted photo
+const isEnc=b=>b.length>16&&MAGIC.every((x,i)=>b[i]===x);
+async function kdf(secret,salt,iter){const base=await crypto.subtle.importKey("raw",te.encode(secret),"PBKDF2",false,["deriveKey"]);
+  return crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations:iter,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["encrypt","decrypt"])}
+async function lockRaw(raw,secret,iter){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+  const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},await kdf(secret,salt,iter),raw);return {salt:b64(salt),iv:b64(iv),ct:b64(ct),iter}}
+async function unlockRaw(w,secret){if(!w)throw new Error("none"); // throws if the secret is wrong
+  return new Uint8Array(await crypto.subtle.decrypt({name:"AES-GCM",iv:unb64(w.iv)},await kdf(secret,unb64(w.salt),w.iter),unb64(w.ct)))}
+const RC_ABC="0123456789ABCDEFGHJKMNPQRSTVWXYZ"; // no I, L, O or U, so it's easy to copy by hand
+const newCode=()=>[...crypto.getRandomValues(new Uint8Array(20))].map(x=>RC_ABC[x&31]).join("").match(/.{5}/g).join("-");
+const normCode=c=>String(c||"").toUpperCase().replace(/O/g,"0").replace(/[IL]/g,"1").replace(/[^0-9A-Z]/g,"");
+// cards shown over the running app (recovery code, unlock), reusing the sign-in screen's look
+function overlay(html){const box=$("login");box.classList.remove("a2hs");box.innerHTML=html;box.hidden=false;box.scrollTop=0;return box}
+function closeOverlay(){const box=$("login");box.hidden=true;box.innerHTML=""}
 
 /* ---------- home screen: on a phone's browser, suggest adding the app before signing in ----------
    Same heading and intro on every phone; only the steps differ.
@@ -154,7 +175,7 @@ function showLogin(note){
     let u;try{u=await sb.auth.updateUser({password:p1})}catch(err){u={error:err}}
     done();const m=String(u.error&&u.error.message||"");
     if(u.error&&!/same|different/i.test(m)){flashErr("lg-frerr",/weak|short|least/i.test(m)?"That password is too weak. Make it longer.":"Couldn't save the new password. Check your connection and try again.");return}
-    box.hidden=true;start(frSession)}; // a "same as before" password is fine: they're signed in either way
+    box.hidden=true;start(frSession,p1)}; // a "same as before" password is fine: they're signed in either way
   if(note)flashErr("lg-err",note);
   const hint=!note&&addInstallHint(box);
   fp.onsubmit=async e=>{e.preventDefault();const email=$("lg-email").value.trim().toLowerCase(),password=$("lg-pass").value;
@@ -164,7 +185,7 @@ function showLogin(note){
     b.disabled=false;b.textContent="Sign in";
     if(res.error||!res.data||!res.data.session){const m=String(res.error&&res.error.message||"");
       flashErr("lg-err",/invalid|credentials|password/i.test(m)?"That email and password don't match. Check them, or tap Forgot password.":/rate|too many/i.test(m)?"Too many attempts. Wait a minute, then try again.":"Couldn't sign in. Check your connection and try again.");return}
-    box.hidden=true;start(res.data.session)};
+    box.hidden=true;start(res.data.session,password)};
   fs.onsubmit=async e=>{e.preventDefault();const email=$("lg-semail").value.trim().toLowerCase(),p1=$("lg-spass").value,p2=$("lg-spass2").value;
     if(!/^\S+@\S+\.\S+$/.test(email)){flashErr("lg-serr","Enter a valid email address.");return}
     if(p1.length<8){flashErr("lg-serr","Choose a password of at least 8 characters.");return}
@@ -177,7 +198,7 @@ function showLogin(note){
     if(res.error){flashErr("lg-serr",/not_invited|database error|saving new user|signups not allowed|not allowed/i.test(m)?($("lg-scode").value.trim()?"That invite code isn't right. Check it with whoever shared the app.":"Enter the invite code you were given.")
       :/already|registered|exists/i.test(m)?"There's already an account for this email. Sign in instead."
       :/weak|password/i.test(m)?"That password is too weak. Make it longer.":/rate|too many/i.test(m)?"Too many attempts. Wait a minute, then try again.":"Couldn't create the account. Check your connection and try again.");return}
-    if(res.data&&res.data.session){box.hidden=true;start(res.data.session);return}
+    if(res.data&&res.data.session){box.hidden=true;start(res.data.session,p1);return}
     toSignIn();flashErr("lg-err","Account created. Check your email for a confirmation link, then sign in here.")};
   if(!hint||!box.classList.contains("a2hs"))setTimeout(()=>$("lg-email").focus(),50);
 }
@@ -211,7 +232,7 @@ function codeLogin(note){
 }
 
 /* ---------- the adapter: same interface the app uses inside Claude ---------- */
-function start(session){
+function start(session,pw){
   const user=session.user,uid=user.id;
   // one person per browser's local copy: if someone else signs in here, start them clean
   try{if(localStorage.getItem("routine-owner")!==uid){clearLocal();localStorage.setItem("routine-owner",uid)}}catch(e){}
@@ -237,26 +258,155 @@ function start(session){
       if(res.error)throw netErr(res.error)}}
   const db={collection:p=>new Col(p),doc:p=>{const i=p.lastIndexOf("/");return new Doc(p.slice(0,i),p.slice(i+1))}};
 
-  // photos: private bucket, one folder per person; shown through long-lived signed links cached on the device
+  /* ---------- photos: encrypted on this device before upload ----------
+     Each person has a random photo key. Their record "private/photokey" holds it locked twice: with their password,
+     and with a recovery code shown once. Storage only ever holds scrambled bytes; this device unscrambles them to
+     show them. The unlocked key is kept on this device (cleared on sign-out). Older plain photos are encrypted in
+     place once the key is available. */
   const BLANK="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+  const LOCKED="data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 80"><rect width="60" height="80" fill="#DDE5DF"/><g fill="none" stroke="#6A726C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="21" y="38" width="18" height="14" rx="2.5"/><path d="M24.5 38v-4a5.5 5.5 0 0 1 11 0v4"/></g></svg>');
+  const KCOL="data/users/"+uid+"/private",KID="photokey";
+  let pkey=null,praw=null,krec=null,kstate="loading",pendPw=null,rr=null;const kwait=[];
+  const rerender=()=>{clearTimeout(rr);rr=setTimeout(()=>window.__routineRerender&&window.__routineRerender(),30)};
+  async function readRec(){for(;;){let r;try{r=await sb.from("docs").select("id,data").eq("col",KCOL)}catch(e){r={error:e}}
+      if(!r.error){const row=(r.data||[]).find(x=>x.id===KID);return row?row.data:null}
+      if(netErr(r.error).code!=="unavailable")throw r.error;await waitOnline(10000)}}
+  async function saveRec(d){d=Object.assign({},d,{v:1,updated:new Date().toISOString()});
+    let r;try{r=await sb.from("docs").upsert({user_id:uid,col:KCOL,id:KID,data:d,updated_at:d.updated},{onConflict:"user_id,col,id"})}catch(e){r={error:e}}
+    if(r.error)throw netErr(r.error);krec=d}
+  async function useKey(raw){praw=raw;pkey=await crypto.subtle.importKey("raw",raw,"AES-GCM",false,["encrypt","decrypt"]);kstate="ready";pendPw=null;
+    try{localStorage.setItem("routine-pk",JSON.stringify({uid,raw:b64(raw)}))}catch(e){}
+    kwait.splice(0).forEach(f=>f());decFail.clear();waitKey.clear();rerender();setTimeout(secureOld,400)}
+  async function freshKey(p){const raw=crypto.getRandomValues(new Uint8Array(32));await saveRec({pw:await lockRaw(raw,p,PW_ITER),rc:null});await useKey(raw)}
+  // work out the key on app open or sign-in; the password is known only when they've just typed it
+  async function initKey(p){
+    let cached=null;try{const c=JSON.parse(localStorage.getItem("routine-pk")||"null");if(c&&c.uid===uid)cached=unb64(c.raw)}catch(e){}
+    if(cached&&!p){await useKey(cached);return}
+    krec=await readRec();
+    if(cached){await useKey(cached); // this device already has it: make sure it's locked with the password just used
+      if(!krec)await saveRec({pw:await lockRaw(cached,p,PW_ITER),rc:null});
+      else{try{await unlockRaw(krec.pw,p)}catch(e){await saveRec(Object.assign({},krec,{pw:await lockRaw(cached,p,PW_ITER)}))}}
+      return}
+    if(!krec){if(p)await freshKey(p);else kstate="locked";return}
+    if(!p){kstate="locked";return}
+    try{await useKey(await unlockRaw(krec.pw,p))}
+    catch(e){if(!krec.rc)await freshKey(p); // no recovery code yet means no encrypted photos yet: just make a new key
+      else{kstate="recover";pendPw=p}}}   // the password was reset: the recovery code unlocks the key
+  let kinit=Promise.resolve();
+  async function needKey(){await kinit;if(pkey)return pkey;if(await askUnlock())return pkey;throw {code:"declined"}}
+
+  // "Unlock your photos" (password) and "Enter your recovery code" (after a reset)
+  let asking=null;
+  function askUnlock(){if(pkey)return Promise.resolve(true);if(asking)return asking;
+    asking=new Promise(done=>{const fin=ok=>{asking=null;closeOverlay();done(ok)};
+      const showPw=msg=>{overlay(`<form class="lg-card" id="pk-f" novalidate><h1>Unlock your photos</h1>
+          <p class="lg-sub">Your progress photos are now encrypted, so only you can see them. Enter your password once on this device.</p>
+          <p class="lg-err" role="alert" ${msg?"":"hidden"}>${esc(msg||"")}</p>
+          <label for="pk-pw">Password</label><input id="pk-pw" type="password" autocomplete="current-password" required>
+          <button class="lg-btn" id="pk-go" type="submit">Unlock</button>
+          <button class="lg-link" type="button" id="pk-later">Not now</button></form>`);
+        $("pk-later").onclick=()=>fin(false);
+        $("pk-f").onsubmit=async e=>{e.preventDefault();const p=$("pk-pw").value;if(!p){showPw("Enter your password.");return}
+          const b=$("pk-go");b.disabled=true;b.textContent="Unlocking…";
+          let r;try{r=await sb.auth.signInWithPassword({email:user.email,password:p})}catch(err){r={error:err}}
+          if(r.error){const m=String(r.error.message||"");showPw(/invalid|credentials/i.test(m)?"That password isn't right.":"Couldn't check it. Check your connection and try again.");return}
+          try{kinit=initKey(p);await kinit}catch(err){showPw("Couldn't unlock. Check your connection and try again.");return}
+          if(pkey)fin(true);else if(kstate==="recover")showRc();else fin(false)};
+        setTimeout(()=>{const i=$("pk-pw");i&&i.focus()},50)};
+      const showRc=msg=>{overlay(`<form class="lg-card" id="pk-f" novalidate><h1>Enter your recovery code</h1>
+          <p class="lg-sub">Your password was reset, so your photos need the recovery code you saved.</p>
+          <p class="lg-err" role="alert" ${msg?"":"hidden"}>${esc(msg||"")}</p>
+          <label for="pk-rc">Recovery code</label><input id="pk-rc" class="lg-codein" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXXX-XXXXX-XXXXX-XXXXX">
+          <button class="lg-btn" id="pk-go" type="submit">Unlock photos</button>
+          <button class="lg-link" type="button" id="pk-none">I don't have it</button>
+          <button class="lg-link" type="button" id="pk-later">Not now</button></form>`);
+        $("pk-later").onclick=()=>fin(false);$("pk-none").onclick=showFresh;
+        $("pk-f").onsubmit=async e=>{e.preventDefault();const code=normCode($("pk-rc").value);
+          if(code.length!==20){showRc("Enter the whole code: four groups of five.");return}
+          const b=$("pk-go");b.disabled=true;b.textContent="Unlocking…";
+          let raw;try{raw=await unlockRaw(krec.rc,code)}catch(err){showRc("That code doesn't match. Check it and try again.");return}
+          try{if(pendPw)await saveRec(Object.assign({},krec,{pw:await lockRaw(raw,pendPw,PW_ITER)}))}catch(err){} // relock with the new password
+          await useKey(raw);fin(true)};
+        setTimeout(()=>{const i=$("pk-rc");i&&i.focus()},50)};
+      const showFresh=()=>{overlay(`<div class="lg-card"><h1>Start without your old photos?</h1>
+          <p class="lg-sub">Without the code, photos you added before can't be unlocked. They'll show as locked, and you can delete them. New photos will work as normal.</p>
+          <button class="lg-btn" type="button" id="pk-fresh">Start fresh</button>
+          <button class="lg-link" type="button" id="pk-back">Back</button></div>`);
+        $("pk-back").onclick=()=>showRc();
+        $("pk-fresh").onclick=async()=>{const b=$("pk-fresh");b.disabled=true;b.textContent="Starting…";
+          try{await freshKey(pendPw)}catch(e){b.disabled=false;b.textContent="Start fresh";return}fin(true)}};
+      kstate==="recover"?showRc():showPw()});
+    return asking}
+
+  // "Save your recovery code": before the first encrypted photo, or from Settings for a new one
+  let rcAsk=null;
+  async function ensureRc(force){if(!krec)krec=(await readRec())||{pw:null,rc:null};if(krec.rc&&!force)return;if(rcAsk)return rcAsk;
+    const code=newCode();
+    rcAsk=new Promise((done,fail)=>{const end=ok=>{rcAsk=null;closeOverlay();ok?done():fail({code:"declined"})};
+      overlay(`<div class="lg-card"><h1>${force?"Your new recovery code":"Save your recovery code"}</h1>
+          <p class="lg-sub">Your progress photos are encrypted, so only you can see them. If you forget your password, you'll need this code to see them again.</p>
+          <div class="lg-code" id="pk-code">${code}</div>
+          <button class="lg-btn lg-btn2" type="button" id="pk-copy">Copy code</button>
+          <p class="lg-sub lg-tight">Keep it somewhere safe, like your notes or password manager.${force?" Your old code stops working.":""}</p>
+          <p class="lg-err" id="pk-err" role="alert" hidden></p>
+          <button class="lg-btn" type="button" id="pk-saved">I've saved it</button>
+          <button class="lg-link" type="button" id="pk-cancel">${force?"Cancel":"Not now"}</button></div>`);
+      $("pk-copy").onclick=async()=>{try{await navigator.clipboard.writeText(code);$("pk-copy").textContent="Copied"}catch(e){$("pk-copy").textContent="Select the code above to copy it"}};
+      $("pk-cancel").onclick=()=>end(false);
+      $("pk-saved").onclick=async()=>{const b=$("pk-saved");b.disabled=true;b.textContent="Saving…";
+        try{await saveRec(Object.assign({},krec,{rc:await lockRaw(praw,normCode(code),RC_ITER)}));end(true)}
+        catch(e){b.disabled=false;b.textContent="I've saved it";flashErr("pk-err","Couldn't save it. Check your connection and try again.")}}});
+    return rcAsk}
+
+  // showing photos: fetch the stored bytes, decrypt if needed, show from memory
   let urls={};try{urls=JSON.parse(localStorage.getItem("routine-photo-urls")||"{}")}catch(e){}
-  const pending=new Set(),failed=new Set();let pt=null;
   const saveUrls=()=>{try{localStorage.setItem("routine-photo-urls",JSON.stringify(urls))}catch(e){}};
-  async function fetchUrls(){const ids=[...pending];pending.clear();if(!ids.length)return;
-    let res;try{res=await sb.storage.from("photos").createSignedUrls(ids.map(i=>uid+"/"+i),60*60*24*30)}catch(e){res={error:e}}
-    if(res.error||!res.data){ids.forEach(i=>failed.add(i));return}
-    res.data.forEach((d,i)=>{if(d&&d.signedUrl)urls[ids[i]]={url:d.signedUrl,exp:Date.now()+29*864e5};else failed.add(ids[i])});
-    saveUrls();window.__routineRerender&&window.__routineRerender()}
-  function photoUrl(id){const u=urls[id];if(u&&u.exp>Date.now())return u.url;
-    if(!failed.has(id)){pending.add(id);clearTimeout(pt);pt=setTimeout(fetchUrls,40)}return u?u.url:BLANK}
+  const urlWait=new Map(),failed=new Set(),dec=new Map(),busy=new Set(),decFail=new Set(),waitKey=new Set();let pt=null;
+  function signed(id,fresh){const u=urls[id];if(u&&u.exp>Date.now()&&!fresh)return Promise.resolve(u.url);
+    return new Promise((res,rej)=>{if(!urlWait.has(id))urlWait.set(id,[]);urlWait.get(id).push({res,rej});clearTimeout(pt);pt=setTimeout(fetchUrls,40)})}
+  async function fetchUrls(){const waits=new Map(urlWait),ids=[...waits.keys()];urlWait.clear();if(!ids.length)return;
+    let r;try{r=await sb.storage.from("photos").createSignedUrls(ids.map(i=>uid+"/"+i),60*60*24*30)}catch(e){r={error:e}}
+    ids.forEach((id,i)=>{const d=!r.error&&r.data&&r.data[i];
+      if(d&&d.signedUrl){urls[id]={url:d.signedUrl,exp:Date.now()+29*864e5};waits.get(id).forEach(w=>w.res(d.signedUrl))}else waits.get(id).forEach(w=>w.rej(new Error("no link")))});saveUrls()}
+  async function bytes(id){for(let t=0;;t++){const url=await signed(id,t>0);let r=null;try{r=await fetch(url)}catch(e){}
+      if(r&&r.ok)return new Uint8Array(await r.arrayBuffer());if(t>=1)throw new Error("fetch")}}
+  const decrypt=async b=>new Blob([await crypto.subtle.decrypt({name:"AES-GCM",iv:b.slice(4,16)},pkey,b.slice(16))],{type:"image/jpeg"});
+  async function load(id){if(busy.has(id))return;busy.add(id);
+    try{const b=await bytes(id);let blob;
+      if(isEnc(b)){if(!pkey){waitKey.add(id);rerender();await kinit;if(!pkey)await new Promise(r=>kwait.push(r))}
+        try{blob=await decrypt(b)}catch(e){decFail.add(id);return}}
+      else blob=new Blob([b],{type:"image/jpeg"}); // an older photo from before encryption
+      dec.set(id,URL.createObjectURL(blob))}
+    catch(e){failed.add(id)}
+    finally{busy.delete(id);rerender()}}
+  function photoUrl(id){if(dec.has(id))return dec.get(id);if(decFail.has(id)||waitKey.has(id))return LOCKED;if(!failed.has(id))load(id);return BLANK}
+  async function photoBlob(id){if(dec.has(id))return (await fetch(dec.get(id))).blob(); // for Export: the original photo
+    const b=await bytes(id);if(!isEnc(b))return new Blob([b],{type:"image/jpeg"});if(!pkey)throw new Error("locked");return decrypt(b)}
+  const encrypt=async blob=>{const iv=crypto.getRandomValues(new Uint8Array(12));
+    // labelled as an image so the photos bucket accepts it; the bytes can't be opened without the key
+    return new Blob([new Uint8Array(MAGIC),iv,await crypto.subtle.encrypt({name:"AES-GCM",iv},pkey,await blob.arrayBuffer())],{type:"image/jpeg"})};
   const newId=()=>[...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,"0")).join("");
-  async function put(id,blob,upsert){const type=blob.type||"image/jpeg";
-    if(blob.size>10*1024*1024)throw {code:"too_large"};
-    let res;try{res=await sb.storage.from("photos").upload(uid+"/"+id,blob,{contentType:type,upsert:!!upsert})}catch(e){res={error:e}}
+  async function put(id,blob,upsert){if(blob.size>10*1024*1024)throw {code:"too_large"};
+    await needKey();await ensureRc();
+    let res;try{res=await sb.storage.from("photos").upload(uid+"/"+id,await encrypt(blob),{contentType:"image/jpeg",upsert:!!upsert})}catch(e){res={error:e}}
     if(res.error){const m=String(res.error.message||"");throw {code:/size|large/i.test(m)?"too_large":/mime|type/i.test(m)?"unsupported_type":netErr(res.error).code}}
-    failed.delete(id);pending.add(id);await fetchUrls()}
+    if(dec.has(id))URL.revokeObjectURL(dec.get(id));dec.set(id,URL.createObjectURL(blob)); // show the original straight away
+    failed.delete(id);decFail.delete(id);delete urls[id];saveUrls();rerender()}
+  // encrypt photos stored before encryption existed (once the key is here and a recovery code is saved)
+  let securing=false;
+  async function secureOld(){if(securing||!pkey)return;securing=true;
+    try{let r;try{r=await sb.storage.from("photos").list(uid,{limit:1000})}catch(e){return}
+      if(r.error||!r.data)return;
+      let done={};try{done=JSON.parse(localStorage.getItem("routine-secured")||"{}")}catch(e){}
+      for(const f of r.data){if(!/^[0-9a-f]{32}$/.test(f.name)||done[uid+"/"+f.name])continue;
+        let b;try{b=await bytes(f.name)}catch(e){continue}
+        if(!isEnc(b)){try{await ensureRc()}catch(e){return} // asked again next time
+          const u=await sb.storage.from("photos").upload(uid+"/"+f.name,await encrypt(new Blob([b])),{contentType:"image/jpeg",upsert:true});
+          if(u.error)continue;delete urls[f.name];saveUrls()}
+        done[uid+"/"+f.name]=1;try{localStorage.setItem("routine-secured",JSON.stringify(done))}catch(e){}}}
+    finally{securing=false}}
   const assets={upload:async blob=>{const id=newId();await put(id,blob,false);return {id}},
-    delete:async id=>{await sb.storage.from("photos").remove([uid+"/"+(typeof id==="string"?id:id.id)]);delete urls[id];saveUrls()}};
+    delete:async id=>{id=typeof id==="string"?id:id.id;await sb.storage.from("photos").remove([uid+"/"+id]);delete urls[id];saveUrls();if(dec.has(id)){URL.revokeObjectURL(dec.get(id));dec.delete(id)}}};
 
   const downloads={save:async({filename,data})=>{
     const blob=data instanceof Blob?data:new Blob([data],{type:/\.json$/.test(filename)?"application/json":/\.csv$/.test(filename)?"text/csv":"application/octet-stream"});
@@ -267,8 +417,11 @@ function start(session){
     setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);return {status:"saved"}}};
 
   window.claude={use:async name=>({db,user:{id:async()=>uid},assets,downloads})[name]||null};
-  window.__routineHost={email:user.email,photoUrl,canChangePassword:C.authMode!=="code",
-    changePassword:async pw=>{const {error}=await sb.auth.updateUser({password:pw});if(error)throw new Error(/same|different/i.test(error.message)?"same":/weak|short|least/i.test(error.message)?"weak":"failed")},
+  window.__routineHost={email:user.email,photoUrl,photoBlob,canChangePassword:C.authMode!=="code",
+    changePassword:async np=>{const {error}=await sb.auth.updateUser({password:np});if(error)throw new Error(/same|different/i.test(error.message)?"same":/weak|short|least/i.test(error.message)?"weak":"failed");
+      // the photo key follows the new password (if this device has it unlocked)
+      if(praw){try{if(!krec)krec=(await readRec())||{rc:null};await saveRec(Object.assign({},krec,{pw:await lockRaw(praw,np,PW_ITER)}))}catch(e){}}},
+    newRecoveryCode:async()=>{await needKey();await ensureRc(true)},
     importPhoto:(id,blob)=>put(id,blob,true),
     // feedback goes to a table people can add to but not read; the database fills in their email
     sendFeedback:async({kind,message})=>{
@@ -291,6 +444,12 @@ function start(session){
   // run the app
   document.body.classList.add("in");
   const src=$("app-src").textContent,sc=document.createElement("script");sc.textContent=src;document.body.appendChild(sc);
+  // photo key: after a reset ask for the recovery code at once; otherwise ask for the password only if they have photos
+  kinit=initKey(pw).catch(()=>{if(!pkey)kstate="locked"});
+  kinit.then(async()=>{if(kstate==="recover"){setTimeout(askUnlock,600);return}
+    if(kstate!=="locked")return;
+    let r;try{r=await sb.storage.from("photos").list(uid,{limit:1})}catch(e){return}
+    if(!r.error&&r.data&&r.data.some(f=>/^[0-9a-f]{32}$/.test(f.name)))setTimeout(askUnlock,600)});
 }
 
 sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT"&&window.__routineHost)location.replace(location.pathname)});

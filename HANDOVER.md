@@ -19,13 +19,11 @@ Polish the hosted Daily Routine app (GitHub Pages + Supabase) so Jack uses it da
 - Layout checks: Playwright + Chromium are in the workspace (`PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`). Serve a copy of `docs/` with `mock-supabase.js` as `supabase.js`, sign in as `jack@example.com` / `Start-1234`, check at 390px in light and dark.
 
 ## Waiting on Jack
-- **Run `supabase/feedback.sql` in the SQL Editor.** Until then, Send feedback shows "Couldn't send".
 - Open the live link in Safari on a real iPhone (a private tab, so you see it as a newcomer) and follow the card through to the Home Screen app.
-- Earlier live checks still open: a progress photo survives a reopen and shows under Progress; live sync between phone and computer.
 
 ## Agreed next (in this order)
 1. ~~Forgotten-password reset~~ **Done and working live** (31 Oct): Gmail SMTP + Magic Link template with `{{ .Token }}`. First test landed in **junk**; the code screen now says to check junk. If friends keep getting junk, move to a domain + Resend (SMTP settings only).
-2. **Next up:** encrypt progress photos on the phone. Agreed design: random photo key per person, locked by a key from their password; **with a recovery code** (Jack chose it) shown once on first photo; after a forgot-password reset the app asks for it, otherwise those photos stay locked; change password re-locks the key; existing photos encrypted on next sign-in; Export keeps plain photos. Before building, Jack to do the two live checks below (photo survives reopen; live sync).
+2. ~~Encrypt progress photos~~ **Shipped 31 Oct** (with recovery code). Jack to try it on his phone: expect "Unlock your photos" (password) on first open if he has photos, then "Save your recovery code".
 
 ## Open ideas (not started; Jack hasn't committed to them)
 - Backup nudge: show "last backup: X ago" in the weekly review, since Export is manual.

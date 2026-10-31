@@ -55,3 +55,12 @@
 
 - **Deleting a weekly-review photo is one tap on ×, with "Photo deleted. Undo" for 6 seconds** (Jack: the "Remove?" confirm didn't fit the 44px thumbnail and was pointless for a photo still waiting in the review). Undo instead of no safety net because the × is small and a slip would be permanent; the file is only removed from storage when the undo window ends, when another delete or upload starts, or when the app is left.
 - **Photo encryption: with a recovery code** (Jack's choice).
+
+## 31 Oct 2026 (photo encryption)
+
+- **Progress photos are encrypted on the device before upload**, so the project owner (Jack) and anyone with database access see only scrambled files. Threat model, stated honestly: this stops casual browsing and leaks; it can't stop the owner shipping code that steals keys, since he controls the app.
+- **Key design:** random per-person photo key, locked by the password and by a recovery code, stored in their own `docs` row (no new table or SQL). The unlocked key is cached on the device so already-signed-in devices don't need the password every open; signing out clears it.
+- **Recovery code shown before the first encrypted photo, not at sign-up** (people who never add photos never see it). Required before the first photo (Not now cancels the upload). After a forgot-password reset, the code unlocks the key and re-locks it with the new password; without it, "Start fresh" makes a new key and old photos show as locked (deletable).
+- **Prompts only when they matter:** a device without the key asks for the password on open only if the person has photos; otherwise at their first upload.
+- **Files are labelled image/jpeg** so the existing bucket (image types only) accepts them without a schema change for Jack to run.
+- **Older plain photos are encrypted in place** the first time the key is available and a recovery code is saved.

@@ -35,6 +35,10 @@ body:not(.in)>:not(#login):not(script){{display:none!important}}
 #lg-code{{letter-spacing:.3em;font-family:"IBM Plex Mono",ui-monospace,monospace;text-align:center;font-size:1.3rem}}
 .lg-btn{{margin-top:6px;font:inherit;font-weight:650;font-size:1rem;padding:12px;border-radius:10px;border:0;background:#2E7650;color:#fff;cursor:pointer}}.lg-btn:disabled{{opacity:.6}}
 .lg-step{{display:flex;flex-direction:column;gap:10px}}
+.lg-code{{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:1.15rem;font-weight:600;letter-spacing:.04em;text-align:center;padding:14px 8px;border-radius:10px;background:#F4F5F3;border:1px solid #E2E6E2;user-select:all;-webkit-user-select:all;word-break:break-all}}
+.lg-codein{{font-family:"IBM Plex Mono",ui-monospace,monospace!important;letter-spacing:.04em;text-transform:uppercase}}
+.lg-btn2{{background:none!important;color:inherit!important;border:1.5px solid #CDD3CE!important;margin-top:0}}
+.lg-tight{{margin:0!important}}
 .lg-link{{border:0;background:none;color:#6A726C;text-decoration:underline;font:inherit;font-size:.9rem;cursor:pointer;padding:6px}}
 .lg-err{{margin:0;color:#A33A2E;background:#F6E5E2;border-radius:10px;padding:10px 12px;font-size:.9rem}}
 #login.a2hs form{{display:none}}
@@ -43,7 +47,7 @@ body:not(.in)>:not(#login):not(script){{display:none!important}}
 .lg-steps li::before{{content:counter(s);width:26px;height:26px;border-radius:50%;background:#E4EFE8;color:#2E7650;font-weight:700;font-size:.85rem;display:grid;place-items:center}}
 .lg-ico{{width:1.05em;height:1.05em;vertical-align:-.15em;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}}
 .lg-err{{transition:opacity .35s ease}}.lg-err.fade{{opacity:0}}@media (prefers-reduced-motion:reduce){{.lg-err{{transition:none}}}}
-@media (prefers-color-scheme:dark){{#login{{background:#111412;color:#E7EBE8}}.lg-card{{background:#191D1A;border-color:#272D29}}.lg-card input{{background:#191D1A;border-color:#353C37}}.lg-btn{{background:#5DBA88;color:#0E1A13}}.lg-sub,.lg-link{{color:#929B95}}.lg-steps li::before{{background:#1F3328;color:#5DBA88}}.lg-err{{background:#3A1F1B;color:#E07B6E}}}}
+@media (prefers-color-scheme:dark){{#login{{background:#111412;color:#E7EBE8}}.lg-card{{background:#191D1A;border-color:#272D29}}.lg-card input{{background:#191D1A;border-color:#353C37}}.lg-btn{{background:#5DBA88;color:#0E1A13}}.lg-sub,.lg-link{{color:#929B95}}.lg-steps li::before{{background:#1F3328;color:#5DBA88}}.lg-err{{background:#3A1F1B;color:#E07B6E}}.lg-code{{background:#111412;border-color:#272D29}}.lg-btn2{{border-color:#353C37!important}}}}
 </style>
 <script src="config.js"></script>
 <script src="supabase.js"></script>

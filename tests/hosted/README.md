@@ -12,6 +12,8 @@
 
 ## To run
 
+Also: `python3 photo-encryption.py` walks every photo-encryption path: older photos secured, recovery code, storage holds only ciphertext, second device, password change, forgot password + recovery code, start fresh, new code, export, delete account.
+
 Also: `python3 review-photos.py` checks deleting a weekly-review photo: one tap, Undo, and the file leaving storage only once Undo has gone.
 
 Also: `python3 forgot-password.py` checks Forgot password end to end (code email, wrong code, resend, new password, old password refused).

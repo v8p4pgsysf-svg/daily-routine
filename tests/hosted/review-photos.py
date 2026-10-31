@@ -27,8 +27,10 @@ try:
         if pg.get_attribute("#revtoggle", "aria-expanded") != "true": pg.click("#revtoggle"); pg.wait_for_timeout(500)
         jpg = pg.evaluate("""()=>{const c=document.createElement('canvas');c.width=300;c.height=400;const x=c.getContext('2d');x.fillStyle='#7aa58b';x.fillRect(0,0,300,400);return c.toDataURL('image/jpeg',.8).split(',')[1]}""")
         f = os.path.join(tempfile.mkdtemp(), "photo.jpg"); open(f, "wb").write(base64.b64decode(jpg))
-        for _ in range(2):
-            pg.set_input_files("#phfile", f); pg.wait_for_function("!document.querySelector('#phadd')||!document.querySelector('#phadd').disabled", timeout=10000); pg.wait_for_timeout(300)
+        for n in range(2):
+            pg.set_input_files("#phfile", f)
+            if n == 0: pg.wait_for_selector("#pk-saved", timeout=10000); pg.click("#pk-saved")  # first photo: recovery code
+            pg.wait_for_function("!document.querySelector('#phadd')||!document.querySelector('#phadd').disabled", timeout=10000); pg.wait_for_timeout(300)
         check("Two photos in the review strip and in storage", pg.locator("#photos .thumb").count() == 2 and stored(pg) == 2)
         # one tap deletes
         pg.click('#photos [data-rm="0"]'); pg.wait_for_timeout(200)

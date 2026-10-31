@@ -30,7 +30,9 @@ try:
         for _ in range(3): pg.click('[data-st="set-next"]')
         pg.click('[data-st="set-start"]'); pg.wait_for_selector("#setsheet", state="hidden"); pg.wait_for_timeout(800)
         pg.click("#tab-progress"); pg.wait_for_timeout(200)
-        pg.set_input_files("#imp-file", "routine-export.zip"); pg.wait_for_function("document.getElementById('imp-msg').textContent.startsWith('Imported')", timeout=15000)
+        pg.set_input_files("#imp-file", "routine-export.zip")
+        pg.wait_for_selector("#pk-saved", timeout=15000); pg.click("#pk-saved")  # first photo: save the recovery code
+        pg.wait_for_function("document.getElementById('imp-msg').textContent.startsWith('Imported')", timeout=15000)
         pg.wait_for_timeout(800)
         # tick a few habits today so the Today card has a score
         pg.click("#tab-week"); pg.wait_for_timeout(300)
