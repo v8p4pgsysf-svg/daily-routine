@@ -332,8 +332,8 @@ ok($(w,"#review-sec").hidden&&!$(w,'[data-ct="review"]')&&!/Weekly review/.test(
 click(w,$(w,"#tab-progress"));click(w,$(w,'#setcog'));
 chg(w,$(w,"[data-scard]"),1);ok($$(w,'[data-pcard][aria-pressed="true"]').length===1,"SET10. Lowering cardio to 1 keeps only the first cardio day");
 click(w,$(w,'[data-pcard="5"]'));ok(/You have 1 cardio session a week/.test($(w,"#setbody").textContent),"   Can't tick more cardio days than sessions");
-click(w,$(w,'[data-st="set-presets"]'));ok($$(w,"#setbody .preset").length===2,"SET7. Suggested programmes: full body and glute focus");
-click(w,$(w,'[data-preset="fullbody"]'));ok(/Tap to replace/.test($(w,'[data-preset="fullbody"]').textContent),"   Choosing one asks for a second tap");
+click(w,$(w,'[data-st="set-presets"]'));ok($$(w,"#setbody .pritem").length===2,"SET7. Suggested programmes: full body and glute focus");
+click(w,$(w,'[data-preset="fullbody"]'));ok(/Switch to 3-day full body/.test($(w,'[data-preset="fullbody"]').textContent)&&/replaces Workouts A–C/.test($(w,".prconfirm").textContent),"   Choosing one asks to confirm the switch");
 click(w,$(w,'[data-preset="fullbody"]'));
 ok($$(w,"#setbody details.swk").length===3&&$(w,'[data-sname="0-0"]').textContent==="Barbell Squat"&&["0","2","5"].every(d=>$(w,`[data-pgym="${d}"]`).getAttribute("aria-pressed")==="true"),"   It loads A/B/C with the original exercises on Mon, Wed, Sat");
 click(w,$(w,'[data-st="set-save"]'));click(w,$(w,"#tab-week"));
@@ -341,8 +341,11 @@ ok($(w,"#setsheet").hidden&&$(w,'[data-ct="strength"]').textContent==="0/3"&&$(w
 w.close();
 // --- glute programme
 store={};w=boot("2026-10-28T09:00:00");
-click(w,$(w,'#setcog'));click(w,$(w,'[data-st="set-presets"]'));click(w,$(w,'[data-preset="glute"]'));click(w,$(w,'[data-preset="glute"]'));
+click(w,$(w,'#setcog'));ok($(w,".prline .prname").textContent==="3-day full body","PR1. Programme row names the programme you're on");
+click(w,$(w,'[data-st="set-presets"]'));ok(/Current/.test($$(w,"#setbody .pritem")[0].textContent)&&!$(w,'.pritem [data-preset="fullbody"]'),"   The current one is marked Current, with no Switch button");
+click(w,$(w,'[data-preset="glute"]'));click(w,$(w,'[data-preset="glute"]'));ok($(w,".prline .prname").textContent==="3-day glute focus","   After switching it names the new programme");
 ok($(w,'[data-sname="0-0"]').textContent==="Hip Thrust Machine"&&$(w,'[data-sname="1-0"]').textContent==="Reverse Dumbbell Lunge"&&$(w,'[data-sname="2-5"]').textContent==="Reverse Pec Deck"&&$(w,'[data-sexf="1-1-sets"]').value==="3","GL1. Glute focus loads A/B/C with its exercises");
+{const f=$(w,'[data-sexf="1-1-sets"]');type(w,f,"4");ok($(w,".prline .prname").textContent==="Custom","PR2. Editing a workout makes the programme Custom");type(w,$(w,'[data-sexf="1-1-sets"]'),"3");}
 click(w,$(w,'[data-st="set-save"]'));click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="type"][data-type="A"]'));click(w,$(w,'[data-st="start"]'));
 ok($$(w,"#st-main .ex .nm").map(e=>e.textContent).join("|")==="Hip Thrust Machine|Bulgarian Split Squat|Flat Dumbbell Bench Press|Seated Cable Row|Assisted Pull-Up|Leg Curl","   Workout A starts with the glute programme's exercises");
 w.close();
