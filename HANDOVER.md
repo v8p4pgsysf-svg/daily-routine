@@ -12,7 +12,8 @@ Polish the hosted Daily Routine app (GitHub Pages + Supabase) so Jack uses it da
 - Small UI changes on 30 Oct: page header title dropped; planned week and Today box say "Workout A/B/C" (Today box title follows the planned week); exercise list stays open when switching workouts.
 
 ## Waiting on Jack
-- **Three live checks** the simulations can't prove: progress photo upload survives reopen and shows under Progress; live sync between phone and computer; Change password then sign back in. *Confirm* whether done.
+- **Two live checks** the simulations can't prove: progress photo upload survives reopen and shows under Progress; live sync between phone and computer. *Confirm* whether done.
+- Verified live 31 Oct: change password, delete my account, invite-code sign-up.
 - Done 31 Oct: `supabase/accounts.sql` run and invite code changed.
 
 ## Open work for Claude
