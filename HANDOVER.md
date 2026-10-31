@@ -23,7 +23,7 @@ Polish the hosted Daily Routine app (GitHub Pages + Supabase) so Jack uses it da
 
 ## Agreed next (in this order)
 1. ~~Forgotten-password reset~~ **Done and working live** (31 Oct): Gmail SMTP + Magic Link template with `{{ .Token }}`. First test landed in **junk**; the code screen now says to check junk. If friends keep getting junk, move to a domain + Resend (SMTP settings only).
-2. ~~Encrypt progress photos~~ **Shipped 31 Oct** (with recovery code). Jack to try it on his phone: expect "Unlock your photos" (password) on first open if he has photos, then "Save your recovery code".
+2. ~~Encrypt progress photos~~ **Shipped and checked live 31 Oct** (with recovery code): Jack downloaded a stored photo from Supabase Storage and it wouldn't open.
 
 ## Open ideas (not started; Jack hasn't committed to them)
 - Backup nudge: show "last backup: X ago" in the weekly review, since Export is manual.
