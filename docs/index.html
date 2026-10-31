@@ -711,7 +711,7 @@ input[type=number],input[type=date],input[type=text],textarea,select,.cfin{backg
 .pgh{font-size:.68rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-bottom:-4px}
 .pgh-c{justify-self:center}
 .pgs button:first-child{padding:6px 9px;font-size:.84rem}
-.sseg button{padding:6px 0;min-width:34px;font-size:.92rem}
+.sseg button{padding:6px 0;min-width:30px;font-size:.92rem}
 .pgs{justify-self:start}
 .pgrid .pgc{padding:7px 12px;min-width:68px}
 .pgw{font-size:.88rem;font-weight:550;min-width:0}
@@ -767,6 +767,12 @@ details.swk:not([open]){gap:0}
 .serrwrap:has(.serr[hidden]){display:none}
 #seterr{transition:opacity .35s ease}#seterr.fade{opacity:0}
 @media (prefers-reduced-motion:reduce){#seterr{transition:none}}
+.sdots{display:flex;gap:6px;justify-content:center;margin:-6px 0 2px}.sdots span{width:7px;height:7px;border-radius:50%;background:var(--line-strong)}.sdots span.on{background:var(--green)}
+.sintro{margin-top:-4px!important}
+.preset.pick{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;cursor:pointer;font:inherit;color:var(--ink);border:1.5px solid var(--line)}
+.preset.pick.on{border-color:var(--green);background:var(--green-soft)}
+.ttip{display:flex;align-items:center;gap:10px;font-size:.86rem;color:var(--muted);background:var(--bg);border-radius:10px;padding:8px 10px;margin-bottom:10px}
+.ttip span{flex:1}.ttipx{border:0;background:none;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:0 4px}
 .rsheet{position:fixed;inset:0;z-index:40;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .rsheethd{position:sticky;top:0;z-index:2;background:var(--bg);padding:11px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
 .rsheetbar{max-width:640px;margin:0 auto;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;min-height:45px;border-bottom:1px solid var(--line)}
@@ -945,7 +951,7 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
   </div>
 
   <div class="rsheet" id="setsheet" hidden role="dialog" aria-modal="true" aria-labelledby="set-title">
-    <div class="rsheethd"><div class="rsheetbar"><button class="sbtn" data-st="set-cancel">Cancel</button><h2 id="set-title">Your routine</h2><button class="btn primary sbsave" data-st="set-save">Save</button></div></div>
+    <div class="rsheethd"><div class="rsheetbar" id="setbar"><button class="sbtn" data-st="set-cancel">Cancel</button><h2 id="set-title">Your routine</h2><button class="btn primary sbsave" data-st="set-save">Save</button></div></div>
     <div class="serrwrap"><div class="serr" id="seterr" role="alert" hidden></div></div>
     <div class="rsheetbody" id="setbody"></div>
   </div>
@@ -1008,6 +1014,20 @@ const PRESETS=[
     [["reverse_db_lunge",3,8,12],["assisted_pullup",3,5,8],["incline_db_press",3,6,10],["back_extension_45",2,10,15],["lateral_raise",2,12,15],["oh_triceps_ext",3,10,15]],
     [["hip_thrust_machine",3,6,10],["leg_press",3,8,12],["cs_row",3,8,12],["leg_curl",3,8,12],["db_shoulder_press",3,8,12],["reverse_pec_deck",2,12,15]]]}
 ];
+/* Daily habits. To add one, add an entry here: it then appears in setup, settings, the check-ins grid,
+   the weekly counts, the review summary and exports. Never change a key once people have used it.
+   k: storage key · name: label in setup and settings · long: name in reviews and exports · grid: label in the check-ins grid
+   sub: default target text shown under the grid label (people can edit it) · ph: placeholder for that text
+   daysTarget: a "days a week" target instead of every day (number = default) · summary: label in the weekly review summary
+   jack: on in Jack's original routine · start: on by default for someone setting up for the first time */
+const HABIT_CATALOG=[
+  {k:"protein",name:"Protein",long:"Protein target",grid:"Protein",sub:"",ph:"e.g. 160 g",jack:true,start:false},
+  {k:"fv",name:"Fruit & veg",long:"Fruit & veg",grid:"Fruit & veg",sub:"5+ a day",ph:"e.g. 5+ a day",jack:true,start:false},
+  {k:"sleep",name:"Sleep",long:"Sleep",grid:"Sleep",sub:"7–9 hours",ph:"e.g. 7–9 hours",jack:true,start:true},
+  {k:"af",name:"No alcohol",long:"Alcohol-free",grid:"No alcohol",daysTarget:6,summary:"Alcohol",jack:true,start:false}
+];
+const habitDefaults=pick=>Object.fromEntries(HABIT_CATALOG.map(c=>[c.k,c.daysTarget?{on:!!c[pick],target:c.daysTarget}:{on:!!c[pick],sub:c.sub||""}]));
+DEFAULT_SETTINGS.habits=habitDefaults("jack");
 const LS_SET="weekly-routine.settings.v1";
 const clone=o=>JSON.parse(JSON.stringify(o));
 const intIn=(v,lo,hi,d)=>{const n=Math.round(+v);return isFinite(n)&&n>=lo&&n<=hi?n:d};
@@ -1016,19 +1036,21 @@ function normaliseSettings(o){
   const D=DEFAULT_SETTINGS,S=clone(D);if(!o||typeof o!=="object")return S;
   S.updatedAt=+o.updatedAt||0;
   if(o.exNames&&typeof o.exNames==="object")for(const id in o.exNames){if(/^custom_[a-z0-9_]{1,40}$/.test(id)&&typeof o.exNames[id]==="string"&&o.exNames[id].trim())S.exNames[id]=o.exNames[id].trim().slice(0,60)}
-  if(Array.isArray(o.workouts)&&o.workouts.length>=1){
+  if(Array.isArray(o.workouts)&&o.workouts.length===0)S.workouts=[]; // no weights sessions
+  else if(Array.isArray(o.workouts)){
     const ws=o.workouts.slice(0,4).map(w=>({day:intIn(w&&w.day,-1,6,-1),
       items:(Array.isArray(w&&w.items)?w.items:[]).filter(r=>Array.isArray(r)&&typeof r[0]==="string"&&(BASE_EXERCISES[r[0]]||S.exNames[r[0]])).slice(0,12)
         .map(r=>{const lo=intIn(r[2],1,50,8);return [r[0],intIn(r[1],1,10,3),lo,Math.max(lo,intIn(r[3],1,50,lo))]})})).filter(w=>w.items.length);
     if(ws.length)S.workouts=ws;
   }
   if(o.cardio&&typeof o.cardio==="object"){S.cardio.target=intIn(o.cardio.target,0,7,D.cardio.target);if(Array.isArray(o.cardio.days))S.cardio.days=dayList(o.cardio.days)}
-  if(o.habits&&typeof o.habits==="object")for(const k of ["protein","fv","sleep","af"]){const h=o.habits[k];if(!h||typeof h!=="object")continue;
+  if(o.habits&&typeof o.habits==="object")for(const c of HABIT_CATALOG){const k=c.k,h=o.habits[k];if(!h||typeof h!=="object"){S.habits[k].on=false;continue}
     S.habits[k].on=h.on!==false;
-    if(k==="af")S.habits.af.target=intIn(h.target,1,7,D.habits.af.target);else if(typeof h.sub==="string")S.habits[k].sub=h.sub.trim().slice(0,24)}
+    if(c.daysTarget)S.habits[k].target=intIn(h.target,1,7,c.daysTarget);else if(typeof h.sub==="string")S.habits[k].sub=h.sub.trim().slice(0,24)}
   if(o.prep&&typeof o.prep==="object")for(const k of ["lunch","breakfast"]){const h=o.prep[k];if(!h||typeof h!=="object")continue;
     S.prep[k].on=h.on!==false;if(Array.isArray(h.days))S.prep[k].days=dayList(h.days)}
   for(const k of ["lunch","breakfast"])if(!S.prep[k].days.length)S.prep[k].on=false;
+  if(o.setupDone)S.setupDone=true;
   if(o.review&&typeof o.review==="object"){S.review.on=o.review.on!==false;S.review.day=intIn(o.review.day,0,6,6)}
   return S;
 }
@@ -1046,18 +1068,15 @@ function applySettings(S){
   S.workouts.forEach((w,i)=>{if(w.day>=0&&!STRENGTH_DAY[w.day])STRENGTH_DAY[w.day]=LETTERS[i]});
   const nW=S.workouts.length,H=S.habits,ct=S.cardio.target;
   HABITS.length=0;
-  HABITS.push({k:"strength",name:"Strength",short:"Strength",x:nW+" sessions",n:7,target:nW,daily:true});
+  if(nW>0)HABITS.push({k:"strength",name:"Strength",short:"Strength",x:nW+" sessions",n:7,target:nW,daily:true});
   if(ct>0)HABITS.push({k:"cardio",name:"Cardio",short:"Cardio",x:ct+" sessions",n:7,target:ct,daily:true});
-  if(H.protein.on)HABITS.push({k:"protein",name:"Protein target",short:"Protein",x:"Daily target hit",n:7,target:7,daily:true});
-  if(H.fv.on)HABITS.push({k:"fv",name:"Fruit & veg",short:"Fruit & veg",x:"Daily",n:7,target:7,daily:true});
-  if(H.sleep.on)HABITS.push({k:"sleep",name:"Sleep",short:"Sleep",x:"Daily",n:7,target:7,daily:true});
-  if(H.af.on)HABITS.push({k:"af",name:"Alcohol-free",short:"Alcohol-free",x:H.af.target+" days",n:7,target:H.af.target,daily:true});
+  HABIT_CATALOG.forEach(c=>{const h=H[c.k];if(!h||!h.on)return;const tgt=c.daysTarget?h.target:7;
+    HABITS.push({k:c.k,name:c.long||c.name,short:c.grid||c.name,x:c.daysTarget?tgt+" days":"Daily",n:7,target:tgt,daily:true})});
   for(const k of ["lunch","breakfast"]){const P=S.prep[k];if(P.on&&P.days.length)HABITS.push({k,name:PREP_INFO[k].name,short:PREP_INFO[k].name,x:daysTxt(P.days),n:P.days.length,target:P.days.length,days:P.days.slice(),daily:false})}
   if(S.review.on)HABITS.push({k:"review",name:"Weekly review",short:"Review",x:"Notes below",n:1,target:1,days:[S.review.day],daily:false});
   TOTAL_TARGET=HABITS.reduce((a,h)=>a+h.target,0);
   for(const k in GRID_TARGET)delete GRID_TARGET[k];
-  ["protein","fv","sleep"].forEach(k=>{if(H[k].sub)GRID_TARGET[k]=H[k].sub});
-  GRID_TARGET.af=H.af.target>=7?"Every day":H.af.target+"+ days";
+  HABIT_CATALOG.forEach(c=>{const h=H[c.k];if(!h)return;if(c.daysTarget)GRID_TARGET[c.k]=h.target>=7?"Every day":h.target+"+ days";else if(h.sub)GRID_TARGET[c.k]=h.sub});
   PLAN.length=0;
   for(let d=0;d<7;d++){
     const parts=S.workouts.map((w,i)=>w.day===d?"Workout "+LETTERS[i]:"").filter(Boolean);
@@ -1071,7 +1090,7 @@ PRESETS[0].workouts=DEFAULT_SETTINGS.workouts.map(w=>w.items);
 applySettings(SETTINGS);
 /* each past week keeps the targets it was planned with; settings changes apply from the current week on */
 const planSnapshot=()=>({v:1,habits:clone(HABITS),grid:clone(GRID_TARGET)});
-const HKEYS=new Set(["strength","cardio","protein","fv","sleep","af","lunch","breakfast","review"]);
+const HKEYS=new Set(["strength","cardio",...HABIT_CATALOG.map(c=>c.k),"lunch","breakfast","review"]);
 function normalisePlan(p){
   if(!p||typeof p!=="object"||!Array.isArray(p.habits))return null;
   const habits=p.habits.filter(h=>h&&HKEYS.has(h.k)).map(h=>{const daily=!!h.daily,n=intIn(h.n,1,7,daily?7:1);
@@ -1109,7 +1128,7 @@ const todayIdx=()=>(new Date().getDay()+6)%7;
 const DRINK_FROM="2026-10-26";
 const drinkMode=w=>false; // switched back: alcohol-free days are ticked like every other habit
 function daysElapsed(wk){const cur=currentKey();return wk<cur?7:wk===cur?todayIdx()+1:0}
-const STORE_KEYS=[["strength",7],["cardio",7],["protein",7],["fv",7],["sleep",7],["af",7],["lunch",7],["breakfast",7],["review",1]];
+const STORE_KEYS=[["strength",7],["cardio",7],...HABIT_CATALOG.map(c=>[c.k,7]),["lunch",7],["breakfast",7],["review",1]];
 function blankWeek(key){
   const w={week:key,updatedAt:0,weight:null,photo:false,well:"",way:"",improve:""};
   STORE_KEYS.forEach(([k,n])=>w[k]=Array(n).fill(false));
@@ -1305,6 +1324,7 @@ async function initCloud(){
     Object.keys(sessions).forEach(id=>{if(!seenS.has(id))dirtyS.add(id)});
     saveLocal();saveLocalS();mode="cloud";setSync("saved","Synced");
     renderAll();if(editingId)renderEditor();
+    maybeSetup();
     if(dirty.size||dirtyS.size||dirtySet){setSync("saving","Saving…");flush()}
     scol.onSnapshot(s=>{
       let changed=false;
@@ -1348,7 +1368,7 @@ function renderPlan(){
   const isCur=viewKey===currentKey(),t=todayIdx();
   $("plan").innerHTML=PLAN.map((p,i)=>`<div class="pday${isCur&&i===t?" is-today":""}"><span class="d">${DAYS[i]}</span><span class="t">${p.t}</span>${p.s?`<span class="s">${p.s}</span>`:""}</div>`).join("");
 }
-const GRID_LABEL={protein:"Protein",fv:"Fruit & veg",sleep:"Sleep",af:"No alcohol",lunch:"Lunch prep",breakfast:"Breakfast prep",review:"Review"};
+const GRID_LABEL=Object.assign(Object.fromEntries(HABIT_CATALOG.map(c=>[c.k,c.grid||c.name])),{lunch:"Lunch prep",breakfast:"Breakfast prep",review:"Review"});
 function renderDaily(){
   const w=getWeek(viewKey),isCur=viewKey===currentKey(),t=todayIdx(),mon=parseKey(viewKey);
   let h=`<div class="hd"></div>`;
@@ -1416,7 +1436,8 @@ function renderToday(){
     tasks.push(`<div class="trow static"><span class="revpill${w.review[0]?" done":""}" aria-hidden="true">${w.review[0]?"Done":"To do"}</span><span style="flex:1"><span class="tn">Weekly review</span><span class="th">${w.review[0]?"Completed":"Weight, photos, three questions"}</span></span><button class="btn" data-goto="review-cur">${w.review[0]?"View":"Open review"}</button></div>`);
   }
   $("tdate").textContent=DAYS_LONG[t]+" "+fmt(new Date());
-  sec.innerHTML=`${lw&&lw.improve.trim()?`<div class="tfocus"><span class="tfl">Focus</span> ${esc(lw.improve.trim())}</div>`:""}${act}
+  let tip="";try{if(HOST&&SETTINGS.setupDone&&!localStorage.getItem("routine-tip-done"))tip=`<div class="ttip"><span>Tick things off as you go.${SETTINGS.review.on?` Your weekly review is on ${DAYS_LONG[SETTINGS.review.day]}.`:""}</span><button class="ttipx" data-st="tip-x" aria-label="Dismiss tip">×</button></div>`}catch(e){}
+  sec.innerHTML=`${tip}${lw&&lw.improve.trim()?`<div class="tfocus"><span class="tfl">Focus</span> ${esc(lw.improve.trim())}</div>`:""}${act}
     ${tasks.length?`<div class="tgroup"><div class="eyebrow">Also today</div><div class="tlist">${tasks.join("")}</div></div>`:""}`;
 }
 let revOpen=null; // null = automatic: open on Sunday, or for a past week still to do
@@ -1446,13 +1467,13 @@ function renderRevSum(){
   const w=getWeek(viewKey),st=stats(w),cur=viewKey===currentKey(),pw=weeks[keyOf(addDays(parseKey(viewKey),-7))];
   const cs=cardioByDay(viewKey).flat(),cmin=cs.reduce((a,c)=>a+c.minutes,0);
   const HB=habitsFor(w),tg=k=>{const h=HB.find(x=>x.k===k);return h?h.target:0};
-  const alc=drinkMode(w)?`${w.drink.filter(Boolean).length} drinking night${w.drink.filter(Boolean).length===1?"":"s"}`:`${st.per.af||0}/${tg("af")} days`;
+  const extra=HABIT_CATALOG.filter(c=>c.summary&&HB.some(h=>h.k===c.k)).map(c=>`<div><dt>${esc(c.summary)}</dt><dd>${st.per[c.k]||0}/${tg(c.k)} days</dd></div>`).join("");
   const below=HB.filter(h=>h.k!=="review"&&Math.min(st.per[h.k],h.target)<h.target&&(!cur||bestCase(w,h,st)<h.target)).map(h=>`${h.short} ${st.per[h.k]}/${h.target}`);
   const stalled=Object.entries(liftSeries()).filter(([,sr])=>liftStatus(sr)==="stalled").map(([id])=>exLabel(id));
   const look=[below.length&&!cur?`Missed: ${below.join(", ")}`:"",stalled.length?`Stalled: ${stalled.join(", ")}`:""].filter(Boolean);
   $("revsum").innerHTML=`<div class="eyebrow">This week at a glance</div>
-    <dl class="hdl sumdl"><div><dt>Targets hit</dt><dd class="num">${st.hit}/${st.n} · ${st.pct}%</dd></div><div><dt>Strength</dt><dd class="num">${st.per.strength}/${tg("strength")}</dd></div>
-    <div><dt>Cardio</dt><dd><span class="num">${st.per.cardio||0}/${tg("cardio")}</span> <span class="muted">· ${cmin} min</span></dd></div><div><dt>Alcohol</dt><dd>${alc}</dd></div></dl>
+    <dl class="hdl sumdl"><div><dt>Targets hit</dt><dd class="num">${st.hit}/${st.n} · ${st.pct}%</dd></div>${tg("strength")?`<div><dt>Strength</dt><dd class="num">${st.per.strength||0}/${tg("strength")}</dd></div>`:""}
+    ${tg("cardio")?`<div><dt>Cardio</dt><dd><span class="num">${st.per.cardio||0}/${tg("cardio")}</span> <span class="muted">· ${cmin} min</span></dd></div>`:""}${extra}</dl>
     ${look.length?`<div class="sumlook">${look.map(esc).join("<br>")}</div>`:(cur?"":`<div class="sumlook ok">Every target hit.</div>`)}`;
 }
 function renderRevStatus(){
@@ -1531,7 +1552,7 @@ function renderStrengthTrends(){
   const first=keyOf(mondayOf(parseKey(ds[0].date)));
   const counts=span.filter(k=>k>=first||k===cur).map(k=>({k,n:workoutsByDay(k).reduce((a,l)=>a+l.length,0)}));
   const s=barChart(counts,cur,{min:4,step:m=>m>6?2:1,full:SETTINGS.workouts.length,target:SETTINGS.workouts.length,aria:"Strength workouts per week",tip:n=>n+" workout"+(n===1?"":"s")});
-  $("pschart-h").textContent="Strength workouts per week · target "+SETTINGS.workouts.length;
+  $("pschart-h").textContent="Strength workouts per week"+(SETTINGS.workouts.length?" · target "+SETTINGS.workouts.length:"");
   const pastC=counts.filter(c=>c.k!==cur);
   const avgC=pastC.length?pastC.reduce((a,c)=>a+c.n,0)/pastC.length:null;
   $("pschart").innerHTML=s+(avgC==null?"":`<div class="muted" style="font-size:.84rem">Average <span class="num">${(Math.round(avgC*10)/10).toFixed(1)}</span> a week</div>`);
@@ -1795,6 +1816,7 @@ function ready(it){
 function suggestedType(){
   const t=todayIdx(),L=Object.keys(PROGRAMME);if(STRENGTH_DAY[t])return STRENGTH_DAY[t];
   if(SETTINGS.cardio.target>0&&SETTINGS.cardio.days.includes(t))return "cardio";
+  if(!L.length)return "cardio";
   const d=doneSessions();if(!d.length)return L[0];const i=L.indexOf(d[d.length-1].type);return L[(i+1)%L.length];
 }
 let stMsgT=0;
@@ -1996,50 +2018,35 @@ let sdStart="";const setDirty=()=>!!SD&&sdKey(SD)!==sdStart;
 function closeSettings(){$("setsheet").hidden=true;document.body.style.overflow="";SD=null}
 const dayChips=(grp,sel)=>`<div class="daychips" role="group">${DAYS.map((d,i)=>`<button type="button" class="dchip" aria-pressed="${sel.includes(i)}" data-sday="${grp}" data-d="${i}" aria-label="${DAYS_LONG[i]}">${d}</button>`).join("")}</div>`;
 const swRow=(attr,on,label,extra)=>`<div class="shrow"><label class="sw"><input type="checkbox" ${attr} ${on?"checked":""} aria-label="${esc(label)}"><span></span></label><div class="grow"><b>${esc(label)}</b>${extra||""}</div></div>`;
-function renderSettings(){
-  const D=SD;let h="";
-  const H=D.habits;
-  // one line per habit: switch, name, and its target on the right
-  const hRow=(k,label,right)=>`<div class="shrow inl"><label class="sw"><input type="checkbox" data-shab="${k}" ${H[k].on?"checked":""} aria-label="${esc(label)}"><span></span></label><b>${esc(label)}</b><div class="hright">${H[k].on?right:""}</div></div>`;
-  const sub=(k,ph,al)=>`<input type="text" data-shsub="${k}" value="${esc(H[k].sub)}" maxlength="24" placeholder="${ph}" aria-label="${al}">`;
-  h+=`<section class="sset"><h3>Daily habits</h3><div class="panel shab">
-    ${hRow("protein","Protein",sub("protein","e.g. 160 g","Protein target"))}
-    <div class="shsep"></div>
-    ${hRow("fv","Fruit & veg",sub("fv","e.g. 5+ a day","Fruit and veg target"))}
-    <div class="shsep"></div>
-    ${hRow("sleep","Sleep",sub("sleep","e.g. 7–9 hours","Sleep target"))}
-    <div class="shsep"></div>
-    ${hRow("af","No alcohol",`<span class="afsel"><select data-saf aria-label="Alcohol-free days a week">${[1,2,3,4,5,6,7].map(n=>`<option value="${n}" ${H.af.target===n?"selected":""}>${n}</option>`).join("")}</select><span class="muted">days a week</span></span>`)}
-  </div></section>`;
-  // one line each: switch, name, chosen days on the right; tap the days to change them
+function secPrep(D){let h="";
   const daysShort=a=>a.length?[...a].sort((x,y)=>x-y).map(d=>DAYS[d]).join(" · "):"Pick days";
   const pRow=(k,label,on,attr,days,chips,offNote)=>{const open=on&&SD.pexp===k;
     return `<div class="shrow inl pinl"><label class="sw"><input type="checkbox" ${attr} ${on?"checked":""} aria-label="${esc(label)}"><span></span></label><b>${esc(label)}</b>
       ${on?`<button type="button" class="pdays${days.length?"":" none"}" data-pexp="${k}" aria-expanded="${open}" aria-label="${esc(label)} days: ${esc(daysShort(days))}. Change">${esc(daysShort(days))}<span class="pchev" aria-hidden="true"></span></button>`:`<span class="pdays off">Off</span>`}</div>
       ${open?chips:""}${!on&&offNote?`<div class="ts" style="margin:-4px 0 0">${offNote}</div>`:""}`};
-  h+=`<section class="sset"><h3>Prep and review</h3><div class="panel shab">
+  h+=`<div class="panel shab">
     ${["lunch","breakfast"].map((k,i)=>`${i?'<div class="shsep"></div>':""}${pRow(k,PREP_INFO[k].name,D.prep[k].on,`data-sprep="${k}"`,D.prep[k].days,dayChips(k,D.prep[k].days),"")}`).join("")}
     <div class="shsep"></div>
     ${pRow("review","Weekly review",D.review.on,"data-srev",[D.review.day],`<div class="daychips" role="group" aria-label="Review day">${DAYS.map((d,i)=>`<button type="button" class="dchip" aria-pressed="${D.review.day===i}" data-srevday="${i}" aria-label="Review on ${DAYS_LONG[i]}">${d}</button>`).join("")}</div>`,"Off hides the review, including weight and photos.")}
-  </div></section>`;
-  // one place for the training week: how many sessions, which days, then each workout's exercises
-  const ct=D.cardio.target,dayOf=d=>D.workouts.slice(0,D.nw).findIndex(w=>w.day===d);
-  h+=`<section class="sset"><h3>Workouts</h3><div class="panel shab">
-    <div class="shrow"><div class="grow"><b>Weights</b> <span class="muted">per week</span></div><div class="seg sseg" role="group" aria-label="Weights sessions a week">${[1,2,3,4].map(n=>`<button aria-pressed="${D.nw===n}" data-snw="${n}">${n}</button>`).join("")}</div></div>
+  </div>`;
+  return h}
+function secCounts(D){const ct=D.cardio.target;
+  return `<div class="shrow"><div class="grow"><b>Weights</b> <span class="muted">per week</span></div><div class="seg sseg" role="group" aria-label="Weights sessions a week">${[0,1,2,3,4].map(n=>`<button aria-pressed="${D.nw===n}" data-snw="${n}">${n}</button>`).join("")}</div></div>
     <div class="shsep"></div>
-    <div class="shrow"><div class="grow"><b>Cardio</b> <span class="muted">per week</span></div><select data-scard aria-label="Cardio sessions a week">${[0,1,2,3,4,5,6,7].map(n=>`<option value="${n}" ${ct===n?"selected":""}>${n===0?"None":n}</option>`).join("")}</select></div>
-    <div class="shsep"></div>
-    <div class="flabel">Planned days</div>
+    <div class="shrow"><div class="grow"><b>Cardio</b> <span class="muted">per week</span></div><select data-scard aria-label="Cardio sessions a week">${[0,1,2,3,4,5,6,7].map(n=>`<option value="${n}" ${ct===n?"selected":""}>${n===0?"None":n}</option>`).join("")}</select></div>`}
+function secGrid(D){const ct=D.cardio.target,dayOf=d=>D.workouts.slice(0,D.nw).findIndex(w=>w.day===d);
+  return `<div class="flabel">Planned days</div>
     <div class="pgrid">${DAYS_LONG.map((dl,d)=>{const wi=dayOf(d),cd=ct>0&&D.cardio.days.includes(d);
       const what=[wi>=0?"Workout "+LETTERS[wi]:"",cd?"Cardio":""].filter(Boolean).join(" + ");
-      return `<div class="pgd">${DAYS[d]}</div><div class="pgw${what?"":" rest"}">${what||"Rest"}</div><button type="button" class="dchip pgc" aria-pressed="${wi>=0}" data-pgym="${d}" aria-label="${dl}: gym">Gym</button>${ct>0?`<button type="button" class="dchip pgc" aria-pressed="${cd}" data-pcard="${d}" aria-label="${dl}: cardio">Cardio</button>`:"<span></span>"}`}).join("")}</div>
+      return `<div class="pgd">${DAYS[d]}</div><div class="pgw${what?"":" rest"}">${what||"Rest"}</div>${D.nw>0?`<button type="button" class="dchip pgc" aria-pressed="${wi>=0}" data-pgym="${d}" aria-label="${dl}: gym">Gym</button>`:"<span></span>"}${ct>0?`<button type="button" class="dchip pgc" aria-pressed="${cd}" data-pcard="${d}" aria-label="${dl}: cardio">Cardio</button>`:"<span></span>"}`}).join("")}</div>
     ${(()=>{const g=SD.gym.length,c=D.cardio.days.length,okG=g===D.nw,okC=ct===0||c===ct;
       return SD.gymMsg?`<div class="ts gmsg" style="margin-top:0">${esc(SD.gymMsg)}</div>`
-        :`<div class="ts pcount" style="margin-top:0"><span class="${okG?"":"gmsg"}">Gym days <span class="num">${g}/${D.nw}</span></span>${ct>0?` · <span class="${okC?"":"gmsg"}">Cardio days <span class="num">${c}/${ct}</span></span>`:""}</div>`})()}
-  </div>`;
+        :`<div class="ts pcount" style="margin-top:0">${D.nw>0?`<span class="${okG?"":"gmsg"}">Gym days <span class="num">${g}/${D.nw}</span></span>`:""}${D.nw>0&&ct>0?" · ":""}${ct>0?`<span class="${okC?"":"gmsg"}">Cardio days <span class="num">${c}/${ct}</span></span>`:""}</div>`})()}
+`}
+function secLists(D,openAll){let h="";
   D.workouts.slice(0,D.nw).forEach((w,i)=>{
     const n=w.items.filter(r=>String(r.name).trim()).length;
-    h+=`<details class="panel swk" data-swk="${i}" ${SD.open.has(i)?"open":""}><summary><b>Workout ${LETTERS[i]}</b><span class="muted">${n} exercise${n===1?"":"s"}</span></summary>`;
+    h+=`<details class="panel swk" data-swk="${i}" ${openAll||SD.open.has(i)?"open":""}><summary><b>Workout ${LETTERS[i]}</b><span class="muted">${n} exercise${n===1?"":"s"}</span></summary>`;
     h+=`<div class="sgh" aria-hidden="true"><span></span><span>Exercise</span><span>Sets</span><span class="sgrh">Reps</span><span></span></div><div class="sglist" data-sglist="${i}">`;
     w.items.forEach((r,j)=>{
       const id=`${i}-${j}`,nm=String(r.name||"").trim();
@@ -2052,8 +2059,12 @@ function renderSettings(){
     });
     h+=`</div><button type="button" class="linkbtn" data-sexadd="${i}">Add exercise</button></details>`;
   });
+  return h}
+function secPresets(D){let h="";
   h+=`<button type="button" class="linkbtn" data-st="set-presets" aria-expanded="${!!SD.presets}">Use a suggested programme</button>
-    ${SD.presets?`<div class="presets">${PRESETS.map(p=>`<div class="panel preset"><div class="grow"><b>${esc(p.name)}</b></div><button type="button" class="btn${setArmed===p.id?" primary":""}" data-preset="${p.id}">${setArmed===p.id?"Tap to replace":"Use this"}</button></div>`).join("")}</div>`:""}</section>`;
+    ${SD.presets?`<div class="presets">${PRESETS.map(p=>`<div class="panel preset"><div class="grow"><b>${esc(p.name)}</b></div><button type="button" class="btn${setArmed===p.id?" primary":""}" data-preset="${p.id}">${setArmed===p.id?"Tap to replace":"Use this"}</button></div>`).join("")}</div>`:""}`;
+  return h}
+function secAccount(D){let h="";
   if(HOST&&HOST.email)h+=`<section class="sset"><h3>Account</h3><div class="panel shab">
     <div class="shrow"><div class="grow">Signed in as <b>${esc(HOST.email)}</b></div></div>
     ${HOST.canChangePassword?(SD.pw?`<div class="shsep"></div><div class="pwform"><input type="password" id="pw1" autocomplete="new-password" placeholder="New password (8+ characters)" aria-label="New password"><input type="password" id="pw2" autocomplete="new-password" placeholder="Type it again" aria-label="Type the new password again">
@@ -2061,21 +2072,103 @@ function renderSettings(){
       :`<div class="shsep"></div><div class="shrow"><button type="button" class="linkbtn" data-st="pw-open">Change password</button>${SD.pwDone?`<span class="ts" style="color:var(--green);margin-left:auto">Password changed</span>`:""}</div>`):""}
     <div class="shsep"></div><div class="shrow"><button type="button" class="linkbtn" data-st="sign-out">Sign out</button></div>
   </div></section>`;
+  return h}
+function setBar(l,la,title,r,ra){$("setbar").innerHTML=`${l?`<button class="sbtn" data-st="${la}">${l}</button>`:"<span></span>"}<h2 id="set-title">${title}</h2><button class="btn primary sbsave" data-st="${ra}">${r}</button>`}
+/* ---------- first-time setup: a few short steps built from the same pieces as settings ---------- */
+const SETUP_STEPS=5;
+function newcomerDraft(){ // a neutral starting point (not Jack's routine)
+  return {nw:3,workouts:[0,1,2,3].map(()=>({day:-1,items:[{name:"",sets:3,lo:8,hi:12}]})),
+    cardio:{target:2,days:[1,5]},habits:habitDefaults("start"),
+    prep:{lunch:{on:false,days:[6]},breakfast:{on:false,days:[6]}},review:{on:true,day:6}};
+}
+function openSetup(){
+  SD=newcomerDraft();SD.setup=1;SD.prog=null;SD.open=new Set();SD.editing=null;SD.pexp=null;SD.gym=[0,2,4];SD.gymMsg="";assignGym();
+  setArmed=false;flashSetErr("");fillExList();renderSettings();
+  $("setsheet").hidden=false;document.body.style.overflow="hidden";$("setsheet").scrollTop=0;
+}
+function setupDots(n){return `<div class="sdots" aria-label="Step ${n} of ${SETUP_STEPS}">${Array.from({length:SETUP_STEPS},(_,i)=>`<span class="${i<n?"on":""}"></span>`).join("")}</div>`}
+function renderSetup(){
+  const D=SD,n=D.setup,last=n===SETUP_STEPS;let h=setupDots(n);
+  setBar(n>1?"Back":"","set-back","Set up",last?"Start":"Next",last?"set-start":"set-next");
+  if(n===1)h+=`<section class="sset"><h3>Welcome</h3><p class="ts sintro">Set up your routine in a few quick steps. You can change any of it later from the settings cog.</p>
+      <h3>What do you want to track each day?</h3><div class="panel shab">${habitRows(D)}</div></section>`;
+  else if(n===2){
+    h+=`<section class="sset"><h3>How much do you want to train?</h3><div class="panel shab">${secCounts(D)}</div>`;
+    if(D.nw>0){
+      h+=`<h3>Choose a programme</h3><div class="presets">${PRESETS.map(p=>`<button type="button" class="panel preset pick${D.prog===p.id?" on":""}" data-sprog="${p.id}" aria-pressed="${D.prog===p.id}"><b>${esc(p.name)}</b><span class="muted">${p.workouts.length} workouts</span></button>`).join("")}
+        <button type="button" class="panel preset pick${D.prog==="own"?" on":""}" data-sprog="own" aria-pressed="${D.prog==="own"}"><b>My own</b><span class="muted">Add your exercises</span></button></div>`;
+      if(D.prog==="own")h+=secLists(D,true);
+      else if(D.prog)h+=`<p class="ts">${D.nw===3?"Workouts A, B and C are loaded.":"Workouts loaded."} You can change exercises any time in settings.</p>`;
+    }else h+=`<p class="ts">No weights sessions. You can add some later in settings.</p>`;
+    h+=`</section>`;
+  }
+  else if(n===3)h+=`<section class="sset"><h3>When will you train?</h3><p class="ts sintro">Tap Gym and Cardio for the days you plan to go.</p><div class="panel shab">${secGrid(D)}</div></section>`;
+  else if(n===4)h+=`<section class="sset"><h3>Prep and weekly review</h3><p class="ts sintro">Optional reminders. Tap the days on the right to change them.</p>${secPrep(D)}</section>`;
+  else{
+    const on=HABIT_CATALOG.filter(c=>D.habits[c.k].on).map(c=>c.name);
+    const days=a=>[...a].sort((x,y)=>x-y).map(d=>DAYS[d]).join(", ");
+    const lines=[on.length?`Tracking ${on.join(", ")}`:"No daily habits yet",
+      D.nw?`${D.nw} weights session${D.nw===1?"":"s"} a week · ${days(SD.gym)}`:"",
+      D.cardio.target?`${D.cardio.target} cardio session${D.cardio.target===1?"":"s"} a week · ${days(D.cardio.days)}`:"",
+      ...["lunch","breakfast"].filter(k=>D.prep[k].on).map(k=>`${PREP_INFO[k].name} · ${days(D.prep[k].days)}`),
+      D.review.on?`Weekly review on ${DAYS_LONG[D.review.day]}`:""].filter(Boolean);
+    h+=`<section class="sset"><h3>You're all set</h3><div class="panel shab">${lines.map(l=>`<div class="shrow">${esc(l)}</div>`).join('<div class="shsep"></div>')}</div>
+      <p class="ts">Tap Start to begin. Change anything later from the settings cog.</p></section>`;
+  }
+  $("setbody").innerHTML=h;
+}
+// check a step before moving on
+function setupStepError(n){const D=SD;
+  if(n===2&&D.nw>0){
+    if(!D.prog)return "Choose a programme, or My own.";
+    for(let i=0;i<D.nw;i++)if(!D.workouts[i].items.some(r=>String(r.name||"").trim()))return `Add at least one exercise to Workout ${LETTERS[i]}.`;
+  }
+  if(n===3){if(SD.gym.length!==D.nw)return `Pick ${D.nw} gym day${D.nw===1?"":"s"} (${SD.gym.length} picked).`;
+    if(D.cardio.target>0&&D.cardio.days.length!==D.cardio.target)return `Pick ${D.cardio.target} cardio day${D.cardio.target===1?"":"s"} (${D.cardio.days.length} picked).`}
+  return "";
+}
+function setupGo(d){
+  if(d>0){const e=setupStepError(SD.setup);if(e){flashSetErr(e);$("setsheet").scrollTop=0;return}}
+  flashSetErr("");SD.setup=Math.min(SETUP_STEPS,Math.max(1,SD.setup+d));SD.gymMsg="";renderSettings();$("setsheet").scrollTop=0;
+}
+// everything is saved together at the end; no saved settings or data means setup hasn't been done
+const needsSetup=()=>!!HOST&&!SETTINGS.setupDone&&!SETTINGS.updatedAt&&!Object.values(weeks).some(hasData)&&!liveSessions().length;
+function maybeSetup(){if(needsSetup()&&!SD)openSetup()}
+function renderSettings(){
+  const D=SD;let h="";
+  if(SD.setup){renderSetup();return}
+  setBar("Cancel","set-cancel","Your routine","Save","set-save");
+  h+=`<section class="sset"><h3>Daily habits</h3><div class="panel shab">${habitRows(D)}</div></section>`;
+  h+=`<section class="sset"><h3>Prep and review</h3>${secPrep(D)}</section>`;
+  h+=`<section class="sset"><h3>Workouts</h3><div class="panel shab">${secCounts(D)}<div class="shsep"></div>${secGrid(D)}</div>`;
+  h+=secLists(D,false)+secPresets(D)+`</section>`;
+  h+=secAccount(D);
   $("setbody").innerHTML=h;
 }
 const parseReps=v=>{const t=String(v).trim(),m=t.match(/^(\d{1,2})\s*(?:-|–|—|to)\s*(\d{1,2})$/i),one=t.match(/^(\d{1,2})$/);
   if(m){const a=+m[1],b=+m[2];return a>=1&&b>=a&&b<=50?[a,b]:null}if(one){const a=+one[1];return a>=1&&a<=50?[a,a]:null}return null};
 // gym days are lettered in week order: the first gym day is Workout A, the next B, and so on
 function assignGym(){SD.gym=[...new Set(SD.gym)].sort((a,b)=>a-b);SD.workouts.forEach((w,i)=>{w.day=i<SD.nw&&i<SD.gym.length?SD.gym[i]:-1})}
+// one line per habit: switch, name, and its target on the right (shared by settings and setup)
+function habitRows(D){const H=D.habits;
+  return HABIT_CATALOG.map((c,i)=>{const on=H[c.k].on;
+    const right=!on?"":c.daysTarget?`<span class="afsel"><select data-sdays="${c.k}" aria-label="${esc(c.name)}: days a week">${[1,2,3,4,5,6,7].map(n=>`<option value="${n}" ${H[c.k].target===n?"selected":""}>${n}</option>`).join("")}</select><span class="muted">days a week</span></span>`
+      :`<input type="text" data-shsub="${c.k}" value="${esc(H[c.k].sub)}" maxlength="24" placeholder="${esc(c.ph||"")}" aria-label="${esc(c.name)} target">`;
+    return `${i?'<div class="shsep"></div>':""}<div class="shrow inl"><label class="sw"><input type="checkbox" data-shab="${c.k}" ${on?"checked":""} aria-label="${esc(c.name)}"><span></span></label><b>${esc(c.name)}</b><div class="hright">${right}</div></div>`}).join("")}
 function toggleDay(arr,d){const i=arr.indexOf(d);if(i>=0)arr.splice(i,1);else arr.push(d);return arr}
 document.addEventListener("click",e=>{
   if(!SD||$("setsheet").hidden)return;const t=e.target;
+  const sp=t.closest("[data-sprog]");if(sp&&SD.setup){const id=sp.dataset.sprog;SD.prog=id;
+    if(id==="own"){for(let i=0;i<4;i++)if(!SD.workouts[i].items.length||SD.workouts[i].items.every(r=>!String(r.name).trim()))SD.workouts[i]={day:SD.workouts[i].day,items:[{name:"",sets:3,lo:8,hi:12}]}}
+    else{const P=PRESETS.find(x=>x.id===id);P.workouts.forEach((items,i)=>{SD.workouts[i]={day:-1,items:items.map(([ex,sets,lo,hi])=>({name:EXERCISES[ex]||BASE_EXERCISES[ex]||ex,sets,lo,hi}))}});
+      if(SD.nw!==P.workouts.length){SD.nw=P.workouts.length;SD.gym=SD.gym.slice(0,SD.nw)}}
+    assignGym();flashSetErr("");renderSettings();return}
   const pr=t.closest("[data-preset]");if(pr){const P=PRESETS.find(x=>x.id===pr.dataset.preset);if(!P)return;
     if(setArmed!==P.id){setArmed=P.id;renderSettings();return}
     setArmed=false;SD.presets=false;SD.gymMsg="";SD.nw=P.workouts.length;SD.open=new Set();
     P.workouts.forEach((items,i)=>{SD.workouts[i]={day:-1,items:items.map(([ex,sets,lo,hi])=>({name:EXERCISES[ex]||BASE_EXERCISES[ex]||ex,sets,lo,hi}))}});
     SD.gym=P.days.slice(0,SD.nw);assignGym();renderSettings();return}
-  const nw=t.closest("[data-snw]");if(nw){SD.nw=+nw.dataset.snw;SD.gym=SD.gym.slice(0,SD.nw);SD.gymMsg="";assignGym();renderSettings();return}
+  const nw=t.closest("[data-snw]");if(nw){if(SD.setup&&SD.prog&&SD.prog!=="own"&&+nw.dataset.snw!==SD.nw)SD.prog="own";SD.nw=+nw.dataset.snw;SD.gym=SD.gym.slice(0,SD.nw);SD.gymMsg="";assignGym();renderSettings();return}
   const sn=t.closest("[data-sname]");if(sn){SD.editing=sn.dataset.sname;renderSettings();const inp=$("setbody").querySelector(`[data-sexn="${SD.editing}"]`);if(inp){inp.focus();inp.select&&inp.select()}return}
   const ad=t.closest("[data-sexadd]");if(ad){const w=SD.workouts[+ad.dataset.sexadd];SD.open.add(+ad.dataset.sexadd);w.items.push({name:"",sets:3,lo:8,hi:12});SD.editing=ad.dataset.sexadd+"-"+(w.items.length-1);renderSettings();
     const inp=$("setbody").querySelector(`[data-sexn="${ad.dataset.sexadd}-${w.items.length-1}"]`);if(inp)inp.focus();return}
@@ -2108,7 +2201,7 @@ document.addEventListener("change",e=>{
   if(!SD)return;const t=e.target;
   if(t.dataset.swday!=null){SD.workouts[+t.dataset.swday].day=+t.value;return}
   if(t.hasAttribute("data-scard")){SD.cardio.target=+t.value;SD.cardio.days=SD.cardio.days.slice().sort((a,b)=>a-b).slice(0,SD.cardio.target);SD.gymMsg="";renderSettings();return}
-  if(t.hasAttribute("data-saf")){SD.habits.af.target=+t.value;return}
+  if(t.dataset.sdays!=null){SD.habits[t.dataset.sdays].target=+t.value;return}
   if(t.dataset.shab!=null){SD.habits[t.dataset.shab].on=t.checked;renderSettings();return}
   if(t.hasAttribute("data-srev")){SD.review.on=t.checked;SD.pexp=t.checked?"review":null;renderSettings();return}
   if(t.dataset.sprep!=null){const P=SD.prep[t.dataset.sprep];P.on=t.checked;if(P.on&&!P.days.length)P.days.push(6);SD.pexp=P.on?t.dataset.sprep:null;renderSettings();return}
@@ -2133,6 +2226,7 @@ function saveFromDraft(){
   if(err){ws.forEach((w,i)=>{if(!w.items.length)SD.open.add(i)});renderSettings();$("setsheet").scrollTop=0;flashSetErr(err);return}
   S.workouts=ws;S.exNames=exNames;S.cardio=clone(D.cardio);S.habits=clone(D.habits);S.review=clone(D.review);
   S.prep=clone(D.prep);["lunch","breakfast"].forEach(k=>{if(!S.prep[k].days.length)S.prep[k].on=false});
+  if(D.setup)S.setupDone=true;
   saveSettings(S);afterSettings();
 }
 function afterSettings(){
@@ -2140,7 +2234,7 @@ function afterSettings(){
   if(stType&&stType!=="cardio"&&!PROGRAMME[stType])stType=null;
   renderAll();if(!editingId)renderStLanding();
 }
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&SD&&!$("setsheet").hidden)closeSettings()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&SD&&!SD.setup&&!$("setsheet").hidden)closeSettings()});
 
 // the name box turns back into text once you leave it (after a pick from the list, or on blur)
 document.addEventListener("focusout",e=>{if(!SD||!e.target.classList||!e.target.classList.contains("sgnin"))return;const inp=e.target;
@@ -2294,6 +2388,10 @@ function stAction(a){
   else if(act==="set-cancel"){if(SD&&setDirty()&&!a.classList.contains("armed")){a.classList.add("armed");a.textContent="Discard?";setTimeout(()=>{a.classList.remove("armed");a.textContent="Cancel"},3000);return}
     a.classList.remove("armed");a.textContent="Cancel";closeSettings()}
   else if(act==="set-save")saveFromDraft();
+  else if(act==="set-next"&&SD&&SD.setup)setupGo(1);
+  else if(act==="set-back"&&SD&&SD.setup)setupGo(-1);
+  else if(act==="set-start"&&SD&&SD.setup)saveFromDraft();
+  else if(act==="tip-x"){try{localStorage.setItem("routine-tip-done","1")}catch(e){}renderToday()}
   else if(act==="older"||act==="newer"){histPage+=act==="older"?1:-1;histOpen=null;renderStHistory()}
   else if(act==="prog-hide"){progChosen=false;renderStProg()}
   else if(act==="prog-toggle"){showProgressing=!showProgressing;renderStProg();if(showProgressing){const r=document.querySelector(".srow.up");if(r)reveal(r,r)}}

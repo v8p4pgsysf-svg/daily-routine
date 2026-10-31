@@ -298,7 +298,7 @@ ok($(w,'[data-sname="0-0"]').textContent==="Barbell Squat"&&$(w,'[data-sexf="0-0
 click(w,$(w,'[data-snw="2"]'));click(w,$(w,'[data-pgym="2"]'));click(w,$(w,'[data-pgym="3"]'));
 click(w,$(w,'[data-sexadd="0"]'));{const n=$$(w,'#setbody [data-row^="0-"]').length-1;ok(!!$(w,`input[data-sexn="0-${n}"]`),"   Add exercise opens a name box on the new row");type(w,$(w,`[data-sexn="0-${n}"]`),"Hip Thrust");type(w,$(w,`[data-sexf="0-${n}-lo"]`),"8");type(w,$(w,`[data-sexf="0-${n}-hi"]`),"12");}
 chg(w,$(w,'[data-shab="protein"]'),false);chg(w,$(w,"[data-scard]"),3);click(w,$(w,'[data-pcard="4"]'));
-chg(w,$(w,"[data-saf]"),5);
+chg(w,$(w,'[data-sdays="af"]'),5);
 click(w,$(w,'[data-st="set-save"]'));
 ok($(w,"#setsheet").hidden,"SET2. Saving closes the sheet");
 click(w,$(w,"#tab-week"));
@@ -368,10 +368,20 @@ click(w,$(w,'#setcog'));click(w,$(w,'[data-pgym="3"]'));click(w,$(w,'[data-pgym=
 ok(!$(w,"#setsheet").hidden&&$(w,'[data-st="set-cancel"]').textContent==="Discard?","   With changes, the first tap asks Discard?");
 click(w,$(w,'[data-st="set-cancel"]'));ok($(w,"#setsheet").hidden&&/Workout B/.test($$(w,"#plan .pday")[2].textContent),"   Second tap discards; Wednesday is still Workout B");
 w.close();
+// --- no weights sessions
+store={};w=boot("2026-10-28T09:00:00");
+click(w,$(w,'#setcog'));click(w,$(w,'[data-snw="0"]'));
+ok(!$(w,'[data-pgym]')&&$$(w,"#setbody details.swk").length===0&&!/Gym days/.test($(w,"#setbody .pcount").textContent),"Z1. Weights 0: no gym buttons, no workouts, no gym-day count");
+click(w,$(w,'[data-st="set-save"]'));
+ok($(w,"#setsheet").hidden&&!$(w,'[data-ct="strength"]'),"Z2. Saved: the Strength row leaves the check-ins grid");
+click(w,$(w,"#tab-strength"));ok($$(w,'[data-st="type"]').map(b=>b.dataset.type).join(",")==="cardio"&&$(w,'[data-st="log-cardio"]'),"Z3. Training offers cardio only");
+click(w,$(w,"#tab-progress"));ok(!/target/.test($(w,"#pschart-h").textContent),"Z4. Progress strength chart has no target line label");
+click(w,$(w,"#tab-week"));click(w,$(w,"#revtoggle"));ok(!/Strength/.test($(w,"#revsum").textContent),"Z5. Review summary leaves out Strength");
+w.close();
 // --- past weeks keep their own targets
 store={};w=boot("2026-10-28T09:00:00");
 click(w,$(w,"#prev"));click(w,$(w,"#d-protein-0"));click(w,$(w,"#d-sleep-0"));click(w,$(w,"#next"));
-click(w,$(w,'#setcog'));chg(w,$(w,'[data-shab="protein"]'),false);chg(w,$(w,"[data-scard]"),1);chg(w,$(w,"[data-saf]"),4);click(w,$(w,'[data-st="set-save"]'));
+click(w,$(w,'#setcog'));chg(w,$(w,'[data-shab="protein"]'),false);chg(w,$(w,"[data-scard]"),1);chg(w,$(w,'[data-sdays="af"]'),4);click(w,$(w,'[data-st="set-save"]'));
 ok(!$(w,"#d-protein-0")&&$(w,'[data-ct="cardio"]').textContent==="0/1"&&$(w,'[data-ct="af"]').textContent==="0/4","PW1. This week uses the new targets (no protein, cardio 1, alcohol-free 4)");
 click(w,$(w,"#prev"));
 ok($(w,"#d-protein-0")&&$(w,"#d-protein-0").checked&&$(w,'[data-ct="cardio"]').textContent==="0/2"&&$(w,'[data-ct="af"]').textContent==="0/6","   Last week keeps its own: protein row with its tick, cardio 0/2, alcohol-free 0/6");

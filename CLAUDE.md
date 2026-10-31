@@ -14,9 +14,17 @@ A personal health and fitness tracker (daily check-ins, weekly review, strength 
   - `supabase/schema.sql` sets all of this up and is safe to re-run.
 - Accounts: people sign up themselves in the app (email + their own password), but only if their email is in `public.invites`. A `before insert` trigger on `auth.users` enforces this, so it can't be bypassed (`supabase/invites.sql`). Email confirmation is off; the app sends no emails. The page hides hosted-only UI (import, account section) unless `window.__routineHost` exists.
 
+## Habits, setup and settings
+- Daily habits are defined once, in `HABIT_CATALOG` in `src/weekly-routine.html`. Adding an entry is enough for it to appear in setup, settings, the check-ins grid, counts, the review summary and exports. Never change an existing key once people have used it.
+- The settings page and the first-time setup share pieces: `habitRows`, `secCounts`, `secGrid`, `secLists`, `secPrep` and `secPresets`.
+- Setup runs once, in the hosted app only. It starts after cloud data has loaded, and only when the person has no saved settings, no data and no `setupDone` marker. Finishing setup saves `setupDone: true` with their settings.
+  - New people start from neutral defaults (`newcomerDraft`). Jack's routine stays the default only for the Claude version.
+- Weights per week can be 0. In that case there's no Strength row, and Training offers cardio only.
+- Suggested programmes live in `PRESETS`.
+
 ## Making a change
 1. Edit `src/weekly-routine.html`.
-2. Run the tests: `node tests/app.test.js src/weekly-routine.html`. This needs `npm i jsdom`, and all checks must pass.
+2. Run the tests: `node tests/app.test.js src/weekly-routine.html`. This needs `npm i jsdom`, and all checks must pass. For sign-in, setup or sync changes, also run the hosted test in `tests/hosted/`.
 3. Rebuild: `python3 tools/build.py`. This rewrites `docs/index.html` and `docs/sw.js`; the new cache version makes phones pick up the update.
 4. Commit and push to `main`. GitHub Pages redeploys in a minute or two.
 5. If Jack still uses the Claude artifact version, republish it too. Ask him first.
