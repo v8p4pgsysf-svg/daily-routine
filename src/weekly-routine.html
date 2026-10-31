@@ -749,7 +749,6 @@ details.swk:not([open]){gap:0}
 .ttip{display:flex;align-items:center;gap:10px;font-size:.86rem;color:var(--muted);background:var(--bg);border-radius:10px;padding:8px 10px;margin-bottom:10px}
 .ttip span{flex:1}.ttipx{border:0;background:none;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:0 4px}
 .suw{display:flex;gap:10px;align-items:center}.suw input{flex:1;min-width:0;padding:9px 11px;font-size:1rem}
-.hnote{margin:-6px 0 0 56px!important;font-size:.78rem}
 .crow{grid-template-columns:44px 92px minmax(0,1fr) 22px}
 .addh{display:flex;flex-direction:column;gap:8px}.addh input{width:100%;padding:9px 11px;font-size:.95rem}
 .rsheet{position:fixed;inset:0;z-index:40;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
@@ -1022,7 +1021,7 @@ const PRESETS=[
    daysTarget: a "days a week" target instead of every day (number = default) · summary: label in the weekly review summary
    jack: on in Jack's original routine · start: on by default for someone setting up for the first time */
 const HABIT_CATALOG=[
-  {k:"protein",name:"Protein",long:"Protein target",grid:"Protein",sub:"",ph:"e.g. 130 g",jack:true,start:true,setupNote:"Set from your weight: 1.6 g per kg. Change it if you like."},
+  {k:"protein",name:"Protein",long:"Protein target",grid:"Protein",sub:"",ph:"e.g. 130 g",jack:true,start:true},
   {k:"fv",name:"Fruit & veg",long:"Fruit & veg",grid:"Fruit & veg",sub:"5+ a day",ph:"e.g. 5+ a day",jack:true,start:false},
   {k:"sleep",name:"Sleep",long:"Sleep",grid:"Sleep",sub:"7–9 hours",ph:"e.g. 7–9 hours",jack:true,start:true},
   {k:"water",name:"Water",long:"Water",grid:"Water",sub:"2 litres",ph:"e.g. 2 litres",jack:false,start:false},
@@ -2124,8 +2123,7 @@ function renderSetup(){
   const D=SD,n=D.setup,last=n===SETUP_STEPS;let h=setupDots(n);
   setBar(n>1?"Back":"","set-back","Set up",last?"Start":"Next",last?"set-start":"set-next");
   if(n===1)h+=`<section class="sset"><h3>Welcome</h3><p class="ts sintro">Set up your routine in a few quick steps. You can change any of it later from the settings cog.</p>
-      <h3>Your weight</h3><div class="panel shab"><div class="shrow suw"><input type="text" inputmode="decimal" id="su-weight" value="${esc(D.weight)}" placeholder="${D.unit==="lb"?"e.g. 175":"e.g. 80"}" aria-label="Your weight in ${D.unit}" autocomplete="off">${unitSeg(D)}</div>
-      <div class="ts" style="margin:0">Your first weigh-in. It starts your weight trend and sets your protein target.</div></div>
+      <h3>Your weight</h3><div class="panel shab"><div class="shrow suw"><input type="text" inputmode="decimal" id="su-weight" value="${esc(D.weight)}" placeholder="${D.unit==="lb"?"e.g. 175":"e.g. 80"}" aria-label="Your weight in ${D.unit}" autocomplete="off">${unitSeg(D)}</div></div>
       <h3>What do you want to track each day?</h3><div class="panel shab">${habitRows(D)}</div></section>`;
   else if(n===2){
     h+=`<section class="sset"><h3>How much do you want to train?</h3><div class="panel shab">${secCounts(D)}</div>`;
@@ -2204,7 +2202,7 @@ function habitRows(D){const H=D.habits;
   return HABIT_CATALOG.map((c,i)=>{const on=H[c.k].on;
     const right=!on?"":c.daysTarget?`<span class="afsel"><select data-sdays="${c.k}" aria-label="${esc(c.name)}: days a week">${[1,2,3,4,5,6,7].map(n=>`<option value="${n}" ${H[c.k].target===n?"selected":""}>${n}</option>`).join("")}</select><span class="muted">days a week</span></span>`
       :`<input type="text" data-shsub="${c.k}" value="${esc(H[c.k].sub)}" maxlength="24" placeholder="${esc(c.ph||"")}" aria-label="${esc(c.name)} target">`;
-    return `${i?'<div class="shsep"></div>':""}<div class="shrow inl"><label class="sw"><input type="checkbox" data-shab="${c.k}" ${on?"checked":""} aria-label="${esc(c.name)}"><span></span></label><b>${esc(c.name)}</b><div class="hright">${right}</div></div>${on&&D.setup&&c.setupNote?`<div class="ts hnote">${esc(c.setupNote)}</div>`:""}`}).join("")+customRows(D)}
+    return `${i?'<div class="shsep"></div>':""}<div class="shrow inl"><label class="sw"><input type="checkbox" data-shab="${c.k}" ${on?"checked":""} aria-label="${esc(c.name)}"><span></span></label><b>${esc(c.name)}</b><div class="hright">${right}</div></div>`}).join("")+customRows(D)}
 function toggleDay(arr,d){const i=arr.indexOf(d);if(i>=0)arr.splice(i,1);else arr.push(d);return arr}
 document.addEventListener("click",e=>{
   if(!SD||$("setsheet").hidden)return;const t=e.target;

@@ -38,7 +38,7 @@ try:
   pg.click('[data-st="set-next"]');pg.wait_for_selector("#seterr",state="visible")
   ok("Enter your weight" in pg.inner_text("#seterr"),"W1. Step 1 needs a weight")
   pg.fill("#su-weight","80");pg.wait_for_timeout(100)
-  ok(pg.input_value('[data-shsub="protein"]')=="130 g" and "1.6 g per kg" in pg.inner_text("#setbody"),"W2. Protein target fills in from weight: 80 kg → 130 g")
+  ok(pg.input_value('[data-shsub="protein"]')=="130 g","W2. Protein target fills in from weight: 80 kg → 130 g")
   pg.click('[data-sunit="lb"]');ok(pg.input_value("#su-weight")=="176.4" and pg.input_value('[data-shsub="protein"]')=="130 g","W3. Switching to lb converts the weight (176.4) and keeps protein at 130 g")
   pg.click('[data-sunit="kg"]');ok(pg.input_value("#su-weight")=="80","   and back to kg")
   pg.screenshot(path="setup-1.png")
