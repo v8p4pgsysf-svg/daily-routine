@@ -50,3 +50,8 @@
 - **Email goes through a dedicated personal Gmail account with an app password**, not Resend. Resend (and every service that sends as you) needs a domain Jack would have to buy; Gmail passes inbox checks because Google sends it. A dedicated account keeps Jack's own address out and avoids the app password being cancelled when he changes his own Google password. Outlook was ruled out: personal Outlook accounts no longer allow password-based SMTP, which is all Supabase supports. Moving to a domain later is only an SMTP settings change.
 - **Email confirmation at sign-up stays off.** Invite codes already gate sign-up; it would add a step for every friend.
 - **First live reset email went to junk** (new Gmail, no sending history). Added "Not there? Check your junk folder." to the code step rather than moving to a domain straight away; domain + Resend is the fix if it persists. Server-side email failures now say "Couldn't send the email right now" instead of blaming the connection (the first SMTP misconfiguration looked like a network problem).
+
+## 31 Oct 2026 (review photos)
+
+- **Deleting a weekly-review photo is one tap on ×, with "Photo deleted. Undo" for 6 seconds** (Jack: the "Remove?" confirm didn't fit the 44px thumbnail and was pointless for a photo still waiting in the review). Undo instead of no safety net because the × is small and a slip would be permanent; the file is only removed from storage when the undo window ends, when another delete or upload starts, or when the app is left.
+- **Photo encryption: with a recovery code** (Jack's choice).

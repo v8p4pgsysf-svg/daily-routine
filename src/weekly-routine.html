@@ -274,7 +274,8 @@ input[type=number]:focus,textarea:focus{outline:none;border-color:var(--green);b
 .thumb{position:relative;width:72px;height:96px;border-radius:8px;overflow:hidden;background:var(--green-soft);border:1px solid var(--line)}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
 .thumb .rm{position:absolute;top:4px;right:4px;min-width:22px;height:22px;padding:0 6px;border-radius:99px;border:0;background:rgba(20,24,21,.72);color:#fff;font-size:.75rem;font-weight:600;cursor:pointer;line-height:22px}
-.thumb .rm.armed{background:var(--danger)}
+.thumb .rm::before{content:"";position:absolute;inset:-8px}
+.phundo{padding:0 0 0 4px;font-size:inherit;align-self:auto}
 .addph{width:72px;height:96px;border:1.5px dashed var(--line-strong);border-radius:8px;background:transparent;color:var(--muted);font-size:.78rem;font-weight:600;cursor:pointer;line-height:1.3;padding:4px}
 .addph:hover:not(:disabled){border-color:var(--green);color:var(--green)}
 .phmsg{font-size:.8rem;color:var(--muted);min-height:0}
@@ -1739,10 +1740,11 @@ async function initAssets(){
 function phMsg(t,err){const m=$("phmsg");m.textContent=t||"";m.classList.toggle("err",!!err)}
 function renderPhotosReview(){
   const w=getWeek(viewKey);
-  let h=w.photos.map((p,i)=>`<div class="thumb"><img src="${blobSrc(p.id)}" alt="Progress photo ${i+1}" data-lb="${viewKey}|${i}" loading="lazy">${assets?`<button class="rm${armed===viewKey+"|"+i?" armed":""}" data-rm="${i}" aria-label="Remove photo ${i+1}">${armed===viewKey+"|"+i?"Remove?":"×"}</button>`:""}</div>`).join("");
+  let h=w.photos.map((p,i)=>`<div class="thumb"><img src="${blobSrc(p.id)}" alt="Progress photo ${i+1}" data-lb="${viewKey}|${i}" loading="lazy">${assets?`<button class="rm" data-rm="${i}" aria-label="Delete photo ${i+1}">×</button>`:""}</div>`).join("");
   if(assets&&w.photos.length<3)h+=`<button class="addph" id="phadd" aria-label="Add a progress photo" ${uploading?"disabled":""}>${uploading?"…":"+"}</button>`;
   $("photos").innerHTML=h;
   if(assetsReady&&!assets&&!uploading)phMsg(HOST?"Photo uploads aren't available right now. Check your connection.":"Photo uploads aren't available in this view. Open the page in Claude while signed in.");
+  else if(undoPh&&undoPh.k===viewKey){const m=$("phmsg");m.classList.remove("err");m.innerHTML=`Photo deleted. <button type="button" class="linkbtn phundo" id="ph-undo">Undo</button>`}
   else if(!$("phmsg").classList.contains("err"))phMsg("");
 }
 function shrink(file){
@@ -1761,7 +1763,7 @@ function shrink(file){
 async function addPhoto(file){
   const k=viewKey;
   if(!assets)return;
-  uploading=true;phMsg("");renderPhotosReview();
+  finishRemove();uploading=true;phMsg("");renderPhotosReview();
   try{
     let blob;
     try{blob=await shrink(file)}catch(e){blob=file}
@@ -1777,11 +1779,19 @@ async function addPhoto(file){
     phMsg(c==="unsupported_type"?"That file type can't be used. Try a JPEG or PNG photo.":c==="too_large"?"That photo is too large. Try a smaller one.":c==="quota_or_state"?"Photo storage is full. Remove some older photos first.":c==="rate_limited"?"Too many uploads at once. Wait a moment and try again.":"The photo didn't upload. Check your connection and try again.",true);
   }finally{uploading=false;renderPhotosReview();renderGallery()}
 }
-async function removePhoto(k,i){
+let undoPh=null; // the photo just deleted: {k,i,p,t}; kept until the undo window closes
+function removePhoto(k,i){
   const w=ensureWeek(k),p=w.photos[i];if(!p)return;
-  w.photos.splice(i,1);w.photo=w.photos.length>0;armed=null;touch(k);renderPhotosReview();renderGallery();
-  try{await assets.delete(p.id)}catch(e){}
+  finishRemove(); // a previous delete is final once another starts
+  w.photos.splice(i,1);w.photo=w.photos.length>0;armed=null;touch(k);
+  undoPh={k,i,p,t:setTimeout(finishRemove,6000)};renderPhotosReview();renderGallery();
 }
+function finishRemove(){if(!undoPh)return;const {p,t}=undoPh;clearTimeout(t);undoPh=null;
+  const m=$("phmsg");if(m&&m.querySelector("#ph-undo"))phMsg("");
+  Promise.resolve().then(()=>assets&&assets.delete(p.id)).catch(()=>{})}
+function undoRemove(){if(!undoPh)return;const {k,i,p,t}=undoPh;clearTimeout(t);undoPh=null;
+  const w=ensureWeek(k);w.photos.splice(Math.min(i,w.photos.length),0,p);w.photo=true;touch(k);phMsg("");renderPhotosReview();renderGallery()}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")finishRemove()});
 function renderGallery(){
   const keys=Object.keys(weeks).filter(k=>weeks[k].photos.length).sort().reverse();
   if(!keys.length){$("gallery").innerHTML=`<div class="gempty slim">${SETTINGS.review.on?"No photos yet. Add them in the weekly review.":"No photos yet. Photos are added in the weekly review, which is switched off in settings."}</div>`;return}
@@ -1830,7 +1840,8 @@ document.addEventListener("click",e=>{
   const t=e.target;
   if(t.closest("#phadd")){$("phfile").click();return}
   const rm=t.closest("[data-rm]");
-  if(rm){const id=viewKey+"|"+rm.dataset.rm;if(armed===id)removePhoto(viewKey,+rm.dataset.rm);else{armed=id;renderPhotosReview()}return}
+  if(rm){removePhoto(viewKey,+rm.dataset.rm);return}
+  if(t.closest("#ph-undo")){undoRemove();return}
   const lb=t.closest("[data-lb]");
   if(lb){const [k,i]=lb.dataset.lb.split("|");openLb(k,+i);return}
   if(t.id==="lb-close"||t.id==="lb"){closeLb();return}

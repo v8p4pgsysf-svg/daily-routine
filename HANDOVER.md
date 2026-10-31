@@ -25,7 +25,7 @@ Polish the hosted Daily Routine app (GitHub Pages + Supabase) so Jack uses it da
 
 ## Agreed next (in this order)
 1. ~~Forgotten-password reset~~ **Done and working live** (31 Oct): Gmail SMTP + Magic Link template with `{{ .Token }}`. First test landed in **junk**; the code screen now says to check junk. If friends keep getting junk, move to a domain + Resend (SMTP settings only).
-2. Encrypt progress photos on the phone (key from the password; recovery code shown once). Jack sees this as a must before wider sharing.
+2. **Next up:** encrypt progress photos on the phone. Agreed design: random photo key per person, locked by a key from their password; **with a recovery code** (Jack chose it) shown once on first photo; after a forgot-password reset the app asks for it, otherwise those photos stay locked; change password re-locks the key; existing photos encrypted on next sign-in; Export keeps plain photos. Before building, Jack to do the two live checks below (photo survives reopen; live sync).
 
 ## Open ideas (not started; Jack hasn't committed to them)
 - Backup nudge: show "last backup: X ago" in the weekly review, since Export is manual.

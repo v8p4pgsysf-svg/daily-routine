@@ -12,6 +12,8 @@
 
 ## To run
 
+Also: `python3 review-photos.py` checks deleting a weekly-review photo: one tap, Undo, and the file leaving storage only once Undo has gone.
+
 Also: `python3 forgot-password.py` checks Forgot password end to end (code email, wrong code, resend, new password, old password refused).
 
 Also: `python3 feedback.py` checks the feedback icon (shown from 375px, hidden at 320px), the sheet, sending, offline and Settings → Send feedback.
