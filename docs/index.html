@@ -726,6 +726,7 @@ details.swk[open]>summary::after{transform:rotate(-135deg)}
 details.swk>summary .muted{margin-left:auto;font-size:.84rem}
 details.swk:not([open]){gap:0}
 .presets{display:flex;flex-direction:column;gap:10px}
+details,.hitem,.panel,section{scroll-margin:16px 0 20px}
 .dhead{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:0;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
 .dhead .muted{margin-left:auto;font-size:.84rem}.dhead .dchev{flex:none;color:var(--muted);transition:transform .15s}.dhead[aria-expanded="true"] .dchev{transform:rotate(180deg)}
 .dhead.acct{padding:12px 0}.dhead.acct .grow{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -2221,6 +2222,23 @@ const parseReps=v=>{const t=String(v).trim(),m=t.match(/^(\d{1,2})\s*(?:-|â€“|â€
 function assignGym(){SD.gym=[...new Set(SD.gym)].sort((a,b)=>a-b);SD.workouts.forEach((w,i)=>{w.day=i<SD.nw&&i<SD.gym.length?SD.gym[i]:-1})}
 // one line per habit: switch, name, and its target on the right (shared by settings and setup)
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target&&e.target.id==="ch-name"){e.preventDefault();const b=document.querySelector('[data-st="ch-add"]');if(b)b.click()}});
+/* When something opens near the bottom of the screen, scroll just enough to show what opened.
+   Works for every drop-down: <details>, buttons with aria-expanded, and the password / delete forms. */
+function revealKey(b){
+  if(b.tagName==="SUMMARY"){const d=b.parentElement;return d.dataset.swk!=null?`details[data-swk="${d.dataset.swk}"]`:d.classList.contains("plistd")?"details.plistd":null}
+  if(b.dataset.st==="pw-open")return ".pwform";if(b.dataset.st==="del-open")return ".delbox";
+  if(b.id)return "#"+b.id;if(b.dataset.st)return `[data-st="${b.dataset.st}"]`;if(b.dataset.hist)return `[data-hist="${b.dataset.hist}"]`;return null}
+document.addEventListener("click",e=>{
+  const b=e.target.closest('summary,[aria-expanded],[data-st="pw-open"],[data-st="del-open"]');if(!b)return;
+  const key=revealKey(b);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    let el=key&&document.querySelector(key)||(b.isConnected?b:null);if(!el)return;
+    const isOpen=el.tagName==="DETAILS"?el.open:el.hasAttribute("aria-expanded")?el.getAttribute("aria-expanded")==="true":true;if(!isOpen)return;
+    const box=el.closest("details,.hitem")||(el.getAttribute("aria-controls")?el.closest("section"):null)||el.closest(".panel")||el;
+    const r=box.getBoundingClientRect(),vh=window.innerHeight;if(r.bottom<=vh-12)return;
+    box.scrollIntoView({behavior:"smooth",block:r.height>vh-90?"start":"end"});
+  }));
+});
 function customRows(D){
   let h=(D.custom||[]).map((c,i)=>`<div class="shsep"></div><div class="shrow inl crow"><label class="sw"><input type="checkbox" data-scon="${i}" ${c.on?"checked":""} aria-label="${esc(c.name)}"><span></span></label><b>${esc(c.name)}</b>
       <div class="hright">${c.on?`<input type="text" data-scsub="${i}" value="${esc(c.sub)}" maxlength="24" placeholder="Target (optional)" aria-label="${esc(c.name)} target">`:""}</div>
