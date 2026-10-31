@@ -778,7 +778,7 @@ details.swk:not([open]){gap:0}
 .rsheetbar{max-width:640px;margin:0 auto;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;min-height:45px;border-bottom:1px solid var(--line)}
 .sbtn{justify-self:start;background:none;border:0;padding:10px 14px 10px 14px;font-weight:600;font-size:.95rem;color:var(--muted);cursor:pointer}
 .sbtn:hover{color:var(--ink)}
-.sbtn.armed{color:var(--danger)}
+.sbtn.armed,.linkbtn.armed{color:var(--danger)}
 .sbsave{justify-self:end;padding:7px 16px;font-size:.92rem}
 .rsheethd h2{margin:0;font-size:.95rem;font-weight:600;text-align:center}
 .rsheet{display:flex;flex-direction:column}
@@ -1754,7 +1754,7 @@ function renderGallery(){
   $("gallery").innerHTML=keys.map(k=>{const w=weeks[k];
     const nW=workoutsByDay(k).reduce((a,l)=>a+l.length,0);
     const meta=[w.weight==null?"":w.weight.toFixed(1)+" kg",nW?nW+" workout"+(nW===1?"":"s"):""].filter(Boolean).join(" · ");
-    return `<div class="panel gweek"><div class="gh"><strong>${weekTitle(k)}</strong><span class="muted num" style="font-size:.84rem">${meta}</span></div><div class="gphotos">${w.photos.map((p,i)=>`<img src="${blobSrc(p.id)}" alt="${weekTitle(k)}, photo ${i+1}" data-lb="${k}|${i}" loading="lazy">`).join("")}</div></div>`}).join("");
+    return `<div class="panel gweek"><div class="gh"><strong>${weekTitle(k)}</strong><span class="muted" style="font-size:.84rem">${meta}</span></div><div class="gphotos">${w.photos.map((p,i)=>`<img src="${blobSrc(p.id)}" alt="${weekTitle(k)}, photo ${i+1}" data-lb="${k}|${i}" loading="lazy">`).join("")}</div></div>`}).join("");
 }
 // every photo in date order, so the viewer can step week to week
 const photoSeq=()=>Object.keys(weeks).filter(k=>weeks[k].photos.length).sort().flatMap(k=>weeks[k].photos.map((_,i)=>[k,i]));
@@ -2397,7 +2397,12 @@ function stAction(a){
   else if(act==="goto-strength"){showTab("strength");try{location.hash="strength"}catch(e){}window.scrollTo({top:0})}
   else if(act==="rev-complete"||act==="rev-undo"){ensureWeek(viewKey).review[0]=act==="rev-complete";touch(viewKey);renderAll()}
   else if(act==="settings")openSettings();
-  else if(act==="sign-out"&&HOST&&HOST.signOut)HOST.signOut();
+  else if(act==="sign-out"&&HOST&&HOST.signOut){
+    const pending=dirty.size||dirtyS.size||dirtySet||flushing; // includes a save that's in progress
+    if(pending&&!a.classList.contains("armed")){a.classList.add("armed");a.textContent="Not synced yet. Tap again to sign out anyway";
+      if(navigator.onLine&&mode==="cloud")flush();
+      setTimeout(()=>{if(a.isConnected){a.classList.remove("armed");a.textContent="Sign out"}},5000);return}
+    HOST.signOut()}
   else if(act==="pw-open"&&SD){SD.pw=true;renderSettings();const f=$("pw1");if(f)f.focus()}
   else if(act==="pw-cancel"&&SD){SD.pw=false;renderSettings()}
   else if(act==="pw-save"&&HOST&&HOST.changePassword){const p1=$("pw1").value,p2=$("pw2").value,m=$("pwmsg");

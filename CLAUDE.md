@@ -3,7 +3,7 @@
 A personal health and fitness tracker (daily check-ins, weekly review, strength and cardio logging, progress charts) used by Jack, and optionally his girlfriend and friends. It runs as a home-screen web app.
 
 ## How it fits together
-- `src/weekly-routine.html` is the single source of the app. The same page also runs as Jack's Claude artifact, where it uses Claude's storage (`window.claude.use(...)`).
+- `src/weekly-routine.html` is the single source of the app. It began as a Claude artifact, so it still talks to storage through a `window.claude.use(...)` interface. That interface is now supplied by `docs/host.js`. The old Claude artifact version is retired (31 Oct 2026), so don't republish it.
 - `docs/` is the live app on GitHub Pages: https://v8p4pgsysf-svg.github.io/daily-routine/
   - `docs/host.js` signs people in (email and password, through Supabase Auth). It then supplies the same `db` / `user` / `assets` / `downloads` interface the page expects, backed by Supabase. Finally it runs the page's script, which `tools/build.py` embeds as `<script type="text/plain" id="app-src">`.
   - `docs/config.js` holds the Supabase URL and publishable key. These are public by design.
@@ -34,8 +34,7 @@ Each of these lives in one list in `src/weekly-routine.html`; everything else is
 1. Edit `src/weekly-routine.html`.
 2. Run the tests: `node tests/app.test.js src/weekly-routine.html`. This needs `npm i jsdom`, and all checks must pass. For sign-in, setup or sync changes, also run the hosted test in `tests/hosted/`.
 3. Rebuild: `python3 tools/build.py`. This rewrites `docs/index.html` and `docs/sw.js`; the new cache version makes phones pick up the update.
-4. Commit and push to `main`. GitHub Pages redeploys in a minute or two.
-5. If Jack still uses the Claude artifact version, republish it too. Ask him first.
+4. Commit and push to `main`. GitHub Pages redeploys in a minute or two. Phones open the saved copy instantly, pick up the new version in the background, and show it on the next open.
 
 ## Jack's preferences for this app
 - Phone-first: low friction, no duplicate inputs, consistent spacing, readable on iPhone.

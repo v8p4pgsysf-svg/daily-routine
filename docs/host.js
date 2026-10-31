@@ -165,5 +165,5 @@ function start(session){
 
 sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT"&&window.__routineHost)location.replace(location.pathname)});
 sb.auth.getSession().then(({data})=>{if(data&&data.session)start(data.session);else showLogin()}).catch(()=>showLogin());
-if("serviceWorker" in navigator&&location.protocol==="https:")addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+if("serviceWorker" in navigator&&location.protocol==="https:")addEventListener("load",()=>navigator.serviceWorker.register("sw.js").then(r=>r.update()).catch(()=>{}));
 })();

@@ -87,6 +87,13 @@ try:
   pg.evaluate("dispatchEvent(new Event('online'))");pg.wait_for_timeout(16500)
   db=pg.evaluate("JSON.parse(localStorage.getItem('mock-db')||'{}')")
   ok(any(r["data"].get("sleep",[0,0,0])[2] for r in db.values() if r["user_id"]==uid),"H14. Back online: it syncs")
+  # signing out with changes not yet synced asks first
+  pg.click("#tab-week");pg.evaluate("window.__mockOffline=true");pg.locator('[id^="d-sleep-"]').nth(3).check();pg.wait_for_timeout(1500)
+  pg.click("#setcog");pg.click('[data-st="sign-out"]');pg.wait_for_timeout(300)
+  ok("Not synced yet" in pg.inner_text('[data-st="sign-out"]') and pg.locator("#login").is_hidden(),"SO1. Signing out with unsynced changes asks first, and doesn't sign out")
+  pg.click('[data-st="set-cancel"]');pg.evaluate("window.__mockOffline=false");pg.evaluate("dispatchEvent(new Event('online'))");pg.wait_for_timeout(16500)
+  db=pg.evaluate("JSON.parse(localStorage.getItem('mock-db')||'{}')")
+  ok(any(r["data"].get("sleep",[0,0,0,0])[3] for r in db.values() if r["user_id"]==uid),"   Once back online the change syncs, so nothing is lost")
   # signing out from another tab, then back in, starts on Today
   pg.click("#tab-progress");pg.wait_for_timeout(100)
   # change password, sign out, sign back in with it
