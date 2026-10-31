@@ -396,15 +396,17 @@ type(w,$(w,"#weight"),"176.4");{const wk=JSON.parse(w.localStorage.getItem("week
 w.close();
 // --- more habits and your own
 store={};w=boot("2026-10-28T09:00:00");
-click(w,$(w,'#setcog'));ok(["water","steps","nic"].every(k=>$(w,`[data-shab="${k}"]`)&&!$(w,`[data-shab="${k}"]`).checked),"H1. Water, steps and no nicotine are offered, all off");
-chg(w,$(w,'[data-shab="water"]'),true);
-click(w,$(w,'[data-st="ch-open"]'));type(w,$(w,"#ch-name"),"Meditate");type(w,$(w,"#ch-sub"),"10 minutes");chg(w,$(w,"#ch-days"),5);click(w,$(w,'[data-st="ch-add"]'));
-ok(/Meditate/.test($(w,"#setbody").textContent)&&$(w,'[data-scsub="0"]').value==="10 minutes","H2. Add your own habit: Meditate, 10 minutes, 5 days");
+click(w,$(w,'#setcog'));ok($(w,'[data-shab="steps"]')&&!$(w,'[data-shab="steps"]').checked&&!$(w,'[data-shab="water"]')&&!$(w,'[data-shab="nic"]')&&w.document.querySelectorAll('#setbody [data-shab]').length===5,"H1. Five built-in habits; steps offered, off; water and no nicotine gone");
+chg(w,$(w,'[data-shab="steps"]'),true);
+ok($(w,"#ch-name").placeholder==="Add a habit, e.g. Water"&&!$(w,"#ch-days")&&!$(w,"#ch-sub"),"   Add a habit is one box (e.g. Water) and an Add button");
+type(w,$(w,"#ch-name"),"Water");click(w,$(w,'[data-st="ch-add"]'));type(w,$(w,'[data-scsub="0"]'),"2 litres");
+type(w,$(w,"#ch-name"),"water");click(w,$(w,'[data-st="ch-add"]'));
+ok(/Water/.test($(w,"#setbody").textContent)&&w.document.querySelectorAll('[data-scdel]').length===1&&$(w,'[data-scsub="0"]').value==="2 litres","H2. Add your own habit: Water, 2 litres (a duplicate name isn't added twice)");
 click(w,$(w,'[data-st="set-save"]'));
 const lbl=[...w.document.querySelectorAll("#daily .lbl")].map(e=>e.textContent);
-ok(lbl.some(t=>/Water/.test(t)&&/2 litres/.test(t))&&lbl.some(t=>/Meditate/.test(t)&&/10 minutes · 5\+ days/.test(t)),"H3. Both appear in the check-ins grid with their targets");
+ok(lbl.some(t=>/Steps/.test(t)&&/10,000/.test(t))&&lbl.some(t=>/Water/.test(t)&&/2 litres/.test(t)),"H3. Both appear in the check-ins grid with their targets");
 {const k=JSON.parse(w.localStorage.getItem("weekly-routine.settings.v1")).custom[0].k;click(w,$(w,`#d-${k}-0`));
- ok($(w,`[data-ct="${k}"]`).textContent==="1/5","H4. Ticking your own habit counts toward its target (1/5)");
+ ok($(w,`[data-ct="${k}"]`).textContent==="1/7","H4. Ticking your own habit counts as a daily habit (1/7)");
  save(w);w.close();w=boot("2026-10-28T09:00:00");ok($(w,`#d-${k}-0`).checked,"   and the tick survives a reload");
  click(w,$(w,'#setcog'));click(w,$(w,'[data-scdel="0"]'));click(w,$(w,'[data-st="set-save"]'));ok(!$(w,`#d-${k}-0`),"H5. Deleting it removes it from the grid");}
 w.close();

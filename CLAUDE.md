@@ -16,7 +16,7 @@ A personal health and fitness tracker (daily check-ins, weekly review, strength 
 
 ## Single sources: add things in one place
 Each of these lives in one list in `src/weekly-routine.html`; everything else is derived from it. Never change an existing id or key once people have used it.
-- `HABIT_CATALOG`: daily habits (protein, fruit & veg, sleep, water, steps, no alcohol, no nicotine). People can add up to 8 of their own (`settings.custom`, keys `x_…`). These feed setup, settings, the check-ins grid, counts, the review summary and exports.
+- `HABIT_CATALOG`: daily habits (protein, fruit & veg, sleep, steps, no alcohol). People can add up to 8 of their own (`settings.custom`, keys `x_…`): one line to add, counted daily out of 7 like protein, with an optional target. These feed setup, settings, the check-ins grid, counts, the review summary and exports.
 - `EXERCISE_CATALOG`: exercises, each with a name, a short name for the key-lifts table, its weight step, and whether it's assisted. These feed the exercise picker, programmes, workouts, the progress dropdown, key lifts, lift status and exports. People's own exercises are stored in `settings.exNames`.
 - `PRESETS`: suggested programmes. Jack's default programme is `DEFAULT_SETTINGS.workouts`, which is also the "3-day full body" preset.
 - `CARDIO_CATALOG`: cardio types offered as chips. `counts:false` means a type is logged but not counted toward the weekly target (Walk).

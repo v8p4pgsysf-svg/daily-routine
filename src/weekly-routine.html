@@ -752,7 +752,8 @@ details.swk:not([open]){gap:0}
 .ttip span{flex:1}.ttipx{border:0;background:none;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:0 4px}
 .suw{display:flex;gap:10px;align-items:center}.suw input{flex:1;min-width:0;padding:9px 11px;font-size:1rem}
 .crow{grid-template-columns:44px 92px minmax(0,1fr) 22px}
-.addh{display:flex;flex-direction:column;gap:8px}.addh input{width:100%;padding:9px 11px;font-size:.95rem}
+.addh{display:flex;gap:8px;align-items:center}.addh input{flex:1 1 auto;min-width:0;padding:9px 11px;font-size:.95rem}
+.shrow.inl.crow{grid-template-columns:44px 92px minmax(0,1fr) 22px}
 .rsheet{position:fixed;inset:0;z-index:40;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .rsheethd{position:sticky;top:0;z-index:2;background:var(--bg);padding:11px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
 .rsheetbar{max-width:640px;margin:0 auto;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;min-height:45px;border-bottom:1px solid var(--line)}
@@ -1026,10 +1027,8 @@ const HABIT_CATALOG=[
   {k:"protein",name:"Protein",long:"Protein target",grid:"Protein",sub:"",ph:"e.g. 130 g",jack:true,start:true},
   {k:"fv",name:"Fruit & veg",long:"Fruit & veg",grid:"Fruit & veg",sub:"5+ a day",ph:"e.g. 5+ a day",jack:true,start:false},
   {k:"sleep",name:"Sleep",long:"Sleep",grid:"Sleep",sub:"7–9 hours",ph:"e.g. 7–9 hours",jack:true,start:true},
-  {k:"water",name:"Water",long:"Water",grid:"Water",sub:"2 litres",ph:"e.g. 2 litres",jack:false,start:false},
   {k:"steps",name:"Steps",long:"Steps",grid:"Steps",sub:"10,000",ph:"e.g. 10,000",jack:false,start:false},
-  {k:"af",name:"No alcohol",long:"Alcohol-free",grid:"No alcohol",daysTarget:6,summary:"Alcohol",jack:true,start:false},
-  {k:"nic",name:"No nicotine",long:"Nicotine-free",grid:"No nicotine",daysTarget:7,summary:"Nicotine",jack:false,start:false}
+  {k:"af",name:"No alcohol",long:"Alcohol-free",grid:"No alcohol",daysTarget:6,summary:"Alcohol",jack:true,start:false}
 ];
 const habitDefaults=pick=>Object.fromEntries(HABIT_CATALOG.map(c=>[c.k,c.daysTarget?{on:!!c[pick],target:c.daysTarget}:{on:!!c[pick],sub:c.sub||""}]));
 DEFAULT_SETTINGS.habits=habitDefaults("jack");
@@ -2188,16 +2187,13 @@ const parseReps=v=>{const t=String(v).trim(),m=t.match(/^(\d{1,2})\s*(?:-|–|�
 // gym days are lettered in week order: the first gym day is Workout A, the next B, and so on
 function assignGym(){SD.gym=[...new Set(SD.gym)].sort((a,b)=>a-b);SD.workouts.forEach((w,i)=>{w.day=i<SD.nw&&i<SD.gym.length?SD.gym[i]:-1})}
 // one line per habit: switch, name, and its target on the right (shared by settings and setup)
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target&&e.target.id==="ch-name"){e.preventDefault();const b=document.querySelector('[data-st="ch-add"]');if(b)b.click()}});
 function customRows(D){
   let h=(D.custom||[]).map((c,i)=>`<div class="shsep"></div><div class="shrow inl crow"><label class="sw"><input type="checkbox" data-scon="${i}" ${c.on?"checked":""} aria-label="${esc(c.name)}"><span></span></label><b>${esc(c.name)}</b>
       <div class="hright">${c.on?`<input type="text" data-scsub="${i}" value="${esc(c.sub)}" maxlength="24" placeholder="Target (optional)" aria-label="${esc(c.name)} target">`:""}</div>
       <button type="button" class="sgx" data-scdel="${i}" aria-label="Delete ${esc(c.name)}" title="Delete habit"><svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button></div>`).join("");
   if((D.custom||[]).length>=8)return h+`<div class="shsep"></div><div class="ts" style="margin:0">You can have up to 8 of your own habits.</div>`;
-  h+=SD.addHabit?`<div class="shsep"></div><div class="addh"><input type="text" id="ch-name" maxlength="24" placeholder="Habit, e.g. Meditate" aria-label="New habit name" autocomplete="off">
-      <input type="text" id="ch-sub" maxlength="24" placeholder="Target, e.g. 10 minutes (optional)" aria-label="New habit target" autocomplete="off">
-      <div class="pwrow"><span class="afsel"><select id="ch-days" aria-label="Days a week">${[7,6,5,4,3,2,1].map(n=>`<option value="${n}">${n===7?"Every day":n+" days a week"}</option>`).join("")}</select></span>
-      <button type="button" class="btn primary" data-st="ch-add">Add</button><button type="button" class="btn ghost" data-st="ch-cancel">Cancel</button></div></div>`
-    :`<div class="shsep"></div><div class="shrow"><button type="button" class="linkbtn" data-st="ch-open">Add your own habit</button></div>`;
+  h+=`<div class="shsep"></div><div class="addh"><input type="text" id="ch-name" maxlength="24" placeholder="Add a habit, e.g. Water" aria-label="New habit name" autocomplete="off" enterkeyhint="done"><button type="button" class="btn" data-st="ch-add">Add</button></div>`;
   return h;
 }
 function habitRows(D){const H=D.habits;
@@ -2454,8 +2450,9 @@ function stAction(a){
   else if(act==="ch-open"&&SD){SD.addHabit=true;renderSettings();const f=$("ch-name");if(f)f.focus()}
   else if(act==="ch-cancel"&&SD){SD.addHabit=false;renderSettings()}
   else if(act==="ch-add"&&SD){const nm=$("ch-name").value.trim();if(!nm){$("ch-name").focus();return}
+    if(SD.custom.some(c=>c.name.toLowerCase()===nm.toLowerCase())||HABIT_CATALOG.some(c=>c.name.toLowerCase()===nm.toLowerCase())){$("ch-name").select();return}
     const k="x_"+Math.random().toString(36).slice(2,10).replace(/[^a-z0-9]/g,"a").padEnd(8,"a");
-    SD.custom.push({k,name:nm.slice(0,24),sub:$("ch-sub").value.trim().slice(0,24),target:+$("ch-days").value||7,on:true});SD.addHabit=false;renderSettings()}
+    SD.custom.push({k,name:nm.slice(0,24),sub:"",target:7,on:true});renderSettings();const f=$(`[data-scsub="${SD.custom.length-1}"]`);if(f)f.focus()}
   else if(act==="pw-open"&&SD){SD.pw=true;renderSettings();const f=$("pw1");if(f)f.focus()}
   else if(act==="pw-cancel"&&SD){SD.pw=false;renderSettings()}
   else if(act==="pw-save"&&HOST&&HOST.changePassword){const p1=$("pw1").value,p2=$("pw2").value,m=$("pwmsg");
