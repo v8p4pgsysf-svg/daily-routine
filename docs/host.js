@@ -118,7 +118,7 @@ function showLogin(note){
       <label for="lg-semail">Email</label><input id="lg-semail" name="new-email" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" required>
       <label for="lg-spass">Password</label><input id="lg-spass" name="new-password" type="password" autocomplete="new-password" placeholder="At least 8 characters" required>
       <label for="lg-spass2">Password again</label><input id="lg-spass2" name="new-password-confirm" type="password" autocomplete="new-password" required>
-      <label for="lg-scode">Invite code</label><input id="lg-scode" name="invite-code" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="From whoever shared the app">
+      <label for="lg-scode">Invite code</label><input id="lg-scode" name="invite-code" type="text" autocomplete="off" autocapitalize="none" spellcheck="false">
       
       <button class="lg-btn" id="lg-sbtn" type="submit">Create account</button>
       <button class="lg-link" type="button" id="lg-have">Already have an account? Sign in</button></form>

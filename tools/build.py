@@ -26,9 +26,10 @@ head=f'''<!doctype html><html lang="en-GB"><head><meta charset="utf-8">
 <style>:root{{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}}body{{margin:0;font:14px system-ui,-apple-system,sans-serif}}img{{max-width:100%}}[hidden]{{display:none!important}}
 .rsheethd{{padding-top:calc(11px + env(safe-area-inset-top,0px))!important}}
 body:not(.in)>:not(#login):not(script){{display:none!important}}
-#login{{position:fixed;inset:0;z-index:100;display:grid;place-items:center;gap:12px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:24px 16px;background:#F4F5F3;color:#1A1E1B;font-family:"Hanken Grotesk",system-ui,-apple-system,sans-serif}}
+#login{{position:fixed;inset:0;z-index:100;display:grid;grid-template-columns:minmax(0,1fr);place-items:center;gap:12px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:24px 16px;background:#F4F5F3;color:#1A1E1B;font-family:"Hanken Grotesk",system-ui,-apple-system,sans-serif}}
 .lg-card{{width:100%;max-width:360px;background:#fff;border:1px solid #E2E6E2;border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:10px}}
 .lg-card h1{{margin:0;font-size:1.5rem}}.lg-sub{{margin:0 0 6px;color:#6A726C;font-size:.95rem;line-height:1.45}}
+.lg-card input{{min-width:0}}
 .lg-card label{{font-weight:600;font-size:.88rem}}
 .lg-card input{{font:inherit;font-size:1.05rem;padding:12px;border:1.5px solid #CDD3CE;border-radius:10px;background:#fff;color:inherit}}
 .lg-card input:focus{{outline:none;border-color:#2E7650;box-shadow:0 0 0 3px #E4EFE8}}

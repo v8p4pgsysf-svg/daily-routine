@@ -64,3 +64,8 @@
 - **Prompts only when they matter:** a device without the key asks for the password on open only if the person has photos; otherwise at their first upload.
 - **Files are labelled image/jpeg** so the existing bucket (image types only) accepts them without a schema change for Jack to run.
 - **Older plain photos are encrypted in place** the first time the key is available and a recovery code is saved.
+
+## 31 Oct 2026 (end-of-evening sweep)
+
+- **Sign-in cards now shrink to the screen** (`#login` grid column `minmax(0,1fr)`, inputs `min-width:0`). They sized to the inputs' natural width and overflowed by ~25px at 320px (Display Zoom); this predated tonight.
+- **Invite code box lost its placeholder**: it was cut off at 320px, and the line above already says to enter the code you were given.

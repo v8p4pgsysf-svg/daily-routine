@@ -1,30 +1,27 @@
 # Handover: Daily Routine app
-Updated: 31 Oct 2026, after adding the Home Screen nudge.
+Updated: 31 Oct 2026, end of the evening session.
 
 ## Current goal
-Polish the hosted Daily Routine app (GitHub Pages + Supabase) so Jack uses it daily on his iPhone and can invite his girlfriend and friends.
+Polish the hosted Daily Routine app (GitHub Pages + Supabase) so Jack uses it daily on his iPhone and can invite his girlfriend and friends. The two must-haves before wider sharing are done: forgotten-password reset and private (encrypted) progress photos.
 
 ## Read first
-`CLAUDE.md` (architecture, single-source lists, how to ship). `src/weekly-routine.html` is ~220 KB in one file: grep for the part you need rather than reading it whole. `RATIONALE.md` before reversing any past decision.
+`CLAUDE.md` (architecture, single-source lists, how to ship). `src/weekly-routine.html` is ~230 KB in one file: grep for the part you need. `RATIONALE.md` before reversing any past decision.
 
-## Last shipped
-- Home Screen nudge on the sign-in page, same on iPhone and Android (see `CLAUDE.md`).
-- Settings: Programme and Workouts A–C in one box (`secPresets(D, secLists(D,false,true))`). Check: `tests/hosted/settings-workouts.py`. Tests: 179 app, 56 end-to-end, 17 home-screen checks (`tests/hosted/home-screen.py`).
-- Feedback: icon left of the cog (375px and up) + Settings → Send feedback; stored in `public.feedback`. Test: `tests/hosted/feedback.py`.
-- Layout review fixes: Today header padding (class clash), chart date labels, 320px check-ins grid, "1 h" durations. Full sweep: `tests/hosted/layout-review.py`.
+## Shipped this session (all live; all tests green)
+- Home Screen card on phone browsers (same on iPhone/Android; form waits behind "Continue in … instead").
+- Settings: Programme + Workouts A–C in one box.
+- Layout fixes: Today header padding (class clash), chart date labels, 320px check-ins grid, "1 h" durations, sign-in cards fitting at 320px.
+- Feedback: icon left of the cog (375px+) and a red "Send feedback" link at the bottom of Settings; Idea/Problem required; `public.feedback` (Jack has run the SQL; it works).
+- Forgot password by emailed 6-digit code, via a dedicated Gmail (app password) as Supabase custom SMTP. Works live; first email landed in junk, so the code step says to check junk.
+- Weekly review photos: × deletes in one tap with Undo.
+- Photo encryption with a recovery code. Checked live: a downloaded file from Storage won't open.
 
-## Testing notes
-- App tests: `npm i jsdom` somewhere, then `NODE_PATH=<that>/node_modules node tests/app.test.js src/weekly-routine.html`.
-- End-to-end and home-screen: follow `tests/hosted/README.md`.
-- Layout checks: Playwright + Chromium are in the workspace (`PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`). Serve a copy of `docs/` with `mock-supabase.js` as `supabase.js`, sign in as `jack@example.com` / `Start-1234`, check at 390px in light and dark.
+## Testing
+- App: `npm i jsdom` somewhere, then `NODE_PATH=<that>/node_modules node tests/app.test.js src/weekly-routine.html` (179 checks).
+- Hosted: follow `tests/hosted/README.md`. Suites: `run.py` (56), `home-screen.py`, `feedback.py`, `forgot-password.py`, `review-photos.py`, `photo-encryption.py`, plus the visual sweeps `layout-review.py` and `screens-sweep.py`. Playwright + Chromium: `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`. The mock's email code is always 123456.
+- Claude can't reach the live site or Supabase from the session; Jack checks live behaviour on his phone and in the dashboard.
 
-## Waiting on Jack
-- Open the live link in Safari on a real iPhone (a private tab, so you see it as a newcomer) and follow the card through to the Home Screen app.
-
-## Agreed next (in this order)
-1. ~~Forgotten-password reset~~ **Done and working live** (31 Oct): Gmail SMTP + Magic Link template with `{{ .Token }}`. First test landed in **junk**; the code screen now says to check junk. If friends keep getting junk, move to a domain + Resend (SMTP settings only).
-2. ~~Encrypt progress photos~~ **Shipped and checked live 31 Oct** (with recovery code): Jack downloaded a stored photo from Supabase Storage and it wouldn't open.
-
-## Open ideas (not started; Jack hasn't committed to them)
-- Backup nudge: show "last backup: X ago" in the weekly review, since Export is manual.
-- Forgotten password and email confirmation, once Jack sets up email sending in Supabase.
+## Open ideas (not started; Jack hasn't chosen)
+- **Feedback alerts** (Jack paused this). Options discussed: (1) in-app feedback inbox only Jack's account can read, with a dot on the icon (Claude's pick: one SQL policy, no third parties); (2) email per message via a Supabase Edge Function + the app's Gmail on port 465 (Supabase blocks 25/587; 465 unconfirmed); (3) ntfy push without message text.
+- Backup nudge: "last backup: X ago" in the weekly review, since Export is manual.
+- If reset emails keep landing in junk for friends: a domain + Resend (only Supabase SMTP settings change).
