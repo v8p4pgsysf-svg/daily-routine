@@ -8,7 +8,7 @@ Polish the hosted Daily Routine app (GitHub Pages + Supabase) so Jack uses it da
 `CLAUDE.md` (architecture, single-source lists, how to ship). `src/weekly-routine.html` is ~220 KB in one file: grep for the part you need rather than reading it whole. `RATIONALE.md` before reversing any past decision.
 
 ## Last shipped
-- Home Screen nudge on the sign-in page (see `CLAUDE.md`). Tests: 179 app, 56 end-to-end, 14 home-screen (`tests/hosted/home-screen.py`).
+- Home Screen nudge on the sign-in page, same on iPhone and Android (see `CLAUDE.md`). Tests: 179 app, 56 end-to-end, 17 home-screen checks (`tests/hosted/home-screen.py`).
 
 ## Testing notes
 - App tests: `npm i jsdom` somewhere, then `NODE_PATH=<that>/node_modules node tests/app.test.js src/weekly-routine.html`.

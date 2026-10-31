@@ -18,13 +18,17 @@ if(!C.supabaseUrl||!C.supabaseAnonKey||/YOUR-/.test(C.supabaseUrl)){
 const sb=window.supabase.createClient(C.supabaseUrl,C.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:"routine-auth"}});
 
 /* ---------- home screen: on a phone's browser, suggest adding the app before signing in ----------
-   iPhone: no install prompt exists, so show the steps. A Home Screen app keeps its own sign-in, separate from
-   Safari, so the steps come first and the form waits behind "Continue in Safari instead".
-   Apps like Instagram open links in their own browser, which can't add to the Home Screen: send people to Safari.
-   Android Chrome: offer its real install prompt. Desktop, or already opened from the Home Screen: nothing. */
+   Same heading and intro on every phone; only the steps differ.
+   On every phone the steps come first and the form waits behind "Continue in … instead" (on iPhone a Home Screen
+   app keeps its own sign-in, separate from Safari, so signing in first would mean signing in twice).
+   iPhone: browsers can't be asked to install, so show the steps.
+   Android: a real Install button when the browser offers one; until then (or in browsers that never do), the menu steps.
+   Apps like Instagram open links in their own browser, which can't add to the Home Screen: send people to the real browser.
+   Desktop, or already opened from the Home Screen: nothing. */
 const UA=navigator.userAgent;
 const IOS=/iPhone|iPad|iPod/.test(UA)||(/Macintosh/.test(UA)&&navigator.maxTouchPoints>1);
-const IN_APP=IOS&&/Instagram|FBAN|FBAV|FB_IAB|LinkedInApp|Snapchat|Line\/|GSA\/|Twitter/.test(UA);
+const ANDROID=/Android/.test(UA);
+const IN_APP=(IOS||ANDROID)&&/Instagram|FBAN|FBAV|FB_IAB|LinkedInApp|Snapchat|Line\/|GSA\/|Twitter/.test(UA);
 const OTHER_IOS=IOS&&/CriOS|FxiOS|EdgiOS/.test(UA);
 const standalone=()=>navigator.standalone===true||(window.matchMedia&&matchMedia("(display-mode: standalone)").matches);
 const SKIP="routine-a2hs-skip";
@@ -32,37 +36,42 @@ const skipped=()=>{try{return localStorage.getItem(SKIP)==="1"}catch(e){return f
 const SHARE_ICO='<svg class="lg-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
 let installEvt=null;
 addEventListener("beforeinstallprompt",e=>{if(window.__routineHost)return; // signed in: leave the browser's own install option alone
-  e.preventDefault();installEvt=e;const box=$("login");if(box&&!box.hidden)addInstallHint(box)});
+  e.preventDefault();installEvt=e;const box=$("login");if(!box||box.hidden)return;
+  const c=$("lg-a2hs");if(c&&c.dataset.kind==="android-steps")c.remove(); // swap the written steps for the Install button
+  addInstallHint(box)});
 function addInstallHint(box){
-  if(standalone()||skipped()||$("lg-a2hs"))return false;
+  if(!(IOS||ANDROID)||standalone()||skipped()||$("lg-a2hs"))return false;
   const done=()=>{try{localStorage.setItem(SKIP,"1")}catch(e){}const c=$("lg-a2hs");c&&c.remove();box.classList.remove("a2hs")};
-  let html;
-  if(IOS&&IN_APP)html=`<h1>Open in Safari first</h1>
+  const browser=IOS?"Safari":"Chrome";
+  const intro=`<h1>Add to your Home Screen</h1>
+      <p class="lg-sub">Daily Routine works best as an app on your Home Screen.</p>`;
+  let html,kind;
+  if(IN_APP){kind="in-app";html=`<h1>Open in ${browser} first</h1>
       <p class="lg-sub">This link opened inside another app, which can't add Daily Routine to your Home Screen.</p>
-      <ol class="lg-steps"><li><span>Tap <b>⋯</b> or the compass icon, then <b>Open in Safari</b> (or <b>Open in browser</b>).</span></li>
-      <li><span>In Safari, follow the steps to add it to your Home Screen.</span></li></ol>
-      <button class="lg-link" type="button" id="lg-skip">Continue here instead</button>`;
-  else if(IOS)html=`<h1>Add to your Home Screen</h1>
-      <p class="lg-sub">Daily Routine works best as an app on your Home Screen: full screen, one tap away, and it stays signed in.</p>
-      <ol class="lg-steps">${OTHER_IOS
-        ?`<li><span>Tap the Share button ${SHARE_ICO} in the address bar.</span></li>`
-        :`<li><span>Tap the Share button ${SHARE_ICO}. On iOS 26 it's under <b>⋯</b> next to the address bar.</span></li>`}
-      <li><span>Tap <b>Add to Home Screen</b>. If you don't see it, scroll down or tap <b>View More</b>.</span></li>
-      <li><span>Keep <b>Open as Web App</b> on, then tap <b>Add</b>.</span></li>
-      <li><span>Open <b>Routine</b> from your Home Screen and sign in there. It keeps its own sign-in, separate from Safari.</span></li></ol>
-      <button class="lg-link" type="button" id="lg-skip">Continue in Safari instead</button>`;
-  else if(installEvt)html=`<h1>Install the app</h1>
-      <p class="lg-sub">Adds Daily Routine to your home screen so it opens full screen, like any other app.</p>
+      <ol class="lg-steps"><li><span>Tap <b>${IOS?"⋯":"⋮"}</b> (or the compass icon), then <b>Open in ${browser}</b> or <b>Open in browser</b>.</span></li>
+      <li><span>Then follow the steps there to add it to your Home Screen.</span></li></ol>
+      <button class="lg-link" type="button" id="lg-skip">Continue here instead</button>`}
+  else if(IOS){kind="ios-steps";html=`${intro}
+      <ol class="lg-steps"><li><span>Tap the Share button ${SHARE_ICO}${OTHER_IOS?" in the address bar":". If you can't see it, tap <b>⋯</b> first"}.</span></li>
+      <li><span>Choose <b>Add to Home Screen</b>. You may need to scroll down to find it.</span></li>
+      <li><span>Tap <b>Add</b>. If you see <b>Open as Web App</b>, leave it on.</span></li>
+      <li><span>Open <b>Routine</b> from your Home Screen and sign in.</span></li></ol>
+      <button class="lg-link" type="button" id="lg-skip">Continue in Safari instead</button>`}
+  else if(installEvt){kind="android-button";html=`${intro}
       <button class="lg-btn" type="button" id="lg-inst">Install</button>
-      <button class="lg-link" type="button" id="lg-skip">Not now</button>`;
-  else return false;
-  const card=document.createElement("div");card.className="lg-card";card.id="lg-a2hs";card.innerHTML=html;
+      <button class="lg-link" type="button" id="lg-skip">Continue in the browser instead</button>`}
+  else{kind="android-steps";html=`${intro}
+      <ol class="lg-steps"><li><span>Tap the <b>⋮</b> menu in your browser.</span></li>
+      <li><span>Choose <b>Install app</b> or <b>Add to Home screen</b>.</span></li>
+      <li><span>Open <b>Routine</b> from your Home Screen and sign in.</span></li></ol>
+      <button class="lg-link" type="button" id="lg-skip">Continue in the browser instead</button>`}
+  const card=document.createElement("div");card.className="lg-card";card.id="lg-a2hs";card.dataset.kind=kind;card.innerHTML=html;
   box.prepend(card);
-  if(IOS)box.classList.add("a2hs"); // iPhone: the steps come first; the form waits
+  box.classList.add("a2hs"); // the steps come first; the form waits
   $("lg-skip").onclick=()=>{done();const f=box.querySelector("input:not([hidden])");f&&setTimeout(()=>f.focus(),30)};
   const ib=$("lg-inst");if(ib)ib.onclick=async()=>{const e=installEvt;installEvt=null;if(!e)return;
     try{await e.prompt();const r=await e.userChoice;if(r&&r.outcome==="accepted"){done();return}}catch(err){}
-    const c=$("lg-a2hs");c&&c.remove()};
+    done()};
   return true;
 }
 
