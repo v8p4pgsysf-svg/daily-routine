@@ -33,11 +33,13 @@ function showLogin(note){
       <button class="lg-btn" id="lg-btn" type="submit">Sign in</button>
       <button class="lg-link" type="button" id="lg-new">New here? Create an account</button></form>
     <form class="lg-card" id="lg-fs" method="post" action="#" novalidate hidden>
-      <h1>Create your account</h1><p class="lg-sub">Use the email you were invited with and choose a password.</p>
+      <h1>Create your account</h1><p class="lg-sub">Choose a password and enter the invite code you were given.</p>
       <p class="lg-err" id="lg-serr" role="alert" hidden></p>
       <label for="lg-semail">Email</label><input id="lg-semail" name="new-email" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" required>
       <label for="lg-spass">Password</label><input id="lg-spass" name="new-password" type="password" autocomplete="new-password" placeholder="At least 8 characters" required>
       <label for="lg-spass2">Password again</label><input id="lg-spass2" name="new-password-confirm" type="password" autocomplete="new-password" required>
+      <label for="lg-scode">Invite code</label><input id="lg-scode" name="invite-code" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="From whoever shared the app">
+      
       <button class="lg-btn" id="lg-sbtn" type="submit">Create account</button>
       <button class="lg-link" type="button" id="lg-have">Already have an account? Sign in</button></form>`;
   const fp=$("lg-fp"),fs=$("lg-fs");
@@ -58,10 +60,11 @@ function showLogin(note){
     if(p1.length<8){flashErr("lg-serr","Choose a password of at least 8 characters.");return}
     if(p1!==p2){flashErr("lg-serr","The two passwords don't match.");return}
     const b=$("lg-sbtn");b.disabled=true;b.textContent="Creating…";
-    let res;try{res=await sb.auth.signUp({email,password:p1})}catch(err){res={error:err}}
+    const invite_code=$("lg-scode").value.trim();
+    let res;try{res=await sb.auth.signUp({email,password:p1,options:{data:invite_code?{invite_code}:{}}})}catch(err){res={error:err}}
     b.disabled=false;b.textContent="Create account";
     const m=String(res.error&&res.error.message||"");
-    if(res.error){flashErr("lg-serr",/not_invited|database error|saving new user|signups not allowed|not allowed/i.test(m)?"This email isn't on the invite list. Ask whoever shared the app to add it, then try again."
+    if(res.error){flashErr("lg-serr",/not_invited|database error|saving new user|signups not allowed|not allowed/i.test(m)?($("lg-scode").value.trim()?"That invite code isn't right. Check it with whoever shared the app.":"Enter the invite code you were given.")
       :/already|registered|exists/i.test(m)?"There's already an account for this email. Sign in instead."
       :/weak|password/i.test(m)?"That password is too weak. Make it longer.":/rate|too many/i.test(m)?"Too many attempts. Wait a minute, then try again.":"Couldn't create the account. Check your connection and try again.");return}
     if(res.data&&res.data.session){box.hidden=true;start(res.data.session);return}
@@ -157,6 +160,16 @@ function start(session){
   window.__routineHost={email:user.email,photoUrl,canChangePassword:C.authMode!=="code",
     changePassword:async pw=>{const {error}=await sb.auth.updateUser({password:pw});if(error)throw new Error(/same|different/i.test(error.message)?"same":/weak|short|least/i.test(error.message)?"weak":"failed")},
     importPhoto:(id,blob)=>put(id,blob,true),
+    deleteAccount:async()=>{
+      // photos first (the storage API removes the files), then the database removes records and the login
+      let r;try{r=await sb.storage.from("photos").list(uid,{limit:1000})}catch(e){r={error:e}}
+      if(r.error)throw new Error("photos");
+      const paths=(r.data||[]).map(f=>uid+"/"+f.name);
+      if(paths.length){const d=await sb.storage.from("photos").remove(paths);if(d.error)throw new Error("photos")}
+      const {error}=await sb.rpc("delete_my_account");if(error)throw new Error("account");
+      try{await sb.auth.signOut({scope:"local"})}catch(e){}
+      clearLocal();try{localStorage.removeItem("routine-owner");localStorage.removeItem("routine-tip-done")}catch(e){}
+      try{sessionStorage.setItem("routine-deleted","1")}catch(e){}location.replace(location.pathname)},
     signOut:async()=>{try{await sb.auth.signOut()}catch(e){}clearLocal();try{localStorage.removeItem("routine-owner")}catch(e){}location.replace(location.pathname)}};
   // run the app
   document.body.classList.add("in");
@@ -164,6 +177,7 @@ function start(session){
 }
 
 sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT"&&window.__routineHost)location.replace(location.pathname)});
-sb.auth.getSession().then(({data})=>{if(data&&data.session)start(data.session);else showLogin()}).catch(()=>showLogin());
+let deleted=false;try{deleted=sessionStorage.getItem("routine-deleted")==="1";sessionStorage.removeItem("routine-deleted")}catch(e){}
+sb.auth.getSession().then(({data})=>{if(data&&data.session&&!deleted)start(data.session);else showLogin(deleted?"Your account and data have been deleted.":"")}).catch(()=>showLogin());
 if("serviceWorker" in navigator&&location.protocol==="https:")addEventListener("load",()=>navigator.serviceWorker.register("sw.js").then(r=>r.update()).catch(()=>{}));
 })();

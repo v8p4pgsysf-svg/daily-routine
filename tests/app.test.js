@@ -378,6 +378,36 @@ click(w,$(w,"#tab-strength"));ok($$(w,'[data-st="type"]').map(b=>b.dataset.type)
 click(w,$(w,"#tab-progress"));ok(!/target/.test($(w,"#pschart-h").textContent),"Z4. Progress strength chart has no target line label");
 click(w,$(w,"#tab-week"));click(w,$(w,"#revtoggle"));ok(!/Strength/.test($(w,"#revsum").textContent),"Z5. Review summary leaves out Strength");
 w.close();
+// --- kg / lb
+store={};w=boot("2026-10-28T09:00:00");
+click(w,$(w,'#setcog'));ok(!!$(w,'[data-sunit="kg"]')&&$(w,'[data-sunit="kg"]').getAttribute("aria-pressed")==="true","U1. Settings has a Units row, kg by default");
+click(w,$(w,'[data-sunit="lb"]'));click(w,$(w,'[data-st="set-save"]'));
+click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="type"][data-type="A"]'));setDate(w,$(w,"#st-date"),"2026-10-27");click(w,$(w,'[data-st="start"]'));
+ok(/lb/.test($(w,"#w-0-0").getAttribute("aria-label")),"U2. Workout weight boxes are in lb");
+type(w,$(w,"#w-0-0"),"135");type(w,$(w,"#r-0-0"),"8");click(w,$(w,'[data-tick="0-0"]'));
+{const ss=JSON.parse(w.localStorage.getItem("weekly-routine.workouts.v1"));const it=Object.values(ss)[0].items[0];
+ ok(Math.abs(it.log[0].w-61.235)<0.01,"   135 lb is stored as "+it.log[0].w+" kg");
+ ok($(w,"#w-0-1").value==="135","   The next set shows 135 (carried down, shown in lb)");}
+click(w,$(w,'[data-st="finish"]'));if($(w,'[data-st="finish"]'))click(w,$(w,'[data-st="finish"]'));click(w,$(w,'[data-st="type"][data-type="A"]'));click(w,$(w,'[data-st="start"]'));
+ok($(w,"#sr-0-0 .pv").textContent==="Last 135×8","U3. Next time, Last shows 135×8 (lb)");
+click(w,$(w,'[data-st="discard"]'));click(w,$(w,'[data-st="discard"]'));
+click(w,$(w,"#tab-week"));click(w,$(w,"#revtoggle"));ok($(w,"#weight-l").textContent==="Weight (lb)","U4. Weekly review weight is in lb");
+type(w,$(w,"#weight"),"176.4");{const wk=JSON.parse(w.localStorage.getItem("weekly-routine.v1"))["2026-10-26"];ok(Math.abs(wk.weight-80.01)<0.05,"   176.4 lb saved as "+wk.weight+" kg");}
+w.close();
+// --- more habits and your own
+store={};w=boot("2026-10-28T09:00:00");
+click(w,$(w,'#setcog'));ok(["water","steps","stretch","daylight","screens","reading","supps"].every(k=>$(w,`[data-shab="${k}"]`)&&!$(w,`[data-shab="${k}"]`).checked),"H1. Seven new habits are offered, all off");
+chg(w,$(w,'[data-shab="water"]'),true);
+click(w,$(w,'[data-st="ch-open"]'));type(w,$(w,"#ch-name"),"Meditate");type(w,$(w,"#ch-sub"),"10 minutes");chg(w,$(w,"#ch-days"),5);click(w,$(w,'[data-st="ch-add"]'));
+ok(/Meditate/.test($(w,"#setbody").textContent)&&$(w,'[data-scsub="0"]').value==="10 minutes","H2. Add your own habit: Meditate, 10 minutes, 5 days");
+click(w,$(w,'[data-st="set-save"]'));
+const lbl=[...w.document.querySelectorAll("#daily .lbl")].map(e=>e.textContent);
+ok(lbl.some(t=>/Water/.test(t)&&/2 litres/.test(t))&&lbl.some(t=>/Meditate/.test(t)&&/10 minutes · 5\+ days/.test(t)),"H3. Both appear in the check-ins grid with their targets");
+{const k=JSON.parse(w.localStorage.getItem("weekly-routine.settings.v1")).custom[0].k;click(w,$(w,`#d-${k}-0`));
+ ok($(w,`[data-ct="${k}"]`).textContent==="1/5","H4. Ticking your own habit counts toward its target (1/5)");
+ save(w);w.close();w=boot("2026-10-28T09:00:00");ok($(w,`#d-${k}-0`).checked,"   and the tick survives a reload");
+ click(w,$(w,'#setcog'));click(w,$(w,'[data-scdel="0"]'));click(w,$(w,'[data-st="set-save"]'));ok(!$(w,`#d-${k}-0`),"H5. Deleting it removes it from the grid");}
+w.close();
 // --- past weeks keep their own targets
 store={};w=boot("2026-10-28T09:00:00");
 click(w,$(w,"#prev"));click(w,$(w,"#d-protein-0"));click(w,$(w,"#d-sleep-0"));click(w,$(w,"#next"));

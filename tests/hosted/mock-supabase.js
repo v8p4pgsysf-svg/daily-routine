@@ -14,13 +14,15 @@ function createClient(){
     async verifyOtp({email,token}){if(token!=="123456")return {data:{},error:{message:"Token has expired or is invalid"}};
       const s={access_token:"t",user:{id:uidOf(email),email}};localStorage.setItem("routine-auth",JSON.stringify(s));return {data:{session:s},error:null}},
     async signInWithPassword({email,password}){const pw=JSON.parse(localStorage.getItem("mock-pw")||"{}");const want=pw[email]||"Start-1234";
+      if(JSON.parse(localStorage.getItem("mock-deleted")||"[]").includes(email))return {data:{},error:{message:"Invalid login credentials"}};
       if(email.startsWith("stranger")||password!==want)return {data:{},error:{message:"Invalid login credentials"}};
       const s={access_token:"t",user:{id:uidOf(email),email}};localStorage.setItem("routine-auth",JSON.stringify(s));return {data:{session:s},error:null}},
     async updateUser({password}){const s=JSON.parse(localStorage.getItem("routine-auth")||"null");const pw=JSON.parse(localStorage.getItem("mock-pw")||"{}");
       if((pw[s.user.email]||"Start-1234")===password)return {error:{message:"New password should be different from the old password."}};pw[s.user.email]=password;localStorage.setItem("mock-pw",JSON.stringify(pw));return {error:null}},
-    async signUp({email,password}){const inv=JSON.parse(localStorage.getItem("mock-invites")||"[]");const pw=JSON.parse(localStorage.getItem("mock-pw")||"{}");
-      if(!inv.includes(email))return {data:{},error:{message:"Database error saving new user"}};
+    async signUp({email,password,options}){const inv=JSON.parse(localStorage.getItem("mock-invites")||"[]");const pw=JSON.parse(localStorage.getItem("mock-pw")||"{}");
+      const code=(localStorage.getItem("mock-code")||"change-me").toLowerCase(),given=String((options&&options.data&&options.data.invite_code)||"").trim().toLowerCase();
       if(pw[email])return {data:{},error:{message:"User already registered"}};
+      if(!inv.includes(email)&&!(code!=="change-me"&&given===code))return {data:{},error:{message:"Database error saving new user"}};
       pw[email]=password;localStorage.setItem("mock-pw",JSON.stringify(pw));const s={access_token:"t",user:{id:uidOf(email),email}};localStorage.setItem("routine-auth",JSON.stringify(s));return {data:{session:s,user:s.user},error:null}},
     async signOut(){localStorage.removeItem("routine-auth");this._cbs.forEach(c=>c("SIGNED_OUT"));return {error:null}},
     onAuthStateChange(cb){this._cbs.push(cb);return {data:{subscription:{unsubscribe(){}}}}}};
@@ -42,8 +44,13 @@ function createClient(){
       const st=load(STK);if(st[path]&&!upsert)return {error:{message:"The resource already exists"}};
       const url=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(blob)});st[path]=url;save(STK,st);return {data:{path},error:null}},
     async createSignedUrls(paths){const st=load(STK),u=me();return {data:paths.map(p=>p.startsWith(u+"/")&&st[p]?{path:p,signedUrl:st[p]}:{path:p,error:"not found",signedUrl:null}),error:null}},
+    async list(folder){const st=load(STK),u=me();if(folder!==u)return {data:[],error:null};return {data:Object.keys(st).filter(k=>k.startsWith(u+"/")).map(k=>({name:k.slice(u.length+1)})),error:null}},
     async remove(paths){const st=load(STK),u=me();paths.forEach(p=>{if(p.startsWith(u+"/"))delete st[p]});save(STK,st);return {error:null}}}}};
-  return {auth,from,channel,removeChannel(){},storage};
+  async function rpc(name){if(name!=="delete_my_account")return {error:{message:"unknown"}};const u=me();if(!u)return {error:{message:"not_signed_in"}};
+    const db=load(DBK);for(const k in db)if(db[k].user_id===u)delete db[k];save(DBK,db);
+    const s=JSON.parse(localStorage.getItem("routine-auth"));const del=JSON.parse(localStorage.getItem("mock-deleted")||"[]");del.push(s.user.email);localStorage.setItem("mock-deleted",JSON.stringify(del));
+    return {error:null}}
+  return {auth,from,channel,removeChannel(){},storage,rpc};
 }
 window.supabase={createClient};
 })();
