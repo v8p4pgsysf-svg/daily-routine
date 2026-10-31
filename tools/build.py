@@ -15,7 +15,7 @@ title=re.search(r"<title>(.*?)</title>",body).group(1)
 body=re.sub(r"<title>.*?</title>\n?","",body,count=1)
 body=body.replace('<meta name="claude:viewport-fit-sides" content="cover">\n','')
 head=f'''<!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>{title}</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">

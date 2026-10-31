@@ -317,6 +317,8 @@ img.broken{visibility:hidden}
 .stcard.resume{flex-direction:row;flex-wrap:wrap;justify-content:space-between;align-items:center;border-color:var(--green-mid);background:var(--green-soft)}
 .sttitle{font-size:1.15rem;font-weight:650}
 .startrow{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+.startrow>.field:first-child{flex:1 1 100%}.startrow>.field:first-child .seg{display:flex}.startrow>.field:first-child .seg button{flex:1 1 0}
+.startrow>.field:nth-child(2){flex:1 1 140px}.startrow>.field:nth-child(2) input{width:100%}.startrow>.btn{flex:1 1 auto}
 .seg{display:inline-flex;gap:3px;padding:3px;border-radius:10px;background:var(--bg);border:1px solid var(--line-strong)}
 .seg button{border:0;background:transparent;border-radius:7px;padding:6px 16px;font-weight:700;font-size:1rem;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.15;color:var(--muted)}
 .seg button small{font-size:.68rem;font-weight:500;letter-spacing:.03em}
@@ -529,7 +531,7 @@ input[type=date],select{font:inherit;color:var(--ink);background:var(--bg);borde
 .exside{flex-direction:row;align-items:center;gap:8px}
 .swapbtn{border:0;padding:4px 2px;font-size:.8rem;font-weight:500;color:var(--muted)}
 .swapbtn:hover{color:var(--ink)}
-.setrow{grid-template-columns:minmax(0,1fr) 76px 12px 60px 44px!important;gap:6px!important}
+.setrow{grid-template-columns:minmax(0,1fr) 76px 12px 72px 44px!important;gap:6px!important}
 .sinfo{display:flex;flex-direction:column;line-height:1.2;min-width:0}
 .setrow .sn{font-family:var(--sans);font-size:.86rem;font-weight:600;color:var(--ink);text-align:left}
 .setrow .pv{font-size:.74rem;color:var(--faint)}
@@ -1614,7 +1616,7 @@ function renderCharts(){
   const pts=Object.keys(weeks).filter(k=>weeks[k].weight!=null&&k<=cur).sort().slice(-12).map(k=>({k,v:toU(weeks[k].weight)}));
   const W=400,H=210,L=40,R=12,T=16,B=28;
   if(pts.length<2){
-    $("wchart").innerHTML=`<div class="empty">${pts.length?`One weigh-in so far: <span class="num">&nbsp;${pts[0].v.toFixed(1)} ${unitW()}</span>. The trend appears after next week's review.`:(SETTINGS.review.on?"Enter your weight in the weekly review.":"Weight is logged in the weekly review, which is switched off in settings.")+" The trend starts after two weigh-ins."}</div>`;
+    $("wchart").innerHTML=`<div class="empty"><span>${pts.length?`One weigh-in so far: <span class="num">${pts[0].v.toFixed(1)} ${unitW()}</span>. The trend appears after next week's review.`:(SETTINGS.review.on?"Enter your weight in the weekly review.":"Weight is logged in the weekly review, which is switched off in settings.")+" The trend starts after two weigh-ins."}</span></div>`;
   }else{
     let mn=Math.min(...pts.map(p=>p.v)),mx=Math.max(...pts.map(p=>p.v));
     mn=Math.floor((mn-0.5)*2)/2;mx=Math.ceil((mx+0.5)*2)/2;if(mx-mn<2){const m=(mx+mn)/2;mn=Math.floor(m-1);mx=Math.ceil(m+1)}
