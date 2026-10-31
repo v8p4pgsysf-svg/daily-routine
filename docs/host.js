@@ -122,7 +122,7 @@ function showLogin(note){
      A code rather than a reset link, because on iPhone a link opens in Safari, not the Home Screen app. */
   const fr=$("lg-fr");let frEmail="",frSession=null;
   const frStep=(n,sub)=>{$("lg-fr1").hidden=n!==1;$("lg-fr2").hidden=n!==2;
-    $("lg-frsub").innerHTML=sub||(n===1?"We'll email you a code so you can choose a new password.":`Enter the code we sent to <b>${esc(frEmail)}</b>, then choose a new password. Not there? Check your junk folder.`)};
+    $("lg-frsub").innerHTML=sub||(n===1?"We'll email you a code so you can choose a new password.":`Enter the code we sent to <b>${esc(frEmail)}</b>. Not there? Check your junk folder.`)};
   const toForgot=()=>{fp.hidden=true;fs.hidden=true;fr.hidden=false;flashErr("lg-err","");flashErr("lg-frerr","");frSession=null;$("lg-fcodewrap").hidden=false;
     $("lg-femail").value=$("lg-email").value;frStep(1);setTimeout(()=>$("lg-femail").focus(),30)};
   const fromForgot=()=>{fr.hidden=true;fp.hidden=false;flashErr("lg-frerr","");if(frEmail||$("lg-femail").value)$("lg-email").value=frEmail||$("lg-femail").value;setTimeout(()=>$($("lg-email").value?"lg-pass":"lg-email").focus(),30)};
@@ -138,7 +138,7 @@ function showLogin(note){
         :!navigator.onLine||/fetch|network|load failed|offline/i.test(m)?"Couldn't send the email. Check your connection and try again."
         :"Couldn't send the email right now. Try again in a few minutes.");return}
     frEmail=email;frSession=null;flashErr("lg-frerr","");$("lg-fcodewrap").hidden=false;
-    frStep(2,again?`We've sent a new code to <b>${esc(email)}</b>. Enter it below, then choose a new password. Not there? Check your junk folder.`:"");
+    frStep(2,again?`We've sent a new code to <b>${esc(email)}</b>. Not there? Check your junk folder.`:"");
     if(!again)$("lg-fcode").value="";setTimeout(()=>$("lg-fcode").focus(),30)}
   $("lg-fresend").onclick=()=>sendCode(true);
   fr.onsubmit=async e=>{e.preventDefault();if(!$("lg-fr1").hidden){sendCode(false);return}
