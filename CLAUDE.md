@@ -38,6 +38,9 @@ Each of these lives in one list in `src/weekly-routine.html`; everything else is
 3. Rebuild: `python3 tools/build.py`. This rewrites `docs/index.html` and `docs/sw.js`; the new cache version makes phones pick up the update.
 4. Commit and push to `main`. GitHub Pages redeploys in a minute or two. Phones open the saved copy instantly, pick up the new version in the background, and show it on the next open.
 
+## Session continuity
+At the start of a session, if `HANDOVER.md` exists, read it before responding: it holds in-flight work and open threads from the last chat. Once that work is picked up, rewrite or delete it so it never goes stale. `RATIONALE.md` is an append-only log of why things were decided; check it before reversing a past decision.
+
 ## Jack's preferences for this app
 - Phone-first: low friction, no duplicate inputs, consistent spacing, readable on iPhone.
 - Opinionated suggestions, with honest trade-offs.
