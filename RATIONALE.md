@@ -17,3 +17,8 @@
 - **Habit list trimmed; own habits are daily.** Water and No nicotine removed from the built-in list (Jack doesn't want many; Water is now the example for adding your own). Own habits lost the days-a-week choice: it was invisible after adding and couldn't be edited, and almost every self-added habit is daily. Rejected keeping a days picker on each row for space. Can be re-added later without data loss (custom habits still store `target`).
 - **Reversal: No nicotine is back** (same day). Jack wants it built in, on the same basis as No alcohol: a days-a-week target, default 7.
 - **Suggested programmes moved to a "Programme" row above the workout cards.** As a card below Workouts A–C it read like another workout and didn't make clear it replaces them. The row names the current programme ("Custom" once edited, Jack's wording) and switching needs an explicit "Switch to …" confirm. Kept to one line to save space.
+
+## 31 Oct 2026 (Home Screen nudge)
+
+- **iPhone shows the Add to Home Screen steps before sign-in, and the form waits behind "Continue in Safari instead".** Safari can't be asked to install a site, so a banner with the steps is the only option. The gate comes before sign-in because a Home Screen app keeps its own sign-in, separate from Safari: anyone who signs in first then adds it has to sign in twice. A banner after sign-in was rejected for that reason. The skip is remembered so it never nags twice.
+- **Android Chrome gets its own Install button, but the form stays visible.** Installed Chrome apps share the browser's sign-in, so there's nothing to gate.

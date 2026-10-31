@@ -17,6 +17,55 @@ if(!C.supabaseUrl||!C.supabaseAnonKey||/YOUR-/.test(C.supabaseUrl)){
 }
 const sb=window.supabase.createClient(C.supabaseUrl,C.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:"routine-auth"}});
 
+/* ---------- home screen: on a phone's browser, suggest adding the app before signing in ----------
+   iPhone: no install prompt exists, so show the steps. A Home Screen app keeps its own sign-in, separate from
+   Safari, so the steps come first and the form waits behind "Continue in Safari instead".
+   Apps like Instagram open links in their own browser, which can't add to the Home Screen: send people to Safari.
+   Android Chrome: offer its real install prompt. Desktop, or already opened from the Home Screen: nothing. */
+const UA=navigator.userAgent;
+const IOS=/iPhone|iPad|iPod/.test(UA)||(/Macintosh/.test(UA)&&navigator.maxTouchPoints>1);
+const IN_APP=IOS&&/Instagram|FBAN|FBAV|FB_IAB|LinkedInApp|Snapchat|Line\/|GSA\/|Twitter/.test(UA);
+const OTHER_IOS=IOS&&/CriOS|FxiOS|EdgiOS/.test(UA);
+const standalone=()=>navigator.standalone===true||(window.matchMedia&&matchMedia("(display-mode: standalone)").matches);
+const SKIP="routine-a2hs-skip";
+const skipped=()=>{try{return localStorage.getItem(SKIP)==="1"}catch(e){return false}};
+const SHARE_ICO='<svg class="lg-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
+let installEvt=null;
+addEventListener("beforeinstallprompt",e=>{if(window.__routineHost)return; // signed in: leave the browser's own install option alone
+  e.preventDefault();installEvt=e;const box=$("login");if(box&&!box.hidden)addInstallHint(box)});
+function addInstallHint(box){
+  if(standalone()||skipped()||$("lg-a2hs"))return false;
+  const done=()=>{try{localStorage.setItem(SKIP,"1")}catch(e){}const c=$("lg-a2hs");c&&c.remove();box.classList.remove("a2hs")};
+  let html;
+  if(IOS&&IN_APP)html=`<h1>Open in Safari first</h1>
+      <p class="lg-sub">This link opened inside another app, which can't add Daily Routine to your Home Screen.</p>
+      <ol class="lg-steps"><li><span>Tap <b>⋯</b> or the compass icon, then <b>Open in Safari</b> (or <b>Open in browser</b>).</span></li>
+      <li><span>In Safari, follow the steps to add it to your Home Screen.</span></li></ol>
+      <button class="lg-link" type="button" id="lg-skip">Continue here instead</button>`;
+  else if(IOS)html=`<h1>Add to your Home Screen</h1>
+      <p class="lg-sub">Daily Routine works best as an app on your Home Screen: full screen, one tap away, and it stays signed in.</p>
+      <ol class="lg-steps">${OTHER_IOS
+        ?`<li><span>Tap the Share button ${SHARE_ICO} in the address bar.</span></li>`
+        :`<li><span>Tap the Share button ${SHARE_ICO}. On iOS 26 it's under <b>⋯</b> next to the address bar.</span></li>`}
+      <li><span>Tap <b>Add to Home Screen</b>. If you don't see it, scroll down or tap <b>View More</b>.</span></li>
+      <li><span>Keep <b>Open as Web App</b> on, then tap <b>Add</b>.</span></li>
+      <li><span>Open <b>Routine</b> from your Home Screen and sign in there. It keeps its own sign-in, separate from Safari.</span></li></ol>
+      <button class="lg-link" type="button" id="lg-skip">Continue in Safari instead</button>`;
+  else if(installEvt)html=`<h1>Install the app</h1>
+      <p class="lg-sub">Adds Daily Routine to your home screen so it opens full screen, like any other app.</p>
+      <button class="lg-btn" type="button" id="lg-inst">Install</button>
+      <button class="lg-link" type="button" id="lg-skip">Not now</button>`;
+  else return false;
+  const card=document.createElement("div");card.className="lg-card";card.id="lg-a2hs";card.innerHTML=html;
+  box.prepend(card);
+  if(IOS)box.classList.add("a2hs"); // iPhone: the steps come first; the form waits
+  $("lg-skip").onclick=()=>{done();const f=box.querySelector("input:not([hidden])");f&&setTimeout(()=>f.focus(),30)};
+  const ib=$("lg-inst");if(ib)ib.onclick=async()=>{const e=installEvt;installEvt=null;if(!e)return;
+    try{await e.prompt();const r=await e.userChoice;if(r&&r.outcome==="accepted"){done();return}}catch(err){}
+    const c=$("lg-a2hs");c&&c.remove()};
+  return true;
+}
+
 /* ---------- sign in: email and password (default), or a code by email if config says authMode:"code" ----------
    Both forms stay on the page (one hidden) so password managers always find a stable sign-in form. */
 let errT={};
@@ -47,6 +96,7 @@ function showLogin(note){
   const toSignUp=()=>{fp.hidden=true;fs.hidden=false;flashErr("lg-err","");$("lg-semail").value=$("lg-email").value;setTimeout(()=>$("lg-semail").focus(),30)};
   $("lg-new").onclick=toSignUp;$("lg-have").onclick=toSignIn;
   if(note)flashErr("lg-err",note);
+  const hint=!note&&addInstallHint(box);
   fp.onsubmit=async e=>{e.preventDefault();const email=$("lg-email").value.trim().toLowerCase(),password=$("lg-pass").value;
     if(!/^\S+@\S+\.\S+$/.test(email)||!password){flashErr("lg-err","Enter your email and password.");return}
     const b=$("lg-btn");b.disabled=true;b.textContent="Signing in…";
@@ -69,7 +119,7 @@ function showLogin(note){
       :/weak|password/i.test(m)?"That password is too weak. Make it longer.":/rate|too many/i.test(m)?"Too many attempts. Wait a minute, then try again.":"Couldn't create the account. Check your connection and try again.");return}
     if(res.data&&res.data.session){box.hidden=true;start(res.data.session);return}
     toSignIn();flashErr("lg-err","Account created. Check your email for a confirmation link, then sign in here.")};
-  setTimeout(()=>$("lg-email").focus(),50);
+  if(!hint||!box.classList.contains("a2hs"))setTimeout(()=>$("lg-email").focus(),50);
 }
 function codeLogin(note){
   const box=$("login");box.hidden=false;let email="";
@@ -83,7 +133,7 @@ function codeLogin(note){
       const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:!!C.allowSignups}});
       if(error){step1(/signup|not allowed|not found/i.test(error.message)?"This email isn't set up yet. Ask whoever shared the app with you to add it.":/rate|seconds/i.test(error.message)?"Too many attempts. Wait a minute, then try again.":"Couldn't send the code. Check your connection and try again.");return}
       step2()};
-    setTimeout(()=>$("lg-email").focus(),50)};
+    if(!(!n&&addInstallHint(box)&&box.classList.contains("a2hs")))setTimeout(()=>$("lg-email").focus(),50)};
   const step2=n=>{box.innerHTML=`<form class="lg-card" id="lg-f2" novalidate>
       <h1>Check your email</h1><p class="lg-sub">Enter the code sent to <b>${esc(email)}</b>.</p>
       ${n?`<p class="lg-err" role="alert">${esc(n)}</p>`:""}
