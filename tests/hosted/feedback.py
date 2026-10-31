@@ -44,9 +44,13 @@ try:
         # open from the icon, send an empty message, then a real one
         pg.click("#fbbtn"); pg.wait_for_timeout(200)
         check("Icon opens the feedback sheet, with the text box focused", pg.locator("#fbsheet").is_visible() and pg.evaluate("document.activeElement.id") == "fb-text")
-        pg.click('[data-st="fb-send"]'); pg.wait_for_timeout(100)
-        check("Sending nothing asks for a message and sends nothing", "Write something first" in pg.inner_text("#fb-msg") and fb(pg) == [])
+        pg.fill("#fb-text", "No kind chosen"); pg.click('[data-st="fb-send"]'); pg.wait_for_timeout(100)
+        check("Idea or Problem must be chosen first; nothing sent", "Choose Idea or Problem" in pg.inner_text("#fb-msg") and fb(pg) == [])
         pg.click('[data-fbk="problem"]')
+        check("Choosing one clears the hint", pg.inner_text("#fb-msg").strip() == "")
+        pg.fill("#fb-text", ""); pg.click('[data-st="fb-send"]'); pg.wait_for_timeout(100)
+        check("An empty message is refused; nothing sent", "Write something first" in pg.inner_text("#fb-msg") and fb(pg) == [])
+        check("The intro no longer mentions who reads it", "whoever runs" not in pg.inner_text("#fbbody"))
         check("Choosing Problem changes the prompt", "What happened" in pg.get_attribute("#fb-text", "placeholder"))
         pg.fill("#fb-text", "The Log cardio button didn't respond on Tuesday.")
         for scheme in ("light", "dark"):
@@ -74,8 +78,14 @@ try:
         pg.set_viewport_size({"width": 320, "height": 700}); pg.wait_for_timeout(150)
         pg.click("#setcog"); pg.wait_for_timeout(200)
         btn = pg.locator('#setbody [data-st="feedback"]')
-        check("Settings has Send feedback at the bottom", btn.count() == 1 and pg.evaluate("[...document.querySelectorAll('#setbody .sset')].pop().textContent").startswith("Feedback"))
-        btn.scroll_into_view_if_needed(); pg.locator("#setbody .sset").last.screenshot(path="shots/settings-feedback-320.png")
+        check("Settings ends with a centred red Send feedback link, no box",
+              btn.count() == 1 and pg.evaluate("document.getElementById('setbody').lastElementChild.className") == "fbset"
+              and pg.locator("#setbody .fbset .panel").count() == 0
+              and abs(pg.evaluate("(()=>{const b=document.querySelector('.fblink').getBoundingClientRect();return (b.left+b.right)/2-innerWidth/2})()")) < 2)
+        pg.evaluate("document.getElementById('setsheet').scrollTop=1e6"); pg.wait_for_timeout(100)
+        for scheme in ("light", "dark"):
+            pg.emulate_media(color_scheme=scheme); pg.wait_for_timeout(100); pg.screenshot(path=f"shots/settings-bottom-320-{scheme}.png")
+        pg.emulate_media(color_scheme="light")
         btn.click(); pg.wait_for_timeout(200)
         check("It opens the sheet on top of Settings", pg.locator("#fbsheet").is_visible() and pg.locator("#setsheet").is_visible())
         pg.fill("#fb-text", "Could there be a rowing option?"); pg.click('[data-fbk="idea"]'); pg.click('[data-st="fb-send"]'); pg.wait_for_timeout(1900)

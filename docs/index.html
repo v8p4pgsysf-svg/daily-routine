@@ -1,5 +1,5 @@
 <!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<meta name="app-version" content="20261031162400">
+<meta name="app-version" content="20261031163356">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Daily Routine</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -870,6 +870,8 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 #fb-text{min-height:170px;font-size:1rem;line-height:1.45;background:var(--surface);resize:none}
 .fbmsg{color:var(--danger);margin-top:-6px}.fbmsg:empty{display:none}
 .fbdone{padding:48px 0;text-align:center;font-size:1.05rem}
+.fbset{display:flex;justify-content:center;margin-top:-6px}
+.linkbtn.fblink{color:var(--danger);font-size:.92rem;padding:8px 12px;align-self:center}
 @media (max-width:360px){.tab{padding:10px 10px}}
 </style>
 
@@ -2113,7 +2115,7 @@ let sdStart="";const setDirty=()=>!!SD&&sdKey(SD)!==sdStart;
 let fbDraft={kind:"",text:""},fbBusy=false; // the draft survives Cancel, so nothing typed is lost
 const fbPh=()=>fbDraft.kind==="problem"?"What happened, and what did you expect?":"What would make the app better?";
 function renderFeedback(){
-  $("fbbody").innerHTML=`<p class="muted fbintro">Ideas, problems, anything. It goes privately to whoever runs the app.</p>
+  $("fbbody").innerHTML=`<p class="muted fbintro">Ideas, problems, anything.</p>
     <div class="seg fbseg" role="group" aria-label="Kind of feedback">${[["idea","Idea"],["problem","Problem"]].map(([k,l])=>`<button type="button" data-fbk="${k}" aria-pressed="${fbDraft.kind===k}">${l}</button>`).join("")}</div>
     <textarea id="fb-text" rows="7" maxlength="2000" placeholder="${fbPh()}" aria-label="Your feedback">${esc(fbDraft.text)}</textarea>
     <div class="ts fbmsg" id="fb-msg" role="status"></div>`}
@@ -2121,6 +2123,7 @@ function openFeedback(){if(!(HOST&&HOST.sendFeedback))return;renderFeedback();$(
   setTimeout(()=>{const t=$("fb-text");if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length)}},60)}
 function closeFeedback(){$("fbsheet").hidden=true;if($("setsheet").hidden)document.body.style.overflow=""}
 async function sendFeedback(){if(fbBusy)return;const text=fbDraft.text.trim(),m=$("fb-msg");
+  if(!fbDraft.kind){if(m)m.textContent="Choose Idea or Problem first.";return}
   if(!text){if(m)m.textContent="Write something first.";const t=$("fb-text");t&&t.focus();return}
   const b=$("fbsheet").querySelector('[data-st="fb-send"]');fbBusy=true;b.disabled=true;b.textContent="Sending…";
   try{await HOST.sendFeedback({kind:fbDraft.kind||null,message:text});fbDraft={kind:"",text:""};
@@ -2131,10 +2134,10 @@ async function sendFeedback(){if(fbBusy)return;const text=fbDraft.text.trim(),m=
 document.addEventListener("click",e=>{const k=e.target.closest&&e.target.closest("[data-fbk]");if(!k)return;
   fbDraft.kind=fbDraft.kind===k.dataset.fbk?"":k.dataset.fbk;
   $("fbbody").querySelectorAll("[data-fbk]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.fbk===fbDraft.kind)));
-  const t=$("fb-text");if(t)t.placeholder=fbPh()});
+  const t=$("fb-text");if(t)t.placeholder=fbPh();const m=$("fb-msg");if(m&&fbDraft.kind)m.textContent=""});
 document.addEventListener("input",e=>{if(e.target.id==="fb-text"){fbDraft.text=e.target.value;const m=$("fb-msg");if(m&&m.textContent)m.textContent=""}});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("fbsheet").hidden)closeFeedback()});
-const secFeedback=()=>HOST&&HOST.sendFeedback?`<section class="sset"><h3>Feedback</h3><div class="panel shab"><div class="shrow"><span class="grow muted">Ideas, problems, anything.</span><button type="button" class="btn sm" data-st="feedback">Send feedback</button></div></div></section>`:"";
+const secFeedback=()=>HOST&&HOST.sendFeedback?`<div class="fbset"><button type="button" class="linkbtn fblink" data-st="feedback">Send feedback</button></div>`:"";
 function closeSettings(){$("setsheet").hidden=true;document.body.style.overflow="";SD=null}
 const dayChips=(grp,sel)=>`<div class="daychips" role="group">${DAYS.map((d,i)=>`<button type="button" class="dchip" aria-pressed="${sel.includes(i)}" data-sday="${grp}" data-d="${i}" aria-label="${DAYS_LONG[i]}">${d}</button>`).join("")}</div>`;
 const swRow=(attr,on,label,extra)=>`<div class="shrow"><label class="sw"><input type="checkbox" ${attr} ${on?"checked":""} aria-label="${esc(label)}"><span></span></label><div class="grow"><b>${esc(label)}</b>${extra||""}</div></div>`;
