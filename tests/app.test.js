@@ -396,7 +396,8 @@ type(w,$(w,"#weight"),"176.4");{const wk=JSON.parse(w.localStorage.getItem("week
 w.close();
 // --- more habits and your own
 store={};w=boot("2026-10-28T09:00:00");
-click(w,$(w,'#setcog'));ok($(w,'[data-shab="steps"]')&&!$(w,'[data-shab="steps"]').checked&&!$(w,'[data-shab="water"]')&&!$(w,'[data-shab="nic"]')&&w.document.querySelectorAll('#setbody [data-shab]').length===5,"H1. Five built-in habits; steps offered, off; water and no nicotine gone");
+click(w,$(w,'#setcog'));ok($(w,'[data-shab="steps"]')&&!$(w,'[data-shab="steps"]').checked&&!$(w,'[data-shab="water"]')&&$(w,'[data-shab="nic"]')&&!$(w,'[data-shab="nic"]').checked&&w.document.querySelectorAll('#setbody [data-shab]').length===6,"H1. Six built-in habits; steps and no nicotine offered, off; water gone");
+chg(w,$(w,'[data-shab="nic"]'),true);ok($(w,'[data-sdays="nic"]')&&$(w,'[data-sdays="nic"]').value==="7","   No nicotine has a days target like No alcohol, default 7");chg(w,$(w,'[data-shab="nic"]'),false);
 chg(w,$(w,'[data-shab="steps"]'),true);
 ok($(w,"#ch-name").placeholder==="Add a habit, e.g. Water"&&!$(w,"#ch-days")&&!$(w,"#ch-sub"),"   Add a habit is one box (e.g. Water) and an Add button");
 type(w,$(w,"#ch-name"),"Water");click(w,$(w,'[data-st="ch-add"]'));type(w,$(w,'[data-scsub="0"]'),"2 litres");

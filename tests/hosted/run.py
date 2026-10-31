@@ -33,7 +33,7 @@ try:
   ok(pg.evaluate("document.getElementById('lg-fp').contains(document.getElementById('lg-pass'))&&document.getElementById('lg-pass').autocomplete==='current-password'&&document.getElementById('lg-email').autocomplete==='username'"),"   Sign-in form is a stable form with username / current-password fields for password managers")
   pg.screenshot(path="h-code.png")
   pg.fill("#lg-pass","Start-1234");pg.click("#lg-btn");pg.wait_for_selector("#setsheet",state="visible");pg.wait_for_timeout(300)
-  ok(pg.locator("#login").is_hidden() and "Welcome" in pg.inner_text("#setbody") and pg.locator("#setbody [data-shab]").count()==5,"H4. First sign-in opens setup at the welcome step, habits listed from the catalog")
+  ok(pg.locator("#login").is_hidden() and "Welcome" in pg.inner_text("#setbody") and pg.locator("#setbody [data-shab]").count()==6,"H4. First sign-in opens setup at the welcome step, habits listed from the catalog")
   ok(pg.is_checked('[data-shab="protein"]') and pg.is_checked('[data-shab="sleep"]') and not pg.is_checked('[data-shab="water"]') and not pg.locator('[data-st="set-back"]').count(),"   Neutral defaults (protein and sleep on, others off), no Back on step 1")
   pg.click('[data-st="set-next"]');pg.wait_for_selector("#seterr",state="visible")
   ok("Enter your weight" in pg.inner_text("#seterr"),"W1. Step 1 needs a weight")

@@ -1053,7 +1053,8 @@ const HABIT_CATALOG=[
   {k:"fv",name:"Fruit & veg",long:"Fruit & veg",grid:"Fruit & veg",sub:"5+ a day",ph:"e.g. 5+ a day",jack:true,start:false},
   {k:"sleep",name:"Sleep",long:"Sleep",grid:"Sleep",sub:"7–9 hours",ph:"e.g. 7–9 hours",jack:true,start:true},
   {k:"steps",name:"Steps",long:"Steps",grid:"Steps",sub:"10,000",ph:"e.g. 10,000",jack:false,start:false},
-  {k:"af",name:"No alcohol",long:"Alcohol-free",grid:"No alcohol",daysTarget:6,summary:"Alcohol",jack:true,start:false}
+  {k:"af",name:"No alcohol",long:"Alcohol-free",grid:"No alcohol",daysTarget:6,summary:"Alcohol",jack:true,start:false},
+  {k:"nic",name:"No nicotine",long:"Nicotine-free",grid:"No nicotine",daysTarget:7,summary:"Nicotine",jack:false,start:false}
 ];
 const habitDefaults=pick=>Object.fromEntries(HABIT_CATALOG.map(c=>[c.k,c.daysTarget?{on:!!c[pick],target:c.daysTarget}:{on:!!c[pick],sub:c.sub||""}]));
 DEFAULT_SETTINGS.habits=habitDefaults("jack");
