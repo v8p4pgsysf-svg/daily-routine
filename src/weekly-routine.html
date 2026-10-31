@@ -877,7 +877,6 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
   <section class="section">
     <div class="sec-head"><h2>Train</h2></div>
     <div class="stmain" id="st-main"></div>
-    <datalist id="exlist"></datalist>
   </section>
   <section class="section">
     <div class="sec-head"><h2>Training history</h2></div>
@@ -955,17 +954,39 @@ const DAY_ITEMS={0:[["strength",0,"Strength A"]],1:[["cardio",0,"Cardio"]],2:[["
    Edit freely. History is keyed on the exercise id (left), so renaming an exercise
    or changing sets/reps never loses past sessions. Each saved session keeps the
    prescription it was logged against. Row: [exercise id, sets, low reps, high reps]. */
-const BASE_EXERCISES={
-  squat:"Barbell Squat",bench:"Bench Press",cable_row:"Seated Cable Row",leg_curl:"Leg Curl",
-  lateral_raise:"Lateral Raise",cable_crunch:"Cable Crunch",rdl:"Romanian Deadlift",lat_pulldown:"Lat Pulldown",
-  incline_db_press:"Incline Dumbbell Press",biceps_curl:"Biceps Curl",triceps_pushdown:"Triceps Pushdown",
-  leg_press:"Hack Squat / Leg Press",db_shoulder_press:"Seated Dumbbell Shoulder Press",cs_row:"Chest-Supported Row",
-  oh_triceps_ext:"Overhead Triceps Extension",calf_raise:"Standing Calf Raise",
-  hip_thrust_machine:"Hip Thrust Machine",bulgarian_split_squat:"Bulgarian Split Squat",flat_db_bench:"Flat Dumbbell Bench Press",
-  assisted_pullup:"Assisted Pull-Up",reverse_db_lunge:"Reverse Dumbbell Lunge",back_extension_45:"45° Back Extension",reverse_pec_deck:"Reverse Pec Deck"
-};
-// assisted lifts: the weight is help, so progress means less of it
-const ASSISTED=new Set(["assisted_pullup"]);
+/* Exercises. To add one, add an entry here: it then appears in the exercise picker, can be used in any programme,
+   and gets the right weight step and labels everywhere (workouts, progress dropdown, key lifts, lift status, exports).
+   Never change an id once people have logged it (history is keyed on it); renaming the name is fine.
+   id · name · short: label in the key-lifts table (optional) · step: kg to add when ready to progress (default 2.5)
+   assisted: the weight is help (assisted pull-ups), so progress means less of it */
+const EXERCISE_CATALOG=[
+  {id:"squat",name:"Barbell Squat",short:"Squat"},
+  {id:"bench",name:"Bench Press",short:"Bench press"},
+  {id:"cable_row",name:"Seated Cable Row",short:"Cable row"},
+  {id:"leg_curl",name:"Leg Curl"},
+  {id:"lateral_raise",name:"Lateral Raise",step:1},
+  {id:"cable_crunch",name:"Cable Crunch"},
+  {id:"rdl",name:"Romanian Deadlift",short:"Romanian deadlift"},
+  {id:"lat_pulldown",name:"Lat Pulldown",short:"Lat pulldown"},
+  {id:"incline_db_press",name:"Incline Dumbbell Press",short:"Incline DB press",step:1},
+  {id:"biceps_curl",name:"Biceps Curl",step:1},
+  {id:"triceps_pushdown",name:"Triceps Pushdown"},
+  {id:"leg_press",name:"Hack Squat / Leg Press",short:"Leg press"},
+  {id:"db_shoulder_press",name:"Seated Dumbbell Shoulder Press",short:"DB shoulder press",step:1},
+  {id:"cs_row",name:"Chest-Supported Row",short:"Chest-supported row"},
+  {id:"oh_triceps_ext",name:"Overhead Triceps Extension",step:1},
+  {id:"calf_raise",name:"Standing Calf Raise"},
+  {id:"hip_thrust_machine",name:"Hip Thrust Machine",short:"Hip thrust"},
+  {id:"bulgarian_split_squat",name:"Bulgarian Split Squat",short:"Bulgarian split squat",step:1},
+  {id:"flat_db_bench",name:"Flat Dumbbell Bench Press",short:"DB bench press",step:1},
+  {id:"assisted_pullup",name:"Assisted Pull-Up",assisted:true},
+  {id:"reverse_db_lunge",name:"Reverse Dumbbell Lunge",short:"Reverse lunge",step:1},
+  {id:"back_extension_45",name:"45° Back Extension",short:"Back extension"},
+  {id:"reverse_pec_deck",name:"Reverse Pec Deck"}
+];
+const EX_BY_ID=Object.fromEntries(EXERCISE_CATALOG.map(e=>[e.id,e]));
+const BASE_EXERCISES=Object.fromEntries(EXERCISE_CATALOG.map(e=>[e.id,e.name]));
+const ASSISTED=new Set(EXERCISE_CATALOG.filter(e=>e.assisted).map(e=>e.id));
 const EXERCISES=Object.assign({},BASE_EXERCISES);
 const PROGRAMME={};
 const LETTERS=["A","B","C","D"];
@@ -1003,6 +1024,11 @@ const HABIT_CATALOG=[
 ];
 const habitDefaults=pick=>Object.fromEntries(HABIT_CATALOG.map(c=>[c.k,c.daysTarget?{on:!!c[pick],target:c.daysTarget}:{on:!!c[pick],sub:c.sub||""}]));
 DEFAULT_SETTINGS.habits=habitDefaults("jack");
+/* Prep tasks. To add one, add an entry here (Jack's days in jack:). It then appears in setup, settings,
+   Today, the planned week and the check-ins grid. Never change a key once used. */
+const PREP_INFO={lunch:{name:"Lunch prep",task:"Prepare lunches",jack:[6]},breakfast:{name:"Breakfast prep",task:"Prepare breakfasts",jack:[6,2]}};
+const PREP_KEYS=Object.keys(PREP_INFO);
+DEFAULT_SETTINGS.prep=Object.fromEntries(Object.entries(PREP_INFO).map(([k,v])=>[k,{on:true,days:v.jack.slice()}]));
 const LS_SET="weekly-routine.settings.v1";
 const clone=o=>JSON.parse(JSON.stringify(o));
 const intIn=(v,lo,hi,d)=>{const n=Math.round(+v);return isFinite(n)&&n>=lo&&n<=hi?n:d};
@@ -1022,9 +1048,9 @@ function normaliseSettings(o){
   if(o.habits&&typeof o.habits==="object")for(const c of HABIT_CATALOG){const k=c.k,h=o.habits[k];if(!h||typeof h!=="object"){S.habits[k].on=false;continue}
     S.habits[k].on=h.on!==false;
     if(c.daysTarget)S.habits[k].target=intIn(h.target,1,7,c.daysTarget);else if(typeof h.sub==="string")S.habits[k].sub=h.sub.trim().slice(0,24)}
-  if(o.prep&&typeof o.prep==="object")for(const k of ["lunch","breakfast"]){const h=o.prep[k];if(!h||typeof h!=="object")continue;
+  if(o.prep&&typeof o.prep==="object")for(const k of PREP_KEYS){const h=o.prep[k];if(!h||typeof h!=="object")continue;
     S.prep[k].on=h.on!==false;if(Array.isArray(h.days))S.prep[k].days=dayList(h.days)}
-  for(const k of ["lunch","breakfast"])if(!S.prep[k].days.length)S.prep[k].on=false;
+  for(const k of PREP_KEYS)if(!S.prep[k].days.length)S.prep[k].on=false;
   if(o.setupDone)S.setupDone=true;
   if(o.review&&typeof o.review==="object"){S.review.on=o.review.on!==false;S.review.day=intIn(o.review.day,0,6,6)}
   return S;
@@ -1032,8 +1058,6 @@ function normaliseSettings(o){
 let SETTINGS=DEFAULT_SETTINGS;
 try{const raw=localStorage.getItem(LS_SET);SETTINGS=normaliseSettings(raw?JSON.parse(raw):null)}catch(e){SETTINGS=normaliseSettings(null)}
 const GRID_TARGET={},STRENGTH_DAY={};
-const PREP_INFO={lunch:{name:"Lunch prep",task:"Prepare lunches"},breakfast:{name:"Breakfast prep",task:"Prepare breakfasts"}};
-const DAY_LONG_ORDER=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 const daysTxt=a=>a.length?[...a].sort((x,y)=>x-y).map(d=>DAYS[d]).join(" · "):"Any day";
 function applySettings(S){
   for(const id in EXERCISES)if(!BASE_EXERCISES[id])delete EXERCISES[id];Object.assign(EXERCISES,S.exNames);
@@ -1047,7 +1071,7 @@ function applySettings(S){
   if(ct>0)HABITS.push({k:"cardio",name:"Cardio",short:"Cardio",x:ct+" sessions",n:7,target:ct,daily:true});
   HABIT_CATALOG.forEach(c=>{const h=H[c.k];if(!h||!h.on)return;const tgt=c.daysTarget?h.target:7;
     HABITS.push({k:c.k,name:c.long||c.name,short:c.grid||c.name,x:c.daysTarget?tgt+" days":"Daily",n:7,target:tgt,daily:true})});
-  for(const k of ["lunch","breakfast"]){const P=S.prep[k];if(P.on&&P.days.length)HABITS.push({k,name:PREP_INFO[k].name,short:PREP_INFO[k].name,x:daysTxt(P.days),n:P.days.length,target:P.days.length,days:P.days.slice(),daily:false})}
+  for(const k of PREP_KEYS){const P=S.prep[k];if(P.on&&P.days.length)HABITS.push({k,name:PREP_INFO[k].name,short:PREP_INFO[k].name,x:daysTxt(P.days),n:P.days.length,target:P.days.length,days:P.days.slice(),daily:false})}
   if(S.review.on)HABITS.push({k:"review",name:"Weekly review",short:"Review",x:"Notes below",n:1,target:1,days:[S.review.day],daily:false});
   TOTAL_TARGET=HABITS.reduce((a,h)=>a+h.target,0);
   for(const k in GRID_TARGET)delete GRID_TARGET[k];
@@ -1056,7 +1080,7 @@ function applySettings(S){
   for(let d=0;d<7;d++){
     const parts=S.workouts.map((w,i)=>w.day===d?"Workout "+LETTERS[i]:"").filter(Boolean);
     if(ct>0&&S.cardio.days.includes(d))parts.push("Cardio");
-    const sub=["lunch","breakfast"].filter(k=>S.prep[k].on&&S.prep[k].days.includes(d)).map(k=>PREP_INFO[k].name);
+    const sub=PREP_KEYS.filter(k=>S.prep[k].on&&S.prep[k].days.includes(d)).map(k=>PREP_INFO[k].name);
     if(S.review.on&&d===S.review.day)sub.push("Weekly review");
     PLAN.push({t:parts.join(" + ")||"Rest",s:sub.join(" · ")});
   }
@@ -1065,7 +1089,7 @@ PRESETS[0].workouts=DEFAULT_SETTINGS.workouts.map(w=>w.items);
 applySettings(SETTINGS);
 /* each past week keeps the targets it was planned with; settings changes apply from the current week on */
 const planSnapshot=()=>({v:1,habits:clone(HABITS),grid:clone(GRID_TARGET)});
-const HKEYS=new Set(["strength","cardio",...HABIT_CATALOG.map(c=>c.k),"lunch","breakfast","review"]);
+const HKEYS=new Set(["strength","cardio",...HABIT_CATALOG.map(c=>c.k),...PREP_KEYS,"review"]);
 function normalisePlan(p){
   if(!p||typeof p!=="object"||!Array.isArray(p.habits))return null;
   const habits=p.habits.filter(h=>h&&HKEYS.has(h.k)).map(h=>{const daily=!!h.daily,n=intIn(h.n,1,7,daily?7:1);
@@ -1082,7 +1106,7 @@ function prepHint(days,t){
   if(days.length<2)return "For the week ahead";
   let gap=7;days.forEach(d=>{const g=(d-t+7)%7;if(g>0&&g<gap)gap=g});
   const a=(t+1)%7,b=(t+gap)%7;
-  return a===b?"For "+DAY_LONG_ORDER[a]:"For "+DAY_LONG_ORDER[a]+" to "+DAY_LONG_ORDER[b];
+  return a===b?"For "+DAYS_LONG[a]:"For "+DAYS_LONG[a]+" to "+DAYS_LONG[b];
 }
 
 
@@ -1103,7 +1127,7 @@ const todayIdx=()=>(new Date().getDay()+6)%7;
 const DRINK_FROM="2026-10-26";
 const drinkMode=w=>false; // switched back: alcohol-free days are ticked like every other habit
 function daysElapsed(wk){const cur=currentKey();return wk<cur?7:wk===cur?todayIdx()+1:0}
-const STORE_KEYS=[["strength",7],["cardio",7],...HABIT_CATALOG.map(c=>[c.k,7]),["lunch",7],["breakfast",7],["review",1]];
+const STORE_KEYS=[["strength",7],["cardio",7],...HABIT_CATALOG.map(c=>[c.k,7]),...PREP_KEYS.map(k=>[k,7]),["review",1]];
 function blankWeek(key){
   const w={week:key,updatedAt:0,weight:null,photo:false,well:"",way:"",improve:""};
   STORE_KEYS.forEach(([k,n])=>w[k]=Array(n).fill(false));
@@ -1138,7 +1162,10 @@ function saveLocal(){try{localStorage.setItem(LS_KEY,JSON.stringify(weeks))}catc
 const LS_S="weekly-routine.workouts.v1";
 let sessions={};
 const numOrNull=v=>(typeof v==="number"&&isFinite(v)&&v>=0)?v:null;
-const CARDIO_TYPES=["Run","Cycle","Row","Swim","Elliptical","Walk"];
+/* Cardio types offered as chips. counts:false = logged, but not counted toward the weekly cardio target. */
+const CARDIO_CATALOG=[{name:"Run"},{name:"Cycle"},{name:"Row"},{name:"Swim"},{name:"Elliptical"},{name:"Walk",counts:false}];
+const CARDIO_TYPES=CARDIO_CATALOG.map(c=>c.name);
+const NO_COUNT=new Set(CARDIO_CATALOG.filter(c=>c.counts===false).map(c=>c.name.toLowerCase()));
 const EFFORTS=["Easy","Moderate","Hard"];
 function normaliseSession(s){
   if(s&&s.kind==="cardio"){
@@ -1158,7 +1185,7 @@ function normaliseSession(s){
     if(typeof it.swappedFrom==="string")o.swappedFrom=it.swappedFrom;
     return o;
   });
-  return {id:s.id,type:/^[A-D]$/.test(s.type)?s.type:"A",
+  return {id:s.id,type:LETTERS.includes(s.type)?s.type:"A",
     date:/^\d{4}-\d{2}-\d{2}$/.test(s.date)?s.date:keyOf(new Date()),
     status:["draft","done","deleted"].includes(s.status)?s.status:"draft",
     startedAt:+s.startedAt||0,updatedAt:+s.updatedAt||0,notes:typeof s.notes==="string"?s.notes:"",items,
@@ -1173,7 +1200,7 @@ const isCardio=s=>s.kind==="cardio";
 const doneSessions=()=>liveSessions().filter(s=>!isCardio(s)&&s.status==="done").sort(byDate);
 const currentDraft=()=>liveSessions().filter(s=>!isCardio(s)&&s.status==="draft").sort(byDate).pop()||null;
 const cardioSessions=()=>liveSessions().filter(isCardio).sort(byDate);
-const cardioCounts=c=>c.ctype.toLowerCase()!=="walk"; // walks are logged but are recovery, not cardio sessions
+const cardioCounts=c=>!NO_COUNT.has(c.ctype.trim().toLowerCase()); // walks are logged but are recovery, not cardio sessions
 function cardioByDay(weekKey){
   const mon=parseKey(weekKey),out=[[],[],[],[],[],[],[]];
   cardioSessions().filter(cardioCounts).forEach(c=>{const d=Math.round((parseKey(c.date)-mon)/864e5);if(d>=0&&d<7)out[d].push(c)});
@@ -1343,7 +1370,7 @@ function renderPlan(){
   const isCur=viewKey===currentKey(),t=todayIdx();
   $("plan").innerHTML=PLAN.map((p,i)=>`<div class="pday${isCur&&i===t?" is-today":""}"><span class="d">${DAYS[i]}</span><span class="t">${p.t}</span>${p.s?`<span class="s">${p.s}</span>`:""}</div>`).join("");
 }
-const GRID_LABEL=Object.assign(Object.fromEntries(HABIT_CATALOG.map(c=>[c.k,c.grid||c.name])),{lunch:"Lunch prep",breakfast:"Breakfast prep",review:"Review"});
+const GRID_LABEL=Object.assign(Object.fromEntries(HABIT_CATALOG.map(c=>[c.k,c.grid||c.name])),Object.fromEntries(PREP_KEYS.map(k=>[k,PREP_INFO[k].name])),{review:"Review"});
 function renderDaily(){
   const w=getWeek(viewKey),isCur=viewKey===currentKey(),t=todayIdx(),mon=parseKey(viewKey);
   let h=`<div class="hd"></div>`;
@@ -1406,7 +1433,7 @@ function renderToday(){
   const lastKey=keyOf(addDays(parseKey(cur),-7)),lw=weeks[lastKey];
   if(SETTINGS.review.on&&t===0&&SETTINGS.review.day!==0&&lw&&hasData(lw)&&!lw.review[0])
     tasks.push(`<div class="trow static"><span class="revpill" aria-hidden="true">Late</span><span style="flex:1"><span class="tn">Finish last week's review</span><span class="th">Week of ${fmt(parseKey(lastKey))} · still counts for that week</span></span><button class="btn" data-goto="review-last">Open</button></div>`);
-  ["lunch","breakfast"].forEach(k=>{const P=SETTINGS.prep[k],i=P.days.indexOf(t);if(P.on&&i>=0)tasks.push(row(k,i,PREP_INFO[k].task,prepHint(P.days,t)))});
+  PREP_KEYS.forEach(k=>{const P=SETTINGS.prep[k],i=P.days.indexOf(t);if(P.on&&i>=0)tasks.push(row(k,i,PREP_INFO[k].task,prepHint(P.days,t)))});
   if(SETTINGS.review.on&&t===SETTINGS.review.day){
     tasks.push(`<div class="trow static"><span class="revpill${w.review[0]?" done":""}" aria-hidden="true">${w.review[0]?"Done":"To do"}</span><span style="flex:1"><span class="tn">Weekly review</span><span class="th">${w.review[0]?"Completed":"Weight, photos, three questions"}</span></span><button class="btn" data-goto="review-cur">${w.review[0]?"View":"Open review"}</button></div>`);
   }
@@ -1493,8 +1520,6 @@ $("revtoggle").onclick=()=>{
 $("plantoggle").onclick=()=>{const b=$("planbody"),o=b.hidden;$("plantoggle").setAttribute("aria-expanded",String(o));
   if(o){b.hidden=false;animOpen(b,()=>reveal($("plantoggle"),b))}else animClose(b,()=>{b.hidden=true})};
 const keyLifts=()=>[...new Set(Object.values(PROGRAMME).flatMap(w=>w.items.slice(0,2).map(r=>r[0])))].filter(id=>!ASSISTED.has(id)).slice(0,6);
-const LIFT_SHORT={squat:"Squat",bench:"Bench press",rdl:"Romanian deadlift",leg_press:"Leg press",db_shoulder_press:"DB shoulder press",lat_pulldown:"Lat pulldown",
-  hip_thrust_machine:"Hip thrust",bulgarian_split_squat:"Bulgarian split squat",reverse_db_lunge:"Reverse lunge",flat_db_bench:"DB bench press",cable_row:"Cable row",cs_row:"Chest-supported row",back_extension_45:"Back extension",incline_db_press:"Incline DB press"};
 function barChart(data,cur,opt){
   const W=400,H=210,L=40,R=12,T=16,B=28,n=data.length,gap=6;
   let mx=Math.max(opt.min,...data.map(c=>c.n));const step=opt.step(mx);mx=Math.ceil(mx/step)*step;
@@ -1535,7 +1560,7 @@ function renderStrengthTrends(){
   const rows=keyLifts().map(id=>{const h=exHistory(id);if(!h.length)return "";
     const pts=h.map(x=>({k:x.s.date,e:Math.max(...x.sets.map(l=>e1rm(l.w,l.r)))}));
     const last=pts[pts.length-1],base=pts.find(p=>p.k>=since)||pts[0],ch=Math.round((last.e-base.e)*2)/2;
-    return `<button class="lrow" data-lift="${id}"><span class="ln">${esc(LIFT_SHORT[id]||EXERCISES[id])}</span><span class="num lv">${fmtW(Math.round(last.e*2)/2)} kg</span><span class="num lc${ch>0?" up":""}">${pts.length<2?"–":(ch>0?"+":ch<0?"−":"±")+fmtW(Math.abs(ch))+" kg"}</span></button>`}).filter(Boolean);
+    return `<button class="lrow" data-lift="${id}"><span class="ln">${esc((EX_BY_ID[id]&&EX_BY_ID[id].short)||exLabel(id))}</span><span class="num lv">${fmtW(Math.round(last.e*2)/2)} kg</span><span class="num lc${ch>0?" up":""}">${pts.length<2?"–":(ch>0?"+":ch<0?"−":"±")+fmtW(Math.abs(ch))+" kg"}</span></button>`}).filter(Boolean);
   $("pslifts").innerHTML=rows.length?`<div class="lifts"><div class="lrow lhd"><span>Lift</span><span>Est. 1RM</span><span>12 wks</span></div>${rows.join("")}</div>`
     :`<div class="empty">Your main lifts appear here once you've logged them.</div>`;
 }
@@ -1768,8 +1793,8 @@ function setsDone(s){let d=0,t=0;s.items.forEach(it=>{t+=it.sets;d+=Math.min(it.
 const isBefore=(a,b)=>a.date<b.date||(a.date===b.date&&a.startedAt<b.startedAt);
 // most recent completed session before `cur` (or overall) with completed sets of this exercise, from any workout
 // double progression step: dumbbell and small isolation lifts go up 1 kg, everything else 2.5 kg
-const SMALL_INC=new Set(["lateral_raise","biceps_curl","incline_db_press","db_shoulder_press","oh_triceps_ext","flat_db_bench","bulgarian_split_squat","reverse_db_lunge"]);
-const incFor=(ex,name)=>SMALL_INC.has(ex)||(!EXERCISES[ex]&&/dumbbell|\bdb\b|curl|raise|fly/i.test(name||ex))?1:2.5;
+// weight step: from the catalogue; your own exercises guess from the name (dumbbell and isolation work go up 1 kg)
+const incFor=(ex,name)=>EX_BY_ID[ex]?(EX_BY_ID[ex].step||2.5):/dumbbell|\bdb\b|curl|raise|fly/i.test(name||ex)?1:2.5;
 // the weight to use this time: last time's, plus one step when every set hit the top of the range
 function nextW(p,ex,i){
   if(!p)return null;const dl=p.it.log.filter(l=>l.done);
@@ -1856,11 +1881,6 @@ function setTimer(on){
 function stopTimer(){if(timerInt){clearInterval(timerInt);timerInt=null}}
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&timerInt)tickTimer()});
 /* swap: changes this session only; the programme stays as it is */
-function fillExList(){
-  const names=new Set(Object.values(EXERCISES));
-  liveSessions().forEach(x=>(x.items||[]).forEach(it=>names.add(exName(it))));
-  $("exlist").innerHTML=[...names].sort().map(n=>`<option value="${esc(n)}"></option>`).join("");
-}
 function exIdFor(name){
   const n=name.trim().toLowerCase();
   for(const id in EXERCISES)if(EXERCISES[id].toLowerCase()===n)return id;
@@ -1906,7 +1926,7 @@ function openCardio(id,date){
 }
 function cardioCard(){
   if(!cfOpen)return `<div class="panel stcard"><div class="sthrow"><div><div class="eyebrow">Cardio</div><div class="sttitle">Log a cardio session</div></div><button class="btn primary lg" data-st="log-cardio">Log cardio</button></div></div>`;
-  const d=cfDraft,today=keyOf(new Date()),isWalk=d.type.trim().toLowerCase()==="walk";
+  const d=cfDraft,today=keyOf(new Date()),isWalk=NO_COUNT.has(d.type.trim().toLowerCase());
   return `<div class="panel stcard" id="cf-card"><div class="sttitle">${cfEdit?"Edit cardio session":"Log cardio"}</div>
     <div class="field"><label for="cf-type">Type</label><div class="chiprow">${CARDIO_TYPES.map(t=>`<button class="tchip" aria-pressed="${t.toLowerCase()===d.type.trim().toLowerCase()}" data-ctype="${t}">${t}</button>`).join("")}<button class="tchip" aria-pressed="${!knownType(d.type)}" data-ctype="__other">Other</button></div>
       <input type="text" id="cf-type" class="cfin" value="${esc(d.type)}" maxlength="40" placeholder="What did you do?" autocomplete="off"${knownType(d.type)?" hidden":""}></div>
@@ -1985,7 +2005,7 @@ function openSettings(){
   while(SD.workouts.length<4)SD.workouts.push({day:-1,items:[{name:"",sets:3,lo:8,hi:12}]});
   SD.open=new Set();SD.editing=null;SD.pexp=null;
   SD.gym=SD.workouts.slice(0,SD.nw).map(w=>w.day).filter(d=>d>=0).sort((a,b)=>a-b);SD.gymMsg="";
-  setArmed=false;flashSetErr("");SD.presets=false;sdStart=sdKey(SD);fillExList();renderSettings();
+  setArmed=false;flashSetErr("");SD.presets=false;sdStart=sdKey(SD);renderSettings();
   $("setsheet").hidden=false;document.body.style.overflow="hidden";$("setsheet").scrollTop=0;
 }
 const sdKey=D=>JSON.stringify([D.nw,D.workouts.slice(0,D.nw).map(w=>[w.day,w.items.map(r=>[String(r.name).trim(),String(r.sets),String(r.lo),String(r.hi)])]),D.cardio,D.habits,D.prep,D.review]);
@@ -2000,7 +2020,7 @@ function secPrep(D){let h="";
       ${on?`<button type="button" class="pdays${days.length?"":" none"}" data-pexp="${k}" aria-expanded="${open}" aria-label="${esc(label)} days: ${esc(daysShort(days))}. Change">${esc(daysShort(days))}<span class="pchev" aria-hidden="true"></span></button>`:`<span class="pdays off">Off</span>`}</div>
       ${open?chips:""}${!on&&offNote?`<div class="ts" style="margin:-4px 0 0">${offNote}</div>`:""}`};
   h+=`<div class="panel shab">
-    ${["lunch","breakfast"].map((k,i)=>`${i?'<div class="shsep"></div>':""}${pRow(k,PREP_INFO[k].name,D.prep[k].on,`data-sprep="${k}"`,D.prep[k].days,dayChips(k,D.prep[k].days),"")}`).join("")}
+    ${PREP_KEYS.map((k,i)=>`${i?'<div class="shsep"></div>':""}${pRow(k,PREP_INFO[k].name,D.prep[k].on,`data-sprep="${k}"`,D.prep[k].days,dayChips(k,D.prep[k].days),"")}`).join("")}
     <div class="shsep"></div>
     ${pRow("review","Weekly review",D.review.on,"data-srev",[D.review.day],`<div class="daychips" role="group" aria-label="Review day">${DAYS.map((d,i)=>`<button type="button" class="dchip" aria-pressed="${D.review.day===i}" data-srevday="${i}" aria-label="Review on ${DAYS_LONG[i]}">${d}</button>`).join("")}</div>`,"Off hides the review, including weight and photos.")}
   </div>`;
@@ -2054,11 +2074,11 @@ const SETUP_STEPS=5;
 function newcomerDraft(){ // a neutral starting point (not Jack's routine)
   return {nw:3,workouts:[0,1,2,3].map(()=>({day:-1,items:[{name:"",sets:3,lo:8,hi:12}]})),
     cardio:{target:2,days:[1,5]},habits:habitDefaults("start"),
-    prep:{lunch:{on:false,days:[6]},breakfast:{on:false,days:[6]}},review:{on:true,day:6}};
+    prep:Object.fromEntries(PREP_KEYS.map(k=>[k,{on:false,days:[6]}])),review:{on:true,day:6}};
 }
 function openSetup(){
   SD=newcomerDraft();SD.setup=1;SD.prog=null;SD.open=new Set();SD.editing=null;SD.pexp=null;SD.gym=[0,2,4];SD.gymMsg="";assignGym();
-  setArmed=false;flashSetErr("");fillExList();renderSettings();
+  setArmed=false;flashSetErr("");renderSettings();
   $("setsheet").hidden=false;document.body.style.overflow="hidden";$("setsheet").scrollTop=0;
 }
 function setupDots(n){return `<div class="sdots" aria-label="Step ${n} of ${SETUP_STEPS}">${Array.from({length:SETUP_STEPS},(_,i)=>`<span class="${i<n?"on":""}"></span>`).join("")}</div>`}
@@ -2085,7 +2105,7 @@ function renderSetup(){
     const lines=[on.length?`Tracking ${on.join(", ")}`:"No daily habits yet",
       D.nw?`${D.nw} weights session${D.nw===1?"":"s"} a week · ${days(SD.gym)}`:"",
       D.cardio.target?`${D.cardio.target} cardio session${D.cardio.target===1?"":"s"} a week · ${days(D.cardio.days)}`:"",
-      ...["lunch","breakfast"].filter(k=>D.prep[k].on).map(k=>`${PREP_INFO[k].name} · ${days(D.prep[k].days)}`),
+      ...PREP_KEYS.filter(k=>D.prep[k].on).map(k=>`${PREP_INFO[k].name} · ${days(D.prep[k].days)}`),
       D.review.on?`Weekly review on ${DAYS_LONG[D.review.day]}`:""].filter(Boolean);
     h+=`<section class="sset"><h3>You're all set</h3><div class="panel shab">${lines.map(l=>`<div class="shrow">${esc(l)}</div>`).join('<div class="shsep"></div>')}</div>
       <p class="ts">Tap Start to begin. Change anything later from the settings cog.</p></section>`;
@@ -2200,7 +2220,7 @@ function saveFromDraft(){
   if(!err&&D.cardio.target>0&&D.cardio.days.length!==D.cardio.target)err=`Pick ${D.cardio.target} cardio day${D.cardio.target===1?"":"s"} in Planned days (${D.cardio.days.length} picked).`;
   if(err){ws.forEach((w,i)=>{if(!w.items.length)SD.open.add(i)});renderSettings();$("setsheet").scrollTop=0;flashSetErr(err);return}
   S.workouts=ws;S.exNames=exNames;S.cardio=clone(D.cardio);S.habits=clone(D.habits);S.review=clone(D.review);
-  S.prep=clone(D.prep);["lunch","breakfast"].forEach(k=>{if(!S.prep[k].days.length)S.prep[k].on=false});
+  S.prep=clone(D.prep);PREP_KEYS.forEach(k=>{if(!S.prep[k].days.length)S.prep[k].on=false});
   if(D.setup)S.setupDone=true;
   saveSettings(S);afterSettings();
 }
@@ -2290,7 +2310,7 @@ function renderEditor(){
   $("st-main").innerHTML=h;updateEditorStatus();
   $("pane-strength").classList.add("focus");
   stopTimer();if(!isDone){timerInt=setInterval(tickTimer,1000);timerUI()}
-  fillExList();
+  
 }
 function updateEditorStatus(){
   const s=sessions[editingId];if(!s)return;const p=setsDone(s);
@@ -2469,7 +2489,7 @@ function renderStProg(){
   const ids=activeExIds();
   const withData=ids.filter(id=>exHistory(id).length);
   if(!progEx||!ids.includes(progEx))progEx=withData[0]||ids[0];
-  const nameOf=id=>{if(EXERCISES[id])return EXERCISES[id];for(const s of doneSessions())for(const it of s.items)if(it.ex===id)return it.name||id;return id};
+  const nameOf=exLabel;
   const sel=`<div class="field"><label for="prog-ex">${progChosen?"Exercise":"View an exercise"}</label><select id="prog-ex">${progChosen?"":`<option value="" selected>Choose an exercise…</option>`}${ids.map(id=>`<option value="${esc(id)}"${progChosen&&id===progEx?" selected":""}>${esc(nameOf(id))}${withData.includes(id)?"":" · no data yet"}</option>`).join("")}</select></div>`;
   if(!progChosen){$("st-prog").innerHTML=liftOverview()+`<div class="stprog" id="prog-detail">${sel}</div>`;return}
   const hist=exHistory(progEx);let body;

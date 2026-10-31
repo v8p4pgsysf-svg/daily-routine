@@ -14,8 +14,16 @@ A personal health and fitness tracker (daily check-ins, weekly review, strength 
   - `supabase/schema.sql` sets all of this up and is safe to re-run.
 - Accounts: people sign up themselves in the app (email + their own password), but only if their email is in `public.invites`. A `before insert` trigger on `auth.users` enforces this, so it can't be bypassed (`supabase/invites.sql`). Email confirmation is off; the app sends no emails. The page hides hosted-only UI (import, account section) unless `window.__routineHost` exists.
 
+## Single sources: add things in one place
+Each of these lives in one list in `src/weekly-routine.html`; everything else is derived from it. Never change an existing id or key once people have used it.
+- `HABIT_CATALOG`: daily habits. These feed setup, settings, the check-ins grid, counts, the review summary and exports.
+- `EXERCISE_CATALOG`: exercises, each with a name, a short name for the key-lifts table, its weight step, and whether it's assisted. These feed the exercise picker, programmes, workouts, the progress dropdown, key lifts, lift status and exports. People's own exercises are stored in `settings.exNames`.
+- `PRESETS`: suggested programmes. Jack's default programme is `DEFAULT_SETTINGS.workouts`, which is also the "3-day full body" preset.
+- `CARDIO_CATALOG`: cardio types offered as chips. `counts:false` means a type is logged but not counted toward the weekly target (Walk).
+- `PREP_INFO`: prep tasks. These feed setup, settings, Today, the planned week and the grid.
+- `DAYS` / `DAYS_LONG` and `LETTERS` hold day names and workout letters.
+
 ## Habits, setup and settings
-- Daily habits are defined once, in `HABIT_CATALOG` in `src/weekly-routine.html`. Adding an entry is enough for it to appear in setup, settings, the check-ins grid, counts, the review summary and exports. Never change an existing key once people have used it.
 - The settings page and the first-time setup share pieces: `habitRows`, `secCounts`, `secGrid`, `secLists`, `secPrep` and `secPresets`.
 - Setup runs once, in the hosted app only. It starts after cloud data has loaded, and only when the person has no saved settings, no data and no `setupDone` marker. Finishing setup saves `setupDone: true` with their settings.
   - New people start from neutral defaults (`newcomerDraft`). Jack's routine stays the default only for the Claude version.
