@@ -219,6 +219,13 @@ function start(session){
   window.__routineHost={email:user.email,photoUrl,canChangePassword:C.authMode!=="code",
     changePassword:async pw=>{const {error}=await sb.auth.updateUser({password:pw});if(error)throw new Error(/same|different/i.test(error.message)?"same":/weak|short|least/i.test(error.message)?"weak":"failed")},
     importPhoto:(id,blob)=>put(id,blob,true),
+    // feedback goes to a table people can add to but not read; the database fills in their email
+    sendFeedback:async({kind,message})=>{
+      const ver=(document.querySelector('meta[name="app-version"]')||{}).content||"";
+      const device=[/iPhone|iPad|iPod/.test(navigator.userAgent)?"iPhone/iPad":/Android/.test(navigator.userAgent)?"Android":"Computer",
+        innerWidth+"×"+innerHeight,standalone()?"Home Screen app":"browser",navigator.userAgent].join(" · ").slice(0,400);
+      let res;try{res=await sb.from("feedback").insert({user_id:uid,kind:kind||null,message:String(message).slice(0,2000),app_version:ver,device})}catch(e){res={error:e}}
+      if(res.error){const e=netErr(res.error);throw new Error(e.code==="unavailable"?"offline":"failed")}},
     deleteAccount:async()=>{
       // photos first (the storage API removes the files), then the database removes records and the login
       let r;try{r=await sb.storage.from("photos").list(uid,{limit:1000})}catch(e){r={error:e}}

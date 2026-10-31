@@ -14,7 +14,9 @@ body=src[:m.start()]+'<script type="text/plain" id="app-src">'+app+'</script>'+s
 title=re.search(r"<title>(.*?)</title>",body).group(1)
 body=re.sub(r"<title>.*?</title>\n?","",body,count=1)
 body=body.replace('<meta name="claude:viewport-fit-sides" content="cover">\n','')
+ver=time.strftime("%Y%m%d%H%M%S")
 head=f'''<!doctype html><html lang="en-GB"><head><meta charset="utf-8">
+<meta name="app-version" content="{ver}">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>{title}</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -49,7 +51,6 @@ body:not(.in)>:not(#login):not(script){{display:none!important}}
 '''
 out=head+body+'\n<script src="host.js"></script>\n</body></html>\n'
 (root/"docs"/"index.html").write_text(out)
-ver=time.strftime("%Y%m%d%H%M%S")
 sw=(here/"sw.template.js").read_text().replace("__VERSION__",ver)
 (root/"docs"/"sw.js").write_text(sw)
 print("built docs/index.html",len(out),"bytes · cache",ver)

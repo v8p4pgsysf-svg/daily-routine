@@ -10,6 +10,7 @@ Polish the hosted Daily Routine app (GitHub Pages + Supabase) so Jack uses it da
 ## Last shipped
 - Home Screen nudge on the sign-in page, same on iPhone and Android (see `CLAUDE.md`).
 - Settings: Programme and Workouts A–C in one box (`secPresets(D, secLists(D,false,true))`). Check: `tests/hosted/settings-workouts.py`. Tests: 179 app, 56 end-to-end, 17 home-screen checks (`tests/hosted/home-screen.py`).
+- Feedback: icon left of the cog (375px and up) + Settings → Send feedback; stored in `public.feedback`. Test: `tests/hosted/feedback.py`.
 - Layout review fixes: Today header padding (class clash), chart date labels, 320px check-ins grid, "1 h" durations. Full sweep: `tests/hosted/layout-review.py`.
 
 ## Testing notes
@@ -18,8 +19,13 @@ Polish the hosted Daily Routine app (GitHub Pages + Supabase) so Jack uses it da
 - Layout checks: Playwright + Chromium are in the workspace (`PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`). Serve a copy of `docs/` with `mock-supabase.js` as `supabase.js`, sign in as `jack@example.com` / `Start-1234`, check at 390px in light and dark.
 
 ## Waiting on Jack
+- **Run `supabase/feedback.sql` in the SQL Editor.** Until then, Send feedback shows "Couldn't send".
 - Open the live link in Safari on a real iPhone (a private tab, so you see it as a newcomer) and follow the card through to the Home Screen app.
 - Earlier live checks still open: a progress photo survives a reopen and shows under Progress; live sync between phone and computer.
+
+## Agreed next (in this order)
+1. Forgotten-password reset with an emailed 6-digit code (not a link: links open in Safari, separate from the Home Screen app). Needs email sending: Jack to get a personal domain + Resend (or similar) and add it as custom SMTP in Supabase. Open question to Jack: does he have a personal domain?
+2. Encrypt progress photos on the phone (key from the password; recovery code shown once). Jack sees this as a must before wider sharing.
 
 ## Open ideas (not started; Jack hasn't committed to them)
 - Backup nudge: show "last backup: X ago" in the weekly review, since Export is manual.

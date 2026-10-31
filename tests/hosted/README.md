@@ -12,6 +12,8 @@
 
 ## To run
 
+Also: `python3 feedback.py` checks the feedback icon (shown from 375px, hidden at 320px), the sheet, sending, offline and Settings → Send feedback.
+
 Also: `python3 layout-review.py` signs in, imports the sample backup and screenshots every tab and Settings at 390, 375 and 320px (light and dark at 390) into `review/`, listing anything that overflows its box. Run it before shipping layout changes.
 
 Also: `python3 settings-workouts.py` checks the Settings Workouts box (Programme + Workouts A–C in one box) at 390px in light and dark, saving shots to `shots/`.

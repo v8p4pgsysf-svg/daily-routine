@@ -28,7 +28,14 @@ function createClient(){
     onAuthStateChange(cb){this._cbs.push(cb);return {data:{subscription:{unsubscribe(){}}}}}};
   const me=()=>{const s=JSON.parse(localStorage.getItem("routine-auth")||"null");return s&&s.user.id};
   const off=()=>window.__mockOffline?{error:{message:"TypeError: Failed to fetch"}}:null;
-  function from(){return {
+  function from(table){
+    if(table==="feedback")return {insert(row){return {then(res,rej){const o=off();if(o)return Promise.resolve(o).then(res,rej);
+      const s=JSON.parse(localStorage.getItem("routine-auth")||"null"),u=me();
+      if(!u||row.user_id!==u||"email" in row)return Promise.resolve({error:{message:"new row violates row-level security policy"}}).then(res,rej);
+      if(!row.message||row.message.length>2000)return Promise.resolve({error:{message:"violates check constraint"}}).then(res,rej);
+      const fb=JSON.parse(localStorage.getItem("mock-feedback")||"[]");fb.push(Object.assign({},row,{email:s.user.email,created_at:new Date().toISOString()}));
+      localStorage.setItem("mock-feedback",JSON.stringify(fb));return Promise.resolve({error:null}).then(res,rej)}}}};
+    return {
     select(){const q={_f:{},eq(c,v){this._f[c]=v;return this},then(res,rej){const o=off();if(o)return Promise.resolve(o).then(res,rej);
       const db=load(DBK),u=me();const rows=Object.values(db).filter(r=>r.user_id===u&&Object.entries(this._f).every(([c,v])=>r[c]===v));
       return Promise.resolve({data:rows.map(r=>({id:r.id,data:r.data})),error:null}).then(res,rej)}};return q},
@@ -48,6 +55,7 @@ function createClient(){
     async remove(paths){const st=load(STK),u=me();paths.forEach(p=>{if(p.startsWith(u+"/"))delete st[p]});save(STK,st);return {error:null}}}}};
   async function rpc(name){if(name!=="delete_my_account")return {error:{message:"unknown"}};const u=me();if(!u)return {error:{message:"not_signed_in"}};
     const db=load(DBK);for(const k in db)if(db[k].user_id===u)delete db[k];save(DBK,db);
+    localStorage.setItem("mock-feedback",JSON.stringify(JSON.parse(localStorage.getItem("mock-feedback")||"[]").filter(r=>r.user_id!==u)));
     const s=JSON.parse(localStorage.getItem("routine-auth"));const del=JSON.parse(localStorage.getItem("mock-deleted")||"[]");del.push(s.user.email);localStorage.setItem("mock-deleted",JSON.stringify(del));
     return {error:null}}
   return {auth,from,channel,removeChannel(){},storage,rpc};

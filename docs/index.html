@@ -1,4 +1,5 @@
 <!doctype html><html lang="en-GB"><head><meta charset="utf-8">
+<meta name="app-version" content="20261031162400">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Daily Routine</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -857,6 +858,18 @@ details,.hitem,.panel,section{scroll-margin:16px 0 20px}
 input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100%;min-width:0;max-width:100%;min-height:42px;text-align:left;line-height:1.3}
 input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0}
 input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
+/* feedback icon sits left of the cog; tabs trimmed so it fits from 375px; below that it's in Settings only */
+.tabs .fbbtn:not([hidden])+.cog{margin-left:0}
+.tabs .sync:not([hidden])+.fbbtn{margin-left:4px}
+@media (max-width:400px){.tab{padding:10px 12px}}
+@media (max-width:350px){.tabs .fbbtn{display:none}.tabs .fbbtn:not([hidden])+.cog{margin-left:auto}}
+.fbsheet{z-index:41}
+#fbbody{gap:16px}
+.fbintro{margin:0;font-size:.92rem;line-height:1.45}
+.fbseg{align-self:flex-start}.fbseg button{padding:7px 20px;font-size:.95rem}
+#fb-text{min-height:170px;font-size:1rem;line-height:1.45;background:var(--surface);resize:none}
+.fbmsg{color:var(--danger);margin-top:-6px}.fbmsg:empty{display:none}
+.fbdone{padding:48px 0;text-align:center;font-size:1.05rem}
 @media (max-width:360px){.tab{padding:10px 10px}}
 </style>
 
@@ -866,6 +879,7 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
     <button class="tab" role="tab" id="tab-strength" aria-selected="false" aria-controls="pane-strength">Training</button>
     <button class="tab" role="tab" id="tab-progress" aria-selected="false" aria-controls="pane-progress">Progress</button>
     <div class="sync" id="sync" data-s="local"><span class="dot"></span><span id="synctext">Saved in this browser</span></div>
+    <button class="cog fbbtn" id="fbbtn" data-st="feedback" aria-label="Send feedback" title="Send feedback" hidden><svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L4 19.8l1.2-4.5A8 8 0 1 1 20.5 11.5z"/></svg></button>
     <button class="cog" id="setcog" data-st="settings" aria-label="Edit routine" title="Edit routine"><svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
   </div>
 
@@ -983,6 +997,11 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
     <div class="rsheethd"><div class="rsheetbar" id="setbar"><button class="sbtn" data-st="set-cancel">Cancel</button><h2 id="set-title">Your routine</h2><button class="btn primary sbsave" data-st="set-save">Save</button></div></div>
     <div class="serrwrap"><div class="serr" id="seterr" role="alert" hidden></div></div>
     <div class="rsheetbody" id="setbody"></div>
+  </div>
+
+  <div class="rsheet fbsheet" id="fbsheet" hidden role="dialog" aria-modal="true" aria-labelledby="fb-title">
+    <div class="rsheethd"><div class="rsheetbar"><button class="sbtn" data-st="fb-cancel">Cancel</button><h2 id="fb-title">Feedback</h2><button class="btn primary sbsave" data-st="fb-send">Send</button></div></div>
+    <div class="rsheetbody" id="fbbody"></div>
   </div>
 
   <div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Progress photo">
@@ -2090,6 +2109,32 @@ function openSettings(){
 }
 const sdKey=D=>JSON.stringify([D.custom,D.unit,D.nw,D.workouts.slice(0,D.nw).map(w=>[w.day,w.items.map(r=>[String(r.name).trim(),String(r.sets),String(r.lo),String(r.hi)])]),D.cardio,D.habits,D.prep,D.review]);
 let sdStart="";const setDirty=()=>!!SD&&sdKey(SD)!==sdStart;
+/* ---------- feedback: ideas and problems, sent to whoever runs the app (hosted only) ---------- */
+let fbDraft={kind:"",text:""},fbBusy=false; // the draft survives Cancel, so nothing typed is lost
+const fbPh=()=>fbDraft.kind==="problem"?"What happened, and what did you expect?":"What would make the app better?";
+function renderFeedback(){
+  $("fbbody").innerHTML=`<p class="muted fbintro">Ideas, problems, anything. It goes privately to whoever runs the app.</p>
+    <div class="seg fbseg" role="group" aria-label="Kind of feedback">${[["idea","Idea"],["problem","Problem"]].map(([k,l])=>`<button type="button" data-fbk="${k}" aria-pressed="${fbDraft.kind===k}">${l}</button>`).join("")}</div>
+    <textarea id="fb-text" rows="7" maxlength="2000" placeholder="${fbPh()}" aria-label="Your feedback">${esc(fbDraft.text)}</textarea>
+    <div class="ts fbmsg" id="fb-msg" role="status"></div>`}
+function openFeedback(){if(!(HOST&&HOST.sendFeedback))return;renderFeedback();$("fbsheet").hidden=false;document.body.style.overflow="hidden";$("fbsheet").scrollTop=0;
+  setTimeout(()=>{const t=$("fb-text");if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length)}},60)}
+function closeFeedback(){$("fbsheet").hidden=true;if($("setsheet").hidden)document.body.style.overflow=""}
+async function sendFeedback(){if(fbBusy)return;const text=fbDraft.text.trim(),m=$("fb-msg");
+  if(!text){if(m)m.textContent="Write something first.";const t=$("fb-text");t&&t.focus();return}
+  const b=$("fbsheet").querySelector('[data-st="fb-send"]');fbBusy=true;b.disabled=true;b.textContent="Sending…";
+  try{await HOST.sendFeedback({kind:fbDraft.kind||null,message:text});fbDraft={kind:"",text:""};
+    $("fbbody").innerHTML=`<div class="fbdone" role="status"><b>Thanks, that's sent.</b></div>`;
+    setTimeout(()=>{if(!$("fbsheet").hidden&&$("fbbody").querySelector(".fbdone"))closeFeedback()},1500)}
+  catch(e){if(m)m.textContent=e&&e.message==="offline"?"You're offline. Your message is kept here, so try again when you're back online.":"Couldn't send. Try again in a moment."}
+  finally{fbBusy=false;b.disabled=false;b.textContent="Send"}}
+document.addEventListener("click",e=>{const k=e.target.closest&&e.target.closest("[data-fbk]");if(!k)return;
+  fbDraft.kind=fbDraft.kind===k.dataset.fbk?"":k.dataset.fbk;
+  $("fbbody").querySelectorAll("[data-fbk]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.fbk===fbDraft.kind)));
+  const t=$("fb-text");if(t)t.placeholder=fbPh()});
+document.addEventListener("input",e=>{if(e.target.id==="fb-text"){fbDraft.text=e.target.value;const m=$("fb-msg");if(m&&m.textContent)m.textContent=""}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("fbsheet").hidden)closeFeedback()});
+const secFeedback=()=>HOST&&HOST.sendFeedback?`<section class="sset"><h3>Feedback</h3><div class="panel shab"><div class="shrow"><span class="grow muted">Ideas, problems, anything.</span><button type="button" class="btn sm" data-st="feedback">Send feedback</button></div></div></section>`:"";
 function closeSettings(){$("setsheet").hidden=true;document.body.style.overflow="";SD=null}
 const dayChips=(grp,sel)=>`<div class="daychips" role="group">${DAYS.map((d,i)=>`<button type="button" class="dchip" aria-pressed="${sel.includes(i)}" data-sday="${grp}" data-d="${i}" aria-label="${DAYS_LONG[i]}">${d}</button>`).join("")}</div>`;
 const swRow=(attr,on,label,extra)=>`<div class="shrow"><label class="sw"><input type="checkbox" ${attr} ${on?"checked":""} aria-label="${esc(label)}"><span></span></label><div class="grow"><b>${esc(label)}</b>${extra||""}</div></div>`;
@@ -2246,7 +2291,7 @@ function renderSettings(){
   h+=`<section class="sset"><h3>Prep and review</h3>${secPrep(D)}</section>`;
   h+=`<section class="sset"><h3>Workouts</h3><div class="panel shab">${secCounts(D)}<div class="shsep"></div>${secGrid(D)}</div>`;
   h+=secPresets(D,secLists(D,false,true))+`</section>`;
-  h+=secAccount(D);
+  h+=secAccount(D)+secFeedback();
   $("setbody").innerHTML=h;
 }
 const parseReps=v=>{const t=String(v).trim(),m=t.match(/^(\d{1,2})\s*(?:-|–|—|to)\s*(\d{1,2})$/i),one=t.match(/^(\d{1,2})$/);
@@ -2519,6 +2564,9 @@ function stAction(a){
     if(dr)openSession(dr.id);else{stType=a.dataset.type;startSession(stType,keyOf(new Date()))}}
   else if(act==="goto-strength"){showTab("strength");try{location.hash="strength"}catch(e){}window.scrollTo({top:0})}
   else if(act==="rev-complete"||act==="rev-undo"){ensureWeek(viewKey).review[0]=act==="rev-complete";touch(viewKey);renderAll()}
+  else if(act==="feedback")openFeedback();
+  else if(act==="fb-cancel")closeFeedback();
+  else if(act==="fb-send")sendFeedback();
   else if(act==="settings")openSettings();
   else if(act==="sign-out"&&HOST&&HOST.signOut){
     const pending=dirty.size||dirtyS.size||dirtySet||flushing; // includes a save that's in progress
@@ -2831,6 +2879,7 @@ async function importBackup(file){
   }catch(e){msg.textContent=e&&e.message==="nobackup"?"That zip has no full-backup.json in it. Use the file from Export all data.":"That file couldn't be read. Use the zip or JSON from Export all data."}
   finally{b.disabled=false;$("imp-file").value=""}
 }
+if(HOST&&HOST.sendFeedback)$("fbbtn").hidden=false;
 if(HOST){$("imp-btn").hidden=false;$("imp-btn").onclick=()=>$("imp-file").click();$("imp-file").onchange=e=>{const f=e.target.files[0];if(f)importBackup(f)}}
 // the host can ask for a redraw (e.g. once photo links arrive)
 window.__routineRerender=()=>{try{renderAll();renderPhotosReview()}catch(e){}};

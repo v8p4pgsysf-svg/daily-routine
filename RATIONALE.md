@@ -36,3 +36,9 @@
 - **Line-chart date labels count back from the latest week**, like the bar charts already did. Counting forward then forcing the last label made the last two collide ("19 Oct" over "26 Oct").
 - **Check-ins grid gets a 320px rule** (iPhone with Display Zoom). Added one rule at the end rather than untangling the stack of earlier 440px rules, which work at 375–440px. Long habit names now end in "…".
 - **Whole-hour workouts read "1 h", not "1 h 0 min".**
+
+## 31 Oct 2026 (feedback)
+
+- **Feedback is an icon left of the cog plus a Send feedback button at the bottom of Settings** (Jack's call). A fourth tab was rejected for space. The icon only fits from 375px (every iPhone at standard zoom) after trimming the tabs' padding from 14px to 12px; at 320px (Display Zoom) it hides, and the Settings button covers everyone.
+- **People can send but not read feedback; no replies or history in the app.** That would be a messaging system; not worth it until feedback actually flows. The database fills in the sender's email so it can't be spoofed.
+- **Privacy and forgotten passwords discussed; agreed order: password reset by emailed code first, then on-device photo encryption.** Encryption makes a forgotten password cost the photos, so the reset (and a recovery code) must exist first. A code, not a link, because a link opens in Safari, which is separate from the Home Screen app.
