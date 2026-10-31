@@ -29,3 +29,10 @@
 ## 31 Oct 2026 (Settings: one Workouts box)
 
 - **Programme and Workouts A–C now share one box** (Jack). Separate panels made four boxes for one idea; the Programme row heads the box and the workouts are collapsible rows under it. While Change is open the workout rows step aside so the switcher has the box to itself. First-time setup keeps its own layout ("My own" shows the grids as separate panels), since it has its own programme step.
+
+## 31 Oct 2026 (layout review)
+
+- **Drop-down header style renamed `.ddhead`.** The account drop-down (38e0358) reused the class name `dhead`, already used by the Today header, and its `padding:0` / `margin-left:auto` squashed the date and "% this week" against the card edge. The Today header kept its name as the original user.
+- **Line-chart date labels count back from the latest week**, like the bar charts already did. Counting forward then forcing the last label made the last two collide ("19 Oct" over "26 Oct").
+- **Check-ins grid gets a 320px rule** (iPhone with Display Zoom). Added one rule at the end rather than untangling the stack of earlier 440px rules, which work at 375–440px. Long habit names now end in "…".
+- **Whole-hour workouts read "1 h", not "1 h 0 min".**

@@ -620,6 +620,14 @@ input[type=date],select{font:inherit;color:var(--ink);background:var(--bg);borde
   .dgrid .cb{width:29px}
   .dgrid .ct{padding-left:6px;padding-right:12px}
 }
+/* iPhone with Display Zoom (320px): narrower day columns so the habit names fit */
+@media (max-width:350px){
+  .dgrid{--col:26px;grid-template-columns:minmax(0,1fr) repeat(7,var(--col)) 32px}
+  .dgrid .cb{width:26px}.dgrid .cb .box{width:23px;height:23px;border-radius:6px}
+  .dgrid .ct{padding-left:2px;padding-right:8px}
+}
+/* a long habit name ends in … rather than running under the tick boxes */
+.dgrid .lbl .n{overflow:hidden;text-overflow:ellipsis}
 
 .dgrid .subhd.gap{padding:0;height:8px;background:var(--bg)}
 
@@ -732,9 +740,9 @@ details.swk>summary .muted{margin-left:auto;font-size:.84rem}
 details.swk:not([open]){gap:0}
 .presets{display:flex;flex-direction:column;gap:10px}
 details,.hitem,.panel,section{scroll-margin:16px 0 20px}
-.dhead{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:0;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
-.dhead .muted{margin-left:auto;font-size:.84rem}.dhead .dchev{flex:none;color:var(--muted);transition:transform .15s}.dhead[aria-expanded="true"] .dchev{transform:rotate(180deg)}
-.dhead.acct{padding:12px 0}.dhead.acct .grow{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ddhead{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:0;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
+.ddhead .muted{margin-left:auto;font-size:.84rem}.ddhead .dchev{flex:none;color:var(--muted);transition:transform .15s}.ddhead[aria-expanded="true"] .dchev{transform:rotate(180deg)}
+.ddhead.acct{padding:12px 0}.ddhead.acct .grow{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .prpanel{margin-bottom:12px}.prline{display:flex;align-items:center;gap:10px}.prline .prname{flex:1 1 auto;min-width:0;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .btn.sm{padding:6px 12px;font-size:.88rem;flex:none}
 .pritem{display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:12px 0;text-align:left}.prtop{display:flex;align-items:center;gap:10px;justify-content:space-between;min-height:32px}
@@ -810,7 +818,7 @@ details,.hitem,.panel,section{scroll-margin:16px 0 20px}
 .sset h3{margin:0;font-size:1.05rem}
 .sset .ts{font-size:.84rem;color:var(--muted);margin-top:-6px}
 .swk{display:flex;flex-direction:column;gap:12px;padding:14px}
-.swkin{padding:0}details.swk.swkin>summary{min-height:34px;align-items:center}
+.swkin{padding:0}details.swk.swkin>summary{min-height:34px;align-items:center;padding-right:2px}
 .swkh{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .swkh b{font-size:1rem}
 .swkh select{width:auto;padding:6px 10px;font-size:.88rem}
@@ -1672,7 +1680,7 @@ function renderCharts(){
       if(ph)s+=`<circle class="wring" cx="${x(i)}" cy="${y(p.v)}" r="8.5"/>`;
       s+=`<circle class="wpt${i===pts.length-1?" last":""}${ph?" ph":""}" cx="${x(i)}" cy="${y(p.v)}" r="4"${ph?` data-lb="${p.k}|0" tabindex="0" role="button" aria-label="${fmt(parseKey(p.k))}: ${p.v.toFixed(1)} kg. View progress photos."`:""}><title>${fmt(parseKey(p.k))}: ${p.v.toFixed(1)} kg${ph?" · tap for photos":""}</title></circle>`});
     const step=Math.max(1,Math.ceil(pts.length/5));
-    pts.forEach((p,i)=>{if(i%step===0||i===pts.length-1)s+=`<text class="ax" x="${x(i)}" y="${H-8}" text-anchor="${i===0?"start":i===pts.length-1?"end":"middle"}">${fmt(parseKey(p.k))}</text>`});
+    pts.forEach((p,i)=>{if((pts.length-1-i)%step===0)s+=`<text class="ax" x="${x(i)}" y="${H-8}" text-anchor="${i===0?"start":i===pts.length-1?"end":"middle"}">${fmt(parseKey(p.k))}</text>`});
     const lp=pts[pts.length-1],fp=pts[0],diff=lp.v-fp.v;
     s+=`</svg>`;
     const anyPh=pts.some(p=>weeks[p.k].photos.length);
@@ -1926,7 +1934,7 @@ function openSession(id){
 let timerInt=null;
 const elapsed=s=>(s.accMs||0)+(s.activeFrom?Math.max(0,Date.now()-s.activeFrom):0);
 const clock=ms=>{const t=Math.floor(ms/1000),h=Math.floor(t/3600),m=Math.floor(t/60)%60,x=t%60;return (h?h+":"+pad(m):m)+":"+pad(x)};
-const durTxt=s=>{if(!s.accMs)return "–";const m=Math.round(s.accMs/60000);return m>=60?Math.floor(m/60)+" h "+(m%60)+" min":m+" min"};
+const durTxt=s=>{if(!s.accMs)return "–";const m=Math.round(s.accMs/60000);return m>=60?Math.floor(m/60)+" h"+(m%60?" "+(m%60)+" min":""):m+" min"};
 const IDLE_MS=30*60000;
 const lastTick=s=>Math.max(0,...s.items.flatMap(it=>it.log.map(l=>l.done&&l.t?l.t:0)));
 // nothing ticked for 30 minutes: stop the clock at the last set so a forgotten workout doesn't run on
@@ -2151,7 +2159,7 @@ function secAccount(D){let h="";
   if(!(HOST&&HOST.email))return `<section class="sset"><h3>Units</h3><div class="panel shab">${units}</div></section>`;
   const open=!!(SD.acct||SD.pw||SD.del||SD.pwDone);
   h+=`<section class="sset"><h3>Account</h3><div class="panel shab">${units}<div class="shsep"></div>
-    <button type="button" class="dhead acct" data-st="acct" aria-expanded="${open}"><span class="grow">Signed in as <b>${esc(HOST.email)}</b></span><svg class="dchev" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+    <button type="button" class="ddhead acct" data-st="acct" aria-expanded="${open}"><span class="grow">Signed in as <b>${esc(HOST.email)}</b></span><svg class="dchev" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
     ${open?`
     ${HOST.canChangePassword?(SD.pw?`<div class="shsep"></div><div class="pwform"><input type="password" id="pw1" autocomplete="new-password" placeholder="New password (8+ characters)" aria-label="New password"><input type="password" id="pw2" autocomplete="new-password" placeholder="Type it again" aria-label="Type the new password again">
       <div class="pwrow"><button type="button" class="btn primary" data-st="pw-save">Change password</button><button type="button" class="btn ghost" data-st="pw-cancel">Cancel</button></div><div class="ts" id="pwmsg" role="status"></div></div>`
@@ -2636,7 +2644,7 @@ function lineChart(pts,label){
   pts.forEach((p,i)=>{s+=`<circle class="wpt${i===pts.length-1?" last":""}" cx="${x(i)}" cy="${y(p.v)}" r="4"><title>${dateLabel(p.k)}: ${f(p.v)} ${unitW()}${p.lab!=null?" × "+p.lab:""}</title></circle>`;
     if(p.lab!=null&&pts.length<=12)s+=`<text class="ptlab" x="${x(i)}" y="${y(p.v)-10}" text-anchor="${i===0?"start":i===pts.length-1?"end":"middle"}">×${p.lab}</text>`});
   const step=Math.max(1,Math.ceil(pts.length/5));
-  pts.forEach((p,i)=>{if(i%step===0||i===pts.length-1)s+=`<text class="ax" x="${x(i)}" y="${H-8}" text-anchor="${i===0?"start":i===pts.length-1?"end":"middle"}">${fmt(parseKey(p.k))}</text>`});
+  pts.forEach((p,i)=>{if((pts.length-1-i)%step===0)s+=`<text class="ax" x="${x(i)}" y="${H-8}" text-anchor="${i===0?"start":i===pts.length-1?"end":"middle"}">${fmt(parseKey(p.k))}</text>`});
   return s+`</svg>`;
 }
 const programmeIds=()=>[...new Set(Object.values(PROGRAMME).flatMap(w=>w.items.map(r=>r[0])))];
@@ -2688,7 +2696,7 @@ function pctChart(pts){
   if(pts.length>1)s+=`<polyline class="wline" points="${line}"/>`;
   pts.forEach((p,i)=>{s+=`<circle class="wpt${i===pts.length-1?" last":""}" cx="${x(i)}" cy="${y(p.v)}" r="4"><title>Week of ${fmt(parseKey(p.k))}: ${fmtPct(p.v)} across ${p.n} lift${p.n===1?"":"s"}</title></circle>`});
   const step2=Math.max(1,Math.ceil(pts.length/5));
-  pts.forEach((p,i)=>{if(i%step2===0||i===pts.length-1)s+=`<text class="ax" x="${x(i)}" y="${H-8}" text-anchor="${pts.length===1?"middle":i===0?"start":i===pts.length-1?"end":"middle"}">${fmt(parseKey(p.k))}</text>`});
+  pts.forEach((p,i)=>{if((pts.length-1-i)%step2===0)s+=`<text class="ax" x="${x(i)}" y="${H-8}" text-anchor="${pts.length===1?"middle":i===0?"start":i===pts.length-1?"end":"middle"}">${fmt(parseKey(p.k))}</text>`});
   return s+`</svg>`;
 }
 // Progress tab: one line for the typical change across all lifts

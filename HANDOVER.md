@@ -10,6 +10,7 @@ Polish the hosted Daily Routine app (GitHub Pages + Supabase) so Jack uses it da
 ## Last shipped
 - Home Screen nudge on the sign-in page, same on iPhone and Android (see `CLAUDE.md`).
 - Settings: Programme and Workouts A–C in one box (`secPresets(D, secLists(D,false,true))`). Check: `tests/hosted/settings-workouts.py`. Tests: 179 app, 56 end-to-end, 17 home-screen checks (`tests/hosted/home-screen.py`).
+- Layout review fixes: Today header padding (class clash), chart date labels, 320px check-ins grid, "1 h" durations. Full sweep: `tests/hosted/layout-review.py`.
 
 ## Testing notes
 - App tests: `npm i jsdom` somewhere, then `NODE_PATH=<that>/node_modules node tests/app.test.js src/weekly-routine.html`.
