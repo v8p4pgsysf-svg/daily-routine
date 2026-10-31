@@ -43,3 +43,9 @@
 - **People can send but not read feedback; no replies or history in the app.** That would be a messaging system; not worth it until feedback actually flows. The database fills in the sender's email so it can't be spoofed.
 - **Privacy and forgotten passwords discussed; agreed order: password reset by emailed code first, then on-device photo encryption.** Encryption makes a forgotten password cost the photos, so the reset (and a recovery code) must exist first. A code, not a link, because a link opens in Safari, which is separate from the Home Screen app.
 - **Feedback refinements (Jack):** Idea or Problem must be chosen before sending; the "goes privately to whoever runs the app" line was dropped; in Settings it's a centred red underlined "Send feedback" link at the bottom, not a section with a box.
+
+## 31 Oct 2026 (email and forgotten passwords)
+
+- **Forgot password = sign in with an emailed 6-digit code, then set a new password on the same card.** Supabase's reset email is built around a link, and the docs don't clearly support a typed recovery code; a link opens in Safari, separate from the Home Screen app. The email-code sign-in is fully documented and reused the old code-login path.
+- **Email goes through a dedicated personal Gmail account with an app password**, not Resend. Resend (and every service that sends as you) needs a domain Jack would have to buy; Gmail passes inbox checks because Google sends it. A dedicated account keeps Jack's own address out and avoids the app password being cancelled when he changes his own Google password. Outlook was ruled out: personal Outlook accounts no longer allow password-based SMTP, which is all Supabase supports. Moving to a domain later is only an SMTP settings change.
+- **Email confirmation at sign-up stays off.** Invite codes already gate sign-up; it would add a step for every friend.

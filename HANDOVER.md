@@ -24,7 +24,7 @@ Polish the hosted Daily Routine app (GitHub Pages + Supabase) so Jack uses it da
 - Earlier live checks still open: a progress photo survives a reopen and shows under Progress; live sync between phone and computer.
 
 ## Agreed next (in this order)
-1. Forgotten-password reset with an emailed 6-digit code (not a link: links open in Safari, separate from the Home Screen app). Needs email sending: Jack to get a personal domain + Resend (or similar) and add it as custom SMTP in Supabase. Open question to Jack: does he have a personal domain?
+1. ~~Forgotten-password reset~~ **Built and live** (emailed 6-digit code). **Waiting on Jack:** a new personal Gmail just for the app + 2-Step Verification + app password → Supabase custom SMTP (smtp.gmail.com, 465), and the Magic Link template with `{{ .Token }}`. Until then, only Supabase team members get the email. Rejected: Outlook (Microsoft dropped password-based SMTP for personal accounts); Resend needs a domain (possible later upgrade, SMTP settings only).
 2. Encrypt progress photos on the phone (key from the password; recovery code shown once). Jack sees this as a must before wider sharing.
 
 ## Open ideas (not started; Jack hasn't committed to them)

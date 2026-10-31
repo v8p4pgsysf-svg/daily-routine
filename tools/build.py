@@ -34,6 +34,7 @@ body:not(.in)>:not(#login):not(script){{display:none!important}}
 .lg-card input:focus{{outline:none;border-color:#2E7650;box-shadow:0 0 0 3px #E4EFE8}}
 #lg-code{{letter-spacing:.3em;font-family:"IBM Plex Mono",ui-monospace,monospace;text-align:center;font-size:1.3rem}}
 .lg-btn{{margin-top:6px;font:inherit;font-weight:650;font-size:1rem;padding:12px;border-radius:10px;border:0;background:#2E7650;color:#fff;cursor:pointer}}.lg-btn:disabled{{opacity:.6}}
+.lg-step{{display:flex;flex-direction:column;gap:10px}}
 .lg-link{{border:0;background:none;color:#6A726C;text-decoration:underline;font:inherit;font-size:.9rem;cursor:pointer;padding:6px}}
 .lg-err{{margin:0;color:#A33A2E;background:#F6E5E2;border-radius:10px;padding:10px 12px;font-size:.9rem}}
 #login.a2hs form{{display:none}}

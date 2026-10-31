@@ -10,7 +10,10 @@ window.__mockOffline=false;
 function createClient(){
   const auth={_cbs:[],
     async getSession(){const s=JSON.parse(localStorage.getItem("routine-auth")||"null");return {data:{session:s}}},
-    async signInWithOtp({email}){window.__lastOtpEmail=email;if(email.startsWith("stranger"))return {error:{message:"Signups not allowed for otp"}};return {error:null}},
+    async signInWithOtp({email}){window.__lastOtpEmail=email;
+      if(window.__mockOtpRate)return {error:{message:"For security purposes, you can only request this after 60 seconds."}};
+      if(email.startsWith("stranger")||JSON.parse(localStorage.getItem("mock-deleted")||"[]").includes(email))return {error:{message:"Signups not allowed for otp"}};
+      window.__otpSent=(window.__otpSent||0)+1;return {error:null}},
     async verifyOtp({email,token}){if(token!=="123456")return {data:{},error:{message:"Token has expired or is invalid"}};
       const s={access_token:"t",user:{id:uidOf(email),email}};localStorage.setItem("routine-auth",JSON.stringify(s));return {data:{session:s},error:null}},
     async signInWithPassword({email,password}){const pw=JSON.parse(localStorage.getItem("mock-pw")||"{}");const want=pw[email]||"Start-1234";

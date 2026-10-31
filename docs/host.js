@@ -89,6 +89,7 @@ function showLogin(note){
       <label for="lg-email">Email</label><input id="lg-email" name="email" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" required>
       <label for="lg-pass">Password</label><input id="lg-pass" name="password" type="password" autocomplete="current-password" required>
       <button class="lg-btn" id="lg-btn" type="submit">Sign in</button>
+      <button class="lg-link" type="button" id="lg-forgot">Forgot password?</button>
       <button class="lg-link" type="button" id="lg-new">New here? Create an account</button></form>
     <form class="lg-card" id="lg-fs" method="post" action="#" novalidate hidden>
       <h1>Create your account</h1><p class="lg-sub">Choose a password and enter the invite code you were given.</p>
@@ -99,11 +100,60 @@ function showLogin(note){
       <label for="lg-scode">Invite code</label><input id="lg-scode" name="invite-code" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="From whoever shared the app">
       
       <button class="lg-btn" id="lg-sbtn" type="submit">Create account</button>
-      <button class="lg-link" type="button" id="lg-have">Already have an account? Sign in</button></form>`;
+      <button class="lg-link" type="button" id="lg-have">Already have an account? Sign in</button></form>
+    <form class="lg-card" id="lg-fr" method="post" action="#" novalidate hidden>
+      <h1>Reset your password</h1><p class="lg-sub" id="lg-frsub"></p>
+      <p class="lg-err" id="lg-frerr" role="alert" hidden></p>
+      <div class="lg-step" id="lg-fr1">
+        <label for="lg-femail">Email</label><input id="lg-femail" name="email" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" required>
+        <button class="lg-btn" id="lg-fsend" type="submit">Email me a code</button></div>
+      <div class="lg-step" id="lg-fr2" hidden>
+        <div class="lg-step" id="lg-fcodewrap"><label for="lg-fcode">Code from the email</label><input id="lg-fcode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required></div>
+        <label for="lg-fp1">New password</label><input id="lg-fp1" name="new-password" type="password" autocomplete="new-password" placeholder="At least 8 characters" required>
+        <label for="lg-fp2">New password again</label><input id="lg-fp2" name="new-password-confirm" type="password" autocomplete="new-password" required>
+        <button class="lg-btn" id="lg-fset" type="submit">Set new password</button>
+        <button class="lg-link" type="button" id="lg-fresend">Send a new code</button></div>
+      <button class="lg-link" type="button" id="lg-fback">Back to sign in</button></form>`;
   const fp=$("lg-fp"),fs=$("lg-fs");
   const toSignIn=()=>{fs.hidden=true;fp.hidden=false;flashErr("lg-serr","");if($("lg-semail").value)$("lg-email").value=$("lg-semail").value;setTimeout(()=>$($("lg-email").value?"lg-pass":"lg-email").focus(),30)};
   const toSignUp=()=>{fp.hidden=true;fs.hidden=false;flashErr("lg-err","");$("lg-semail").value=$("lg-email").value;setTimeout(()=>$("lg-semail").focus(),30)};
   $("lg-new").onclick=toSignUp;$("lg-have").onclick=toSignIn;
+  /* forgotten password: sign in with a 6-digit code emailed to them, then set a new password, all in this card.
+     A code rather than a reset link, because on iPhone a link opens in Safari, not the Home Screen app. */
+  const fr=$("lg-fr");let frEmail="",frSession=null;
+  const frStep=(n,sub)=>{$("lg-fr1").hidden=n!==1;$("lg-fr2").hidden=n!==2;
+    $("lg-frsub").innerHTML=sub||(n===1?"We'll email you a code so you can choose a new password.":`Enter the code we sent to <b>${esc(frEmail)}</b>, then choose a new password.`)};
+  const toForgot=()=>{fp.hidden=true;fs.hidden=true;fr.hidden=false;flashErr("lg-err","");flashErr("lg-frerr","");frSession=null;$("lg-fcodewrap").hidden=false;
+    $("lg-femail").value=$("lg-email").value;frStep(1);setTimeout(()=>$("lg-femail").focus(),30)};
+  const fromForgot=()=>{fr.hidden=true;fp.hidden=false;flashErr("lg-frerr","");if(frEmail||$("lg-femail").value)$("lg-email").value=frEmail||$("lg-femail").value;setTimeout(()=>$($("lg-email").value?"lg-pass":"lg-email").focus(),30)};
+  $("lg-forgot").onclick=toForgot;$("lg-fback").onclick=fromForgot;
+  async function sendCode(again){const email=again?frEmail:$("lg-femail").value.trim().toLowerCase();
+    if(!/^\S+@\S+\.\S+$/.test(email)){flashErr("lg-frerr","Enter your email address.");return}
+    const b=again?$("lg-fresend"):$("lg-fsend"),label=b.textContent;b.disabled=true;b.textContent="Sending…";
+    let res;try{res=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:false}})}catch(err){res={error:err}}
+    b.disabled=false;b.textContent=label;
+    if(res.error){const m=String(res.error.message||"");
+      flashErr("lg-frerr",/signups? not allowed|not found|user not found/i.test(m)?"There's no account with that email. Check it, or create an account."
+        :/rate|seconds|too many/i.test(m)?"A code was sent very recently. Wait a minute, then try again."
+        :"Couldn't send the email. Check your connection and try again.");return}
+    frEmail=email;frSession=null;flashErr("lg-frerr","");$("lg-fcodewrap").hidden=false;
+    frStep(2,again?`We've sent a new code to <b>${esc(email)}</b>. Enter it below, then choose a new password.`:"");
+    if(!again)$("lg-fcode").value="";setTimeout(()=>$("lg-fcode").focus(),30)}
+  $("lg-fresend").onclick=()=>sendCode(true);
+  fr.onsubmit=async e=>{e.preventDefault();if(!$("lg-fr1").hidden){sendCode(false);return}
+    const token=$("lg-fcode").value.replace(/\s/g,""),p1=$("lg-fp1").value,p2=$("lg-fp2").value;
+    if(!frSession&&!/^\d{6,10}$/.test(token)){flashErr("lg-frerr","Enter the code from the email.");return}
+    if(p1.length<8){flashErr("lg-frerr","Choose a password of at least 8 characters.");return}
+    if(p1!==p2){flashErr("lg-frerr","The two passwords don't match.");return}
+    const b=$("lg-fset");b.disabled=true;b.textContent="Saving…";const done=()=>{b.disabled=false;b.textContent="Set new password"};
+    if(!frSession){let r;try{r=await sb.auth.verifyOtp({email:frEmail,token,type:"email"})}catch(err){r={error:err}}
+      if(r.error||!r.data||!r.data.session){done();const m=String(r.error&&r.error.message||"");
+        flashErr("lg-frerr",/expired|invalid|token/i.test(m)?"That code didn't work or has expired. Check it, or send a new one.":"Couldn't check the code. Check your connection and try again.");return}
+      frSession=r.data.session;$("lg-fcodewrap").hidden=true} // the code is used up; a retry only needs the password
+    let u;try{u=await sb.auth.updateUser({password:p1})}catch(err){u={error:err}}
+    done();const m=String(u.error&&u.error.message||"");
+    if(u.error&&!/same|different/i.test(m)){flashErr("lg-frerr",/weak|short|least/i.test(m)?"That password is too weak. Make it longer.":"Couldn't save the new password. Check your connection and try again.");return}
+    box.hidden=true;start(frSession)}; // a "same as before" password is fine: they're signed in either way
   if(note)flashErr("lg-err",note);
   const hint=!note&&addInstallHint(box);
   fp.onsubmit=async e=>{e.preventDefault();const email=$("lg-email").value.trim().toLowerCase(),password=$("lg-pass").value;
@@ -112,7 +162,7 @@ function showLogin(note){
     let res;try{res=await sb.auth.signInWithPassword({email,password})}catch(err){res={error:err}}
     b.disabled=false;b.textContent="Sign in";
     if(res.error||!res.data||!res.data.session){const m=String(res.error&&res.error.message||"");
-      flashErr("lg-err",/invalid|credentials|password/i.test(m)?"That email and password don't match. Check them, or ask whoever set up your account to reset it.":/rate|too many/i.test(m)?"Too many attempts. Wait a minute, then try again.":"Couldn't sign in. Check your connection and try again.");return}
+      flashErr("lg-err",/invalid|credentials|password/i.test(m)?"That email and password don't match. Check them, or tap Forgot password.":/rate|too many/i.test(m)?"Too many attempts. Wait a minute, then try again.":"Couldn't sign in. Check your connection and try again.");return}
     box.hidden=true;start(res.data.session)};
   fs.onsubmit=async e=>{e.preventDefault();const email=$("lg-semail").value.trim().toLowerCase(),p1=$("lg-spass").value,p2=$("lg-spass2").value;
     if(!/^\S+@\S+\.\S+$/.test(email)){flashErr("lg-serr","Enter a valid email address.");return}
