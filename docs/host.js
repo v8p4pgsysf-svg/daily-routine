@@ -338,6 +338,20 @@ function start(session,pw){
       kstate==="recover"?showRc():showPw()});
     return asking}
 
+  // Settings → Photo recovery code: say what it is before anything changes. Making a new code is a choice here, and
+  // the current code keeps working until the new one is saved
+  async function explainRc(){await kinit;if(!krec)krec=(await readRec())||{pw:null,rc:null};
+    return new Promise(done=>{const end=v=>{closeOverlay();done(v)};
+      if(!krec.rc){overlay(`<div class="lg-card"><h1>Photo recovery code</h1>
+          <p class="lg-sub">Your progress photos are encrypted, so only you can see them. You'll get a recovery code when you add your first photo: it's how you get your photos back if you ever forget your password.</p>
+          <button class="lg-btn" type="button" id="pk-ok">OK</button></div>`);$("pk-ok").onclick=()=>end(false);return}
+      overlay(`<div class="lg-card"><h1>Photo recovery code</h1>
+          <p class="lg-sub">Your progress photos are encrypted, so only you can see them. If you ever forget your password, the recovery code you saved is the only way to get them back.</p>
+          <p class="lg-sub lg-tight">Make a new code if you've lost yours or think someone else has seen it. Your current code keeps working until you save the new one.</p>
+          <button class="lg-btn" type="button" id="pk-make">Make a new code</button>
+          <button class="lg-link" type="button" id="pk-keep">Cancel</button></div>`);
+      $("pk-make").onclick=()=>end(true);$("pk-keep").onclick=()=>end(false)})}
+
   // "Save your recovery code": before the first encrypted photo, or from Settings for a new one
   let rcAsk=null;
   async function ensureRc(force){if(!krec)krec=(await readRec())||{pw:null,rc:null};if(krec.rc&&!force)return;if(rcAsk)return rcAsk;
@@ -347,7 +361,7 @@ function start(session,pw){
           <p class="lg-sub">Your progress photos are encrypted, so only you can see them. If you forget your password, you'll need this code to see them again.</p>
           <div class="lg-code" id="pk-code">${code}</div>
           <button class="lg-btn lg-btn2" type="button" id="pk-copy">Copy code</button>
-          <p class="lg-sub lg-tight">Keep it somewhere safe, like your notes or password manager.${force?" Your old code stops working.":""}</p>
+          <p class="lg-sub lg-tight">Keep it somewhere safe, like your notes or password manager.${force?" Your old code keeps working until you tap I've saved it.":""}</p>
           <p class="lg-err" id="pk-err" role="alert" hidden></p>
           <button class="lg-btn" type="button" id="pk-saved">I've saved it</button>
           <button class="lg-link" type="button" id="pk-cancel">${force?"Cancel":"Not now"}</button></div>`);
@@ -421,7 +435,7 @@ function start(session,pw){
     changePassword:async np=>{const {error}=await sb.auth.updateUser({password:np});if(error)throw new Error(/same|different/i.test(error.message)?"same":/weak|short|least/i.test(error.message)?"weak":"failed");
       // the photo key follows the new password (if this device has it unlocked)
       if(praw){try{if(!krec)krec=(await readRec())||{rc:null};await saveRec(Object.assign({},krec,{pw:await lockRaw(praw,np,PW_ITER)}))}catch(e){}}},
-    newRecoveryCode:async()=>{await needKey();await ensureRc(true)},
+    newRecoveryCode:async()=>{if(!await explainRc())return;await needKey();await ensureRc(true)},
     importPhoto:(id,blob)=>put(id,blob,true),
     // feedback goes to a table people can add to but not read; the database fills in their email
     sendFeedback:async({kind,message})=>{

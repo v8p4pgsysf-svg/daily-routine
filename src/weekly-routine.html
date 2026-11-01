@@ -2299,7 +2299,7 @@ function secAccount(D){let h="";
     ${HOST.canChangePassword?(SD.pw?`<div class="shsep"></div><div class="pwform"><input type="password" id="pw1" autocomplete="new-password" placeholder="New password (8+ characters)" aria-label="New password"><input type="password" id="pw2" autocomplete="new-password" placeholder="Type it again" aria-label="Type the new password again">
       <div class="pwrow"><button type="button" class="btn primary" data-st="pw-save">Change password</button><button type="button" class="btn ghost" data-st="pw-cancel">Cancel</button></div><div class="ts" id="pwmsg" role="status"></div></div>`
       :`<div class="shsep"></div><div class="shrow"><button type="button" class="linkbtn" data-st="pw-open">Change password</button>${SD.pwDone?`<span class="ts" style="color:var(--green);margin-left:auto">Password changed</span>`:""}</div>`):""}
-    ${HOST.newRecoveryCode?`<div class="shsep"></div><div class="shrow"><button type="button" class="linkbtn" data-st="new-rc">New photo recovery code</button></div>`:""}
+    ${HOST.newRecoveryCode?`<div class="shsep"></div><div class="shrow"><button type="button" class="linkbtn" data-st="new-rc">Photo recovery code</button></div>`:""}
     <div class="shsep"></div><div class="shrow"><button type="button" class="linkbtn" data-st="sign-out">Sign out</button></div>
     ${HOST.deleteAccount?(SD.del?`<div class="shsep"></div><div class="delbox"><b>Delete your account?</b>
       <p class="ts">This permanently deletes your login, check-ins, workouts, settings and photos. It can't be undone. To keep a copy, use <b>Export all data</b> on the Progress tab first.</p>

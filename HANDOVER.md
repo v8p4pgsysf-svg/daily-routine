@@ -14,11 +14,12 @@ Polish the hosted Daily Routine app (GitHub Pages + Supabase) so Jack uses it da
 - Weekly review shown as Recommended in Settings/setup; Progress says nothing about it when it's off. Settings keep keys from newer versions.
 - Habits-only people (no weights, no cardio): two tabs, no Rest card, setup skips planned days.
 - Workout screen: + Set, Remove set, + Add exercise, Remove (today only; programme untouched). Programme switch keeps chosen gym days.
+- Settings → Photo recovery code explains first; a new code replaces the old one only on "I've saved it".
 - Tests: the app suite and all hosted suites run on fixed calendars; hosted setup is one command (`tests/hosted/setup.sh`); flaky sign-up and photo-encryption races fixed.
 
 ## Testing
 - App: `npm i jsdom` somewhere, then `NODE_PATH=<that>/node_modules node tests/app.test.js src/weekly-routine.html` (234 checks).
-- Hosted: `tests/hosted/setup.sh <folder>` then run the suites there (`run.py` 57, `photo-encryption.py` 27, `feedback.py` 20, `forgot-password.py` 18, `home-screen.py` 17, `review-photos.py` 9, `settings-workouts.py` 7; sweeps `layout-review.py`, `screens-sweep.py`). `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`.
+- Hosted: `tests/hosted/setup.sh <folder>` then run the suites there (`run.py` 57, `photo-encryption.py` 31, `feedback.py` 20, `forgot-password.py` 18, `home-screen.py` 17, `review-photos.py` 10, `settings-workouts.py` 7; sweeps `layout-review.py`, `screens-sweep.py`). `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`.
 - Opening `src/weekly-routine.html` directly shows the photo viewer overlay, because only the build adds `[hidden]{display:none!important}`. Add that style when screenshotting the source.
 - Claude can't reach the live site or Supabase from the session; Jack checks live behaviour on his phone.
 

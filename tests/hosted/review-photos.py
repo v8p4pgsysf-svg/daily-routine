@@ -24,6 +24,10 @@ try:
         pg.click('[data-st="set-next"]'); pg.click('[data-sprog="fullbody"]')
         for _ in range(3): pg.click('[data-st="set-next"]')
         pg.click('[data-st="set-start"]'); pg.wait_for_selector("#setsheet", state="hidden"); pg.wait_for_timeout(600)
+        # before any photo there's no recovery code: the menu item explains, and makes nothing
+        pg.click("#setcog"); pg.click('[data-st="acct"]'); pg.click('[data-st="new-rc"]'); pg.wait_for_selector("#pk-ok")
+        check("No photos yet: Photo recovery code explains you'll get one with your first photo", "when you add your first photo" in pg.inner_text("#login") and not pg.locator("#pk-make").count())
+        pg.click("#pk-ok"); pg.wait_for_timeout(200); pg.click('[data-st="set-cancel"]'); pg.wait_for_timeout(200)
         # open the weekly review and add two photos (a real JPEG made in the page)
         if pg.get_attribute("#revtoggle", "aria-expanded") != "true": pg.click("#revtoggle"); pg.wait_for_timeout(500)
         jpg = pg.evaluate("""()=>{const c=document.createElement('canvas');c.width=300;c.height=400;const x=c.getContext('2d');x.fillStyle='#7aa58b';x.fillRect(0,0,300,400);return c.toDataURL('image/jpeg',.8).split(',')[1]}""")

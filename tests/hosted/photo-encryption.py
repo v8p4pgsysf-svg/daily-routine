@@ -115,8 +115,18 @@ try:
 
         # 6. new recovery code from Settings
         old_rc = pg.evaluate(REC)["rc"]["ct"]
-        pg.click("#setcog"); pg.click('[data-st="acct"]'); pg.click('[data-st="new-rc"]'); pg.wait_for_selector("#pk-saved")
-        check("Settings: New photo recovery code shows a new code", "Your new recovery code" in pg.inner_text("#login"))
+        pg.click("#setcog"); pg.click('[data-st="acct"]')
+        check("Settings: the account menu says Photo recovery code", pg.inner_text('[data-st="new-rc"]').strip() == "Photo recovery code")
+        pg.click('[data-st="new-rc"]'); pg.wait_for_selector("#pk-make")
+        t = pg.inner_text("#login")
+        check("…which explains the code first, with nothing changed yet", "only way to get them back" in t and "keeps working until you save the new one" in t and not pg.locator("#pk-code").count())
+        pg.click("#pk-keep"); pg.wait_for_timeout(300)
+        check("Cancel on the explanation keeps the old code", pg.evaluate(REC)["rc"]["ct"] == old_rc and pg.locator("#login").is_hidden())
+        pg.click('[data-st="new-rc"]'); pg.wait_for_selector("#pk-make"); pg.click("#pk-make"); pg.wait_for_selector("#pk-saved")
+        check("Make a new code shows it, saying the old one works until it's saved", "Your new recovery code" in pg.inner_text("#login") and "keeps working until you tap I've saved it" in pg.inner_text("#login"))
+        pg.click("#pk-cancel"); pg.wait_for_timeout(300)
+        check("Cancel on the new code keeps the old code too", pg.evaluate(REC)["rc"]["ct"] == old_rc)
+        pg.click('[data-st="new-rc"]'); pg.wait_for_selector("#pk-make"); pg.click("#pk-make"); pg.wait_for_selector("#pk-saved")
         code2 = pg.inner_text("#pk-code").strip(); pg.click("#pk-saved"); pg.wait_for_timeout(800)
         check("…and replaces the old one", pg.evaluate(REC)["rc"]["ct"] != old_rc and code2 != code)
         pg.click('[data-st="set-cancel"]'); pg.wait_for_timeout(200)
