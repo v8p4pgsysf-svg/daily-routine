@@ -395,6 +395,7 @@ input[type=date],select{font:inherit;color:var(--ink);background:var(--bg);borde
 .trow .tchev{transform:rotate(-45deg);margin:0 2px 0 -4px}
 button.trow{width:100%;background:none;border-left:0;border-right:0;border-bottom:0;border-radius:0;font:inherit;color:inherit;text-align:left;-webkit-tap-highlight-color:transparent}
 .tlist button.trow:first-child{border-top:0}
+.tlist button.trow{min-height:50px} /* one-line rows (Weekly review) get the same band as two-line ones, so their text sits centred */
 .c.flash .box{animation:cellflash 1.8s ease-out}
 @keyframes cellflash{0%,45%{box-shadow:0 0 0 3px var(--green)}100%{box-shadow:0 0 0 3px transparent}}
 .trow > span:not(.cb):not(.revpill):not(.chev){display:flex;flex-direction:column;min-width:0}
