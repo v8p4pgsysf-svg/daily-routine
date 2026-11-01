@@ -1,5 +1,5 @@
 <!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<meta name="app-version" content="20261101083531">
+<meta name="app-version" content="20261101085949">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Daily Routine</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -549,6 +549,7 @@ button.trow{width:100%;background:none;border-left:0;border-right:0;border-botto
 
 /* compact Today box */
 .dash .todaycard{padding:16px 16px 14px;gap:12px}
+.todaycard:has(> .tgroup:last-child){padding-bottom:2px} /* the last Also-today line's own band supplies the bottom space */
 .dash .tday{font-size:1.15rem;font-weight:700;letter-spacing:-.01em}
 .tfocus{display:block;font-size:.88rem;line-height:1.4;margin-top:-6px}
 .tfl{font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--green);margin-right:4px}
