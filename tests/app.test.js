@@ -28,6 +28,7 @@ $(w,"#st-date").value="2026-10-26";
 click(w,$(w,'[data-st="start"]'));
 ok($(w,"#ed-prog2")&&$(w,"#ed-prog2").textContent==="0/16","1. Workout A started with 16 sets, none done");
 ok($$(w,".ex").length===6&&$(w,".ex .nm").textContent==="Barbell Squat","   6 exercise cards in order, Barbell Squat first");
+ok(/First workout: “3 × 6–8” means 3 sets of 6 to 8 reps/.test($(w,"#st-main").textContent),"NU1. Before any workout is saved, the workout screen explains sets × reps");
 // 2+3 enter bench 60 x 8,7,6 and squat 80 x 8,8,8, tick
 const fill=(xi,sets)=>sets.forEach(([kg,r],si)=>{type(w,$(w,`#w-${xi}-${si}`),kg);type(w,$(w,`#r-${xi}-${si}`),r);click(w,$(w,`[data-tick="${xi}-${si}"]`))});
 fill(0,[[80,8],[80,8],[80,8]]);fill(1,[[60,8],[60,7],[60,6]]);
@@ -48,6 +49,7 @@ click(w,$(w,"#tab-week"));
 const s=JSON.parse(w.localStorage.getItem("weekly-routine.workouts.v1"));
 ok(Object.values(s).filter(x=>x.status==="done").length===1,"   One completed workout stored");
 ok($(w,'[data-ct="strength"]').textContent==="1/3"&&$(w,"button.wk").textContent==="A","5. Scorecard strength shows 1/3 with an A on Monday");
+ok($$(w,"#daily .lbl").filter(l=>/^(Strength|Cardio)/.test(l.textContent)).every(l=>l.querySelector(".x.keep")&&l.querySelector(".x").textContent==="Logged in Training"),"NU5. The grid's Strength and Cardio rows say they're logged in Training");
 // resave / edit shouldn't double count
 const id=Object.keys(s)[0];
 click(w,$(w,"button.wk"));
@@ -73,6 +75,7 @@ ok(/\+2\.5 kg from last time/.test($(w,"#ex-0 .exprev").textContent),"   Squat f
 {const lw=parseFloat($(w,"#sr-0-0 .pv").textContent.replace("Last ",""));
 ok([0,1,2].every(i=>parseFloat($(w,`#w-0-${i}`).value)===lw+2.5),"   Squat weights prefilled 2.5 kg up on last time ("+lw+" → "+(lw+2.5)+")");}
 ok($(w,"#w-1-0").value==="60","   Bench not ready, so it stays at last time's weight");
+ok(!/First workout:/.test($(w,"#st-main").textContent),"NU6. Once a workout is saved, the first-workout hint is gone");
 // tick bench with blank reps -> uses hint
 click(w,$(w,'[data-tick="1-0"]'));
 ok($(w,"#r-1-0").value==="8"&&$(w,"#sr-1-0").classList.contains("done"),"   Ticking a blank set fills last time's reps");
@@ -130,6 +133,7 @@ w.close();
 store={};w=boot("2026-11-01T18:00:00");
 ok(/Weekly review/.test($(w,"#today").textContent)&&/Prepare lunches/.test($(w,"#today").textContent),"S1. Sunday Today lists lunch prep, breakfast prep and the review");
 ok($(w,'[data-st="rev-complete"]').disabled,"S2. Complete review disabled until weight and one answer are in");
+ok($(w,"#revpillh").classList.contains("due")&&$(w,'#today [data-goto="review-cur"] .revpill').classList.contains("due"),"NU2. On review day, an unfinished review's To do is amber in the panel and in Today");
 type(w,$(w,"#well"),"Hit all sessions");
 ok($(w,'[data-st="rev-complete"]').disabled,"   Still disabled with an answer but no weight");
 type(w,$(w,"#weight"),"79.4");
@@ -148,10 +152,14 @@ click(w,$(w,'#today [data-goto="review-cur"]'));ok(!$(w,"#revbody").hidden,"   T
 save(w);w.close();w=boot("2026-11-02T08:00:00");
 ok(/Bed by 11/.test($(w,"#today .tfocus").textContent),"R3. Monday's Today shows last week's improvement as this week's focus");
 ok(/Finish last week's review/.test($(w,"#today").textContent),"R4. Monday prompts to finish last week's incomplete review");
+ok($(w,'#today [data-goto="review-last"] .revpill').classList.contains("due")&&!$(w,"#revpillh").classList.contains("due"),"NU3. Monday: the Late line is amber; this week's panel (not yet due) isn't");
 click(w,$(w,'[data-goto="review-last"]'));
 ok($(w,"#weeklabel").textContent==="26 Oct – 1 Nov"&&!$(w,"#revbody").hidden&&$(w,"#well").value==="Hit all sessions","   Prompt opens last week's review with its answers");
 const h1=hits();click(w,$(w,'[data-st="rev-complete"]'));
 ok(hits()===h1+1&&$(w,"#weeklabel").textContent==="26 Oct – 1 Nov","   Completing it late counts for last week");
+ok(!$(w,"#revpillh").classList.contains("due")&&$(w,"#revpillh").classList.contains("done"),"   and its pill turns green, not amber");
+save(w);w.close();w=boot("2026-11-03T08:00:00");
+ok(!$(w,"#revpillh").classList.contains("due")&&!$(w,'#today [data-goto="review-last"]'),"NU4. Tuesday: no Late line, and this week's review isn't amber");
 // --- timer and swap
 store={};w=boot();
 click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="type"][data-type="A"]'));click(w,$(w,'[data-st="start"]'));
@@ -301,7 +309,7 @@ const SETK="weekly-routine.settings.v1";
 store={[SETK]:JSON.stringify({startedOn:"2026-10-29"})}; // a Thursday
 w=boot("2026-10-29T12:00:00");
 const ct=k=>{const e=$(w,`[data-ct="${k}"]`);return e&&e.textContent};
-ok($(w,"#pct").nextElementSibling.textContent===" starter week"&&/Starter week\s*4 days left · then full weeks/.test($(w,"#today").textContent),"SW1. Joining on Thursday: header says starter week; Today says 4 days left, then full weeks");
+ok($(w,"#pct").nextElementSibling.textContent===" starter week"&&/Starter week\s*4 days left$/m.test($(w,"#today .tfocus").textContent)&&!/full weeks/.test($(w,"#today").textContent),"SW1. Joining on Thursday: header says starter week; Today says 4 days left (no 'then full weeks')");
 ok(!$(w,"#d-protein-0")&&!$(w,"#d-protein-2")&&$(w,"#d-protein-3")&&ct("protein")==="0/4","SW2. Days before they joined are dots; protein counts out of 4");
 ok(ct("strength")==="0/1"&&ct("cardio")==="0/1"&&ct("af")==="0/3"&&/3\+ days/.test($(w,"#daily").textContent)&&ct("breakfast")==="0/1"&&!$(w,"#d-breakfast-1"),"SW3. Targets fit the days left: strength 0/1 (Sat), cardio 0/1 (Sun), no alcohol 3+ days, breakfast prep 0/1 (Sun only)");
 $$(w,"#daily input[type=checkbox][data-k]").filter(e=>["protein","fv","sleep","af"].includes(e.dataset.k)).forEach(e=>click(w,e));
@@ -309,9 +317,9 @@ ok(ct("protein")==="4/4"&&$(w,"#pct").textContent==="75%","SW4. Ticking every ha
 save(w);w.close();w=boot("2026-11-01T18:00:00");
 click(w,$(w,'#today [data-goto="review-cur"]'));
 ok($(w,"#revtoggle .rh-title").textContent==="Starter review"&&$(w,'label[for="well"]').textContent==="What went well in your first days?"&&$(w,'label[for="improve"]').textContent==="Your focus for your first full week?"&&$(w,"#ph-l").textContent==="Starting photos"&&/Starter review/.test($(w,"#today").textContent),"SW5. Sunday: Today and the panel say Starter review; it asks starter questions (starting photos, first full week)");
-ok(/Your starter week · 4 days/.test($(w,"#revsum").textContent)&&/Starter week\s*Last day · then full weeks/.test($(w,"#today").textContent),"   Its summary is 'Your starter week · 4 days'; Today says last day");
+ok(/Your starter week · 4 days/.test($(w,"#revsum").textContent)&&/Starter week\s*Last day/.test($(w,"#today").textContent),"   Its summary is 'Your starter week · 4 days'; Today says last day");
 save(w);w.close();w=boot("2026-11-02T08:00:00");
-ok($(w,"#pct").nextElementSibling.textContent===" this week"&&$(w,"#d-protein-0")&&/Finish your starter review/.test($(w,"#today").textContent)&&!/Starter week/.test($(w,"#today").textContent),"SW6. Monday: an ordinary week with full boxes; the missed review is 'Finish your starter review'");
+ok($(w,"#pct").nextElementSibling.textContent===" of target"&&$(w,"#d-protein-0")&&/Finish your starter review/.test($(w,"#today").textContent)&&!/Starter week/.test($(w,"#today").textContent),"SW6. Monday: an ordinary week with full boxes; the missed review is 'Finish your starter review'");
 click(w,$(w,"#prev"));
 ok(!/\/7/.test($(w,"#revsum .sumlook").textContent)&&!/Protein/.test($(w,"#revsum .sumlook").textContent)&&$(w,"#revtoggle .rh-title").textContent==="Starter review","   Looking back, 'Missed' only covers days they had (no x/7, protein hit)");
 click(w,$(w,"#weeklabel"));click(w,$(w,"#tab-progress"));
@@ -323,7 +331,7 @@ ok(ct("strength")==="—"&&/From Monday/.test($(w,"#daily").textContent)&&ct("pr
 w.close();
 const starts=["2026-10-26","2026-10-27","2026-10-28","2026-10-29","2026-10-30","2026-10-31","2026-11-01"];
 ok(starts.every((d,i)=>{store={[SETK]:JSON.stringify({startedOn:d})};const v=boot(d+"T12:00:00");
-  const r=v.document.querySelector('[data-ct="protein"]').textContent===`0/${7-i}`&&v.document.querySelector("#pct").nextElementSibling.textContent===(i?" starter week":" this week")&&/^\d+%$/.test(v.document.querySelector("#pct").textContent);v.close();return r}),
+  const r=v.document.querySelector('[data-ct="protein"]').textContent===`0/${7-i}`&&v.document.querySelector("#pct").nextElementSibling.textContent===(i?" starter week":" of target")&&/^\d+%$/.test(v.document.querySelector("#pct").textContent);v.close();return r}),
   "SW9. Every start day works: protein out of the days left; a Monday start is an ordinary week");
 store={[SETK]:JSON.stringify({startedOn:"2026-10-29"})};w=boot("2026-10-30T12:00:00");
 click(w,$(w,"#setcog"));click(w,$(w,'[data-st="set-save"]'));

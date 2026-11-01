@@ -135,3 +135,16 @@
 
 - **At 320px (Display Zoom) long text wraps instead of ending in "…"**: the programme name in Settings takes two lines, and "Signed in as" sits above the email (which can break anywhere, so a long address never runs under the arrow). Workout set rows narrow their input columns at 320px only, keeping the 44px tick button, so "Set 3" stays on one line and rep ranges like "10–15" show whole. 375px and up are unchanged.
 - **Backup nudge and "Other activity" left for now** (Jack): the focus moves to making the app easy for new people.
+
+## 1 Nov 2026 (new-user clarity, first batch)
+
+- **Programmes are described by what's in them, not by who they're for.** "(male suggested)" / "(female suggested)" was considered and rejected: inaccurate (glute focus has a full upper-body day; full body suits anyone) and likely to put off the people being invited. Claude's first wording for glute focus ("Lower body and glutes, plus upper body") was rejected by Jack because it just describes full body. Now: "Barbell basics: squat, bench, RDL" and "Extra glute work: hip thrusts, lunges". The workout count on the right was dropped (the name already says 3-day).
+- **Choosing a programme in setup opens it to show Workouts A–C**, one line per workout that wraps when long (Jack worried one line wouldn't fit: it doesn't, and wrapping reads fine). Exercise names are sentence-cased in the list ("Leg curl", "Assisted pull-up") so the catalog's mixed capitals don't show; acronyms (DB, RDL) keep theirs. Replaces "Workouts A, B and C are loaded".
+- **Meal prep: the setup/settings heading says "Meal prep"; the rows keep "Lunch prep" / "Breakfast prep"** so they match the grid, which has no heading to lean on. New people start with lunch prep on (Sunday) and breakfast prep off (Jack). Claude had argued for both off (an unchosen task showing "To do" on the first Sunday); Jack wanted the toggle on in setup as a visible suggestion that's easy to turn off.
+- **Weekly review stays optional and in setup** (Jack): it's on by default and marked Recommended. Claude had suggested taking it out of setup to save a decision.
+- **An unfinished review is amber on review day and on the one nudge day after** (Jack): the panel's To do pill and Today's line (To do on the day, Late the day after). Other days it stays grey; done stays green. Prep lines stay grey.
+- **The Today header says "x% of target"** (Jack) instead of "x% this week"; a starter week still says "x% starter week", since that's what explains its smaller numbers. A tap-to-explain breakdown was considered and dropped as over-engineering: nothing signals it's tappable, and people work the number out.
+- **Starter week line drops "· then full weeks"** (Jack).
+- **The grid's Strength and Cardio rows say "Logged in Training"**: they look like the habit rows but fill themselves from logged sessions, so a new person tapping the dots got nothing. "From Training" was rejected because a starter week already uses "From Monday" there to mean something else.
+- **First workout hint**: until a workout is saved, the workout screen opens with one line on reading "3 × 6–8" and what to enter. A "How to" link per exercise was offered and turned down by Jack as too much for now.
+- **Not changed** (Jack): Planned week's name, the setup weight question, the programme step's wording, and gym equipment assumptions.

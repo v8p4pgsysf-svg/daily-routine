@@ -27,7 +27,8 @@ Polish the hosted Daily Routine app (GitHub Pages + Supabase) so Jack uses it da
 - Discuss options before design changes; he decides. Send short visible updates (SendUserMessage) during anything longer than a couple of minutes: text between tool calls isn't shown to him.
 
 ## Next
-- Focus (Jack, 1 Nov evening): make the app easy and intuitive for new people. Claude's new-user review is with Jack; nothing from it is decided or built yet. His starting questions: programme labels (gendered "suggested" tags vs goal-based subtitles), a programme overview on tap, prep naming ("meal") and defaults, and whether the weekly review should be optional.
+- Focus (Jack, 1 Nov evening): make the app easy and intuitive for new people. First batch shipped (programme descriptions and overview, meal prep heading and lunch default, amber review pill, "% of target", grid "Logged in Training", first-workout hint; see RATIONALE).
+- Waiting on Jack: one word for weight training everywhere. Jack: it's weight training specifically (cardio is separate). Today it's "Weights" (setup), "Gym" (planned-days chips), "Strength" (grid row, Progress chart titles), "Workout A" (sessions), "Training" (tab, covers cardio too). Claude's proposal is with him.
 - 320px tidy-ups: done (evening).
 
 ## Parked until there's evidence

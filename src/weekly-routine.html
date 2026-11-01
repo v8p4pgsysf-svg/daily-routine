@@ -412,6 +412,8 @@ button.trow{width:100%;background:none;border-left:0;border-right:0;border-botto
 .revpill{display:inline-flex;align-items:center;border:1px solid var(--line-strong);background:var(--surface);border-radius:99px;padding:2px 10px;font-size:.76rem;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap}
 .rectag{display:block;font-size:.74rem;font-weight:600;color:var(--green)} /* a sub-line under the row name, like habit rows' "5+ a day" */
 .revpill.done{background:var(--green);border-color:var(--green);color:var(--green-ink)}
+/* the review on its day and the day after, not yet done: amber */
+.revpill.due{background:color-mix(in srgb,var(--warn) 14%,var(--surface));border-color:color-mix(in srgb,var(--warn) 55%,transparent);color:var(--warn)}
 .trow .revpill{width:36px;justify-content:center;padding:2px 0;font-size:.68rem}
 .dgrid .slotwide{display:flex;align-items:center;padding-left:6px}
 .revstatus{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:2px}
@@ -779,6 +781,11 @@ details,.hitem,.panel,section{scroll-margin:16px 0 20px}
 .sintro{margin-top:-4px!important}
 .preset.pick{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;cursor:pointer;font:inherit;color:var(--ink);border:1.5px solid var(--line)}
 .preset.pick.on{border-color:var(--green);background:var(--green-soft)}
+.ttip.wtip{background:var(--surface);border:1px solid var(--line);padding:10px 12px;margin:10px 0 12px;line-height:1.45}
+/* setup programme cards: name over a one-line description; the chosen one lists Workouts A–C */
+.preset.pick{flex-direction:column;align-items:stretch;gap:0}
+.pkhead{display:flex;flex-direction:column;gap:2px;min-width:0}.pkhead .muted{font-size:.86rem}
+.pkover{display:block;border-top:1px solid color-mix(in srgb,var(--green) 30%,transparent);margin-top:10px;padding-top:4px}.pkover .prwk{display:block;color:var(--ink)}
 .ttip{display:flex;align-items:center;gap:10px;font-size:.86rem;color:var(--muted);background:var(--bg);border-radius:10px;padding:8px 10px;margin-bottom:10px}
 .ttip span{flex:1}.ttipx{border:0;background:none;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:0 4px}
 .suw{display:flex;gap:10px;align-items:center}.suw input{flex:1;min-width:0;padding:9px 11px;font-size:1rem}
@@ -882,7 +889,7 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 
 
   <section class="panel dash" aria-label="Dashboard">
-  <div class="dhead"><span class="tday" id="tdate"></span><span class="dtarget"><span class="num" id="pct">0%</span><span class="muted"> this week</span><span hidden><span class="num" id="targetshit">0</span><span class="num" id="ticks">0/36</span></span></span></div>
+  <div class="dhead"><span class="tday" id="tdate"></span><span class="dtarget"><span class="num" id="pct">0%</span><span class="muted"> of target</span><span hidden><span class="num" id="targetshit">0</span><span class="num" id="ticks">0/36</span></span></span></div>
   <div class="todaycard" id="today" aria-label="Today"></div>
   <div class="dbar" aria-hidden="true"><i id="pctbar" style="width:0%"></i></div>
   </section>
@@ -1074,8 +1081,8 @@ const DEFAULT_SETTINGS={v:1,updatedAt:0,
 };
 // suggested programmes: each sets the workouts and gym days only
 const PRESETS=[
-  {id:"fullbody",name:"3-day full body",desc:"Squat, bench, RDL and rows across three full-body sessions.",days:[0,2,5],workouts:null},
-  {id:"glute",name:"3-day glute focus",desc:"A: hip thrust and pull-up progression · B: lunges and upper body · C: glute strength and shoulders.",days:[0,2,5],workouts:[
+  {id:"fullbody",name:"3-day full body",tag:"Barbell basics: squat, bench, RDL",desc:"Squat, bench, RDL and rows across three full-body sessions.",days:[0,2,5],workouts:null},
+  {id:"glute",name:"3-day glute focus",tag:"Extra glute work: hip thrusts, lunges",desc:"A: hip thrust and pull-up progression · B: lunges and upper body · C: glute strength and shoulders.",days:[0,2,5],workouts:[
     [["hip_thrust_machine",3,6,10],["bulgarian_split_squat",3,8,12],["flat_db_bench",3,6,10],["cable_row",3,8,12],["assisted_pullup",2,5,8],["leg_curl",3,8,12]],
     [["reverse_db_lunge",3,8,12],["assisted_pullup",3,5,8],["incline_db_press",3,6,10],["back_extension_45",2,10,15],["lateral_raise",2,12,15],["oh_triceps_ext",3,10,15]],
     [["hip_thrust_machine",3,6,10],["leg_press",3,8,12],["cs_row",3,8,12],["leg_curl",3,8,12],["db_shoulder_press",3,8,12],["reverse_pec_deck",2,12,15]]]}
@@ -1492,7 +1499,7 @@ function renderDaily(){
     const dm=x.k==="af"&&drinkMode(w);
     // starter week: a "6+ days" target shows as its fitted number; rows with nothing left this week say when they start
     const gl=x.off?"From Monday":x.from&&/days|Every day/.test(GT[x.k]||"")?(x.target>=7-x.from?"Every day":x.target+"+ days"):GT[x.k];
-    h+=`<div class="lbl"><div class="n">${GRID_LABEL[x.k]||x.short}</div><div class="x${dm||gl?" keep":""}">${gl||(x.k==="strength"?"Filled by saved workouts":x.k==="cardio"?"Filled by logged cardio":dm?"Tap drinking nights":x.x)}</div></div>`;
+    h+=`<div class="lbl"><div class="n">${GRID_LABEL[x.k]||x.short}</div><div class="x${dm||gl||x.k==="strength"||x.k==="cardio"?" keep":""}">${gl||(x.k==="strength"||x.k==="cardio"?"Logged in Training":dm?"Tap drinking nights":x.x)}</div></div>`;
     for(let d=0;d<7;d++){
       const td=isCur&&d===t?" is-today":"";
       if(x.off||d<(x.from||0))h+=`<div class="c off${td}" aria-hidden="true"></div>`; // before they started
@@ -1545,7 +1552,7 @@ function renderToday(){
   else act=`<div class="tact quiet"><div><div class="tl">${esc(plan.t)}</div></div><button class="btn" data-st="goto-strength">Training anyway? ›</button></div>`;
   // every line looks the same: name on the left, To do/Done on the right, and the whole line goes somewhere when tapped.
   // Prep is ticked in the grid only, so its line jumps to that day's box; review lines open the review
-  const line=(attr,label,name,hint,pill,done)=>`<button type="button" class="trow" ${attr} aria-label="${esc(name)}: ${esc(label)}"><span class="tbody"><span class="tn">${esc(name)}</span>${hint?`<span class="th">${hint}</span>`:""}</span><span class="revpill${done?" done":""}" aria-hidden="true">${pill}</span><span class="chev tchev" aria-hidden="true"></span></button>`;
+  const line=(attr,label,name,hint,pill,done)=>`<button type="button" class="trow" ${attr} aria-label="${esc(name)}: ${esc(label)}"><span class="tbody"><span class="tn">${esc(name)}</span>${hint?`<span class="th">${hint}</span>`:""}</span><span class="revpill${done===true?" done":done==="due"?" due":""}" aria-hidden="true">${pill}</span><span class="chev tchev" aria-hidden="true"></span></button>`;
   const tasks=[];
   const lastKey=keyOf(addDays(parseKey(cur),-7)),lw=weeks[lastKey];
   // a review not done gets one nudge, the day after review day (Monday for a Sunday review); after that it's recorded
@@ -1553,16 +1560,16 @@ function renderToday(){
   const rd=SETTINGS.review.day,lateKey=rd===6?lastKey:cur,lateW=weeks[lateKey];
   if(SETTINGS.review.on&&t===(rd+1)%7&&lateW&&hasData(lateW)&&!lateW.review[0]&&habitsFor(lateW).some(h=>h.k==="review"&&!h.off))
     tasks.push(line(`data-goto="${rd===6?"review-last":"review-cur"}"`,"late. Open it.",isStarter(lateKey)?"Finish your starter review":rd===6?"Finish last week's review":"Finish your weekly review",
-      rd===6?`Week of ${fmt(parseKey(lastKey))} · still counts for that week`:`Was due ${DAYS_LONG[rd]} · still counts this week`,"Late",false));
+      rd===6?`Week of ${fmt(parseKey(lastKey))} · still counts for that week`:`Was due ${DAYS_LONG[rd]} · still counts this week`,"Late","due"));
   PREP_KEYS.forEach(k=>{const P=SETTINGS.prep[k],i=P.days.indexOf(t);if(!P.on||i<0)return;const d=ticks(w,k)[i];
     tasks.push(line(`data-prep="${k}"`,(d?"done":"to do")+". Go to its box in Check-ins.",PREP_INFO[k].task,prepHint(P.days,t),d?"Done":"To do",d))});
   if(SETTINGS.review.on&&t===SETTINGS.review.day){const d=w.review[0];
-    tasks.push(line('data-goto="review-cur"',(d?"done":"to do")+". Open the review.",isStarter(cur)?"Starter review":"Weekly review","",d?"Done":"To do",d));}
+    tasks.push(line('data-goto="review-cur"',(d?"done":"to do")+". Open the review.",isStarter(cur)?"Starter review":"Weekly review","",d?"Done":"To do",d||"due"));}
   $("tdate").textContent=DAYS_LONG[t]+" "+fmt(new Date());
   const midStart=SETTINGS.startedOn&&parseKey(SETTINGS.startedOn).getDay()!==1; // joined mid-week: the Starter week line is their intro
   let tip="";try{if(HOST&&SETTINGS.setupDone&&!midStart&&!localStorage.getItem("routine-tip-done"))tip=`<div class="ttip"><span>Tick things off as you go.${SETTINGS.review.on?` Your weekly review is on ${DAYS_LONG[SETTINGS.review.day]}.`:""}</span><button class="ttipx" data-st="tip-x" aria-label="Dismiss tip">×</button></div>`}catch(e){}
   if(!act&&!tasks.length&&!tip)act=`<div class="tact quiet"><div><div class="ts">Nothing planned today: tick your check-ins below.</div></div></div>`;
-  const starter=isStarter(cur)?`<div class="tfocus"><span class="tfl">Starter week</span> ${t===6?"Last day":(7-t)+" days left"} · then full weeks</div>`:"";
+  const starter=isStarter(cur)?`<div class="tfocus"><span class="tfl">Starter week</span> ${t===6?"Last day":(7-t)+" days left"}</div>`:"";
   sec.innerHTML=`${tip}${starter}${lw&&lw.improve.trim()?`<div class="tfocus"><span class="tfl">Focus</span> ${esc(lw.improve.trim())}</div>`:""}${act}
     ${tasks.length?`<div class="tgroup"><div class="eyebrow">Also today</div><div class="tlist">${tasks.join("")}</div></div>`:""}`;
 }
@@ -1576,6 +1583,8 @@ function revIsOpen(){
 function renderRevHeader(){
   const w=getWeek(viewKey),cur=currentKey(),open=revIsOpen(),rd=SETTINGS.review.day,sun=addDays(parseKey(viewKey),rd);
   $("revpillh").textContent=w.review[0]?"Done":"To do";$("revpillh").classList.toggle("done",w.review[0]);
+  const t0=todayIdx(),lateKey=rd===6?keyOf(addDays(parseKey(cur),-7)):cur; // due today, or the one nudge day after
+  $("revpillh").classList.toggle("due",!w.review[0]&&SETTINGS.review.on&&((viewKey===cur&&t0===rd)||(viewKey===lateKey&&t0===(rd+1)%7)));
   $("revsub").textContent=w.review[0]?"Completed · tap to "+(open?"hide":"view")
     :viewKey===cur?(todayIdx()===rd?"Due today · about five minutes":todayIdx()>rd?"Due "+DAYS[rd]+" "+fmt(sun)+" · still to do":"Due "+DAYS[rd]+" "+fmt(sun)+" · tap to open early")
     :viewKey<cur?"Not completed for this week":"Due "+DAYS_LONG[rd]+" "+fmt(sun);
@@ -1728,7 +1737,7 @@ function renderMetrics(){
   if($("revsum")&&!$("revbody").hidden)setTimeout(renderRevSum,0);
   const w=getWeek(viewKey),s=stats(w),tw=stats(getWeek(currentKey()));
   $("targetshit").textContent=tw.hit;
-  $("pct").textContent=tw.pct+"%";$("pct").nextElementSibling.textContent=isStarter(currentKey())?" starter week":" this week";
+  $("pct").textContent=tw.pct+"%";$("pct").nextElementSibling.textContent=isStarter(currentKey())?" starter week":" of target";
   $("ticks").textContent=tw.done+"/"+tw.total;
   $("pctbar").style.width=tw.pct+"%";
   const HBm=habitsFor(w);document.querySelectorAll("[data-ct]").forEach(el=>{const h=HBm.find(x=>x.k===el.dataset.ct);if(!h)return;
@@ -2286,6 +2295,8 @@ function currentPreset(D){return PRESETS.find(P=>{const W=P.workouts||[];if(!W.l
     return rows.length===items.length&&items.every(([ex,sets,lo,hi],j)=>{const r=rows[j];return String(r.name).trim().toLowerCase()===presetExName(ex)&&+r.sets===sets&&+r.lo===lo&&+r.hi===hi})})})||null}
 // keep the Programme name current while workouts are being edited
 const refreshPrName=()=>{const n=document.querySelector("#setbody .prline .prname");if(n&&SD&&!SD.setup){const c=currentPreset(SD);n.textContent=c?c.name:"Custom"}};
+// "Leg Curl" → "Leg curl", "Pull-Up" → "Pull-up" for running lists; the first word and acronyms (DB, RDL) keep their capitals
+const sentenceCase=n=>String(n).split(" ").map((w,i)=>i&&/^[A-Z][a-z]/.test(w)?w[0].toLowerCase()+w.slice(1):w).join(" ").replace(/-([A-Z])([a-z])/g,(m,a,b)=>"-"+a.toLowerCase()+b);
 function secPresets(D,after=""){ // after: the workout rows, shown below the Programme row unless the switcher is open
   const cur=currentPreset(D);
   let h=`<div class="panel shab prpanel"><div class="shrow prline"><b>Programme</b><span class="prname">${cur?esc(cur.name):"Custom"}</span>
@@ -2325,7 +2336,7 @@ const SETUP_STEPS=5;
 function newcomerDraft(){ // a neutral starting point (not Jack's routine)
   return {nw:3,workouts:[0,1,2,3].map(()=>({day:-1,items:[{name:"",sets:3,lo:8,hi:12}]})),
     cardio:{target:2,days:[1,5]},habits:habitDefaults("start"),
-    prep:Object.fromEntries(PREP_KEYS.map(k=>[k,{on:false,days:[6]}])),review:{on:true,day:6},unit:"kg",weight:"",protAuto:true,custom:[]};
+    prep:Object.fromEntries(PREP_KEYS.map(k=>[k,{on:k==="lunch",days:[6]}])) /* lunch prep on (Sunday), breakfast off */,review:{on:true,day:6},unit:"kg",weight:"",protAuto:true,custom:[]};
 }
 function openSetup(){
   SD=newcomerDraft();SD.setup=1;SD.prog=null;SD.open=new Set();SD.editing=null;SD.pexp=null;SD.gym=[0,2,4];SD.gymMsg="";assignGym();
@@ -2344,15 +2355,16 @@ function renderSetup(){
   else if(n===2){
     h+=`<section class="sset"><h3>How much do you want to train?</h3><div class="panel shab">${secCounts(D)}</div>`;
     if(D.nw>0){
-      h+=`<h3>Choose a programme</h3><div class="presets">${PRESETS.map(p=>`<button type="button" class="panel preset pick${D.prog===p.id?" on":""}" data-sprog="${p.id}" aria-pressed="${D.prog===p.id}"><b>${esc(p.name)}</b><span class="muted">${p.workouts.length} workouts</span></button>`).join("")}
-        <button type="button" class="panel preset pick${D.prog==="own"?" on":""}" data-sprog="own" aria-pressed="${D.prog==="own"}"><b>My own</b><span class="muted">Add your exercises</span></button></div>`;
+      h+=`<h3>Choose a programme</h3><div class="presets">${PRESETS.map(p=>{const on=D.prog===p.id; // the chosen programme opens to show what's in each workout
+        return `<button type="button" class="panel preset pick${on?" on":""}" data-sprog="${p.id}" aria-pressed="${on}" aria-expanded="${on}"><span class="pkhead"><b>${esc(p.name)}</b><span class="muted">${esc(p.tag)}</span></span>${on?`<span class="pkover">${p.workouts.map((items,i)=>`<span class="prwk"><b>${LETTERS[i]}</b> ${items.map(([ex])=>esc(sentenceCase((EX_BY_ID[ex]&&EX_BY_ID[ex].short)||exLabel(ex)))).join(", ")}</span>`).join("")}</span>`:""}</button>`}).join("")}
+        <button type="button" class="panel preset pick${D.prog==="own"?" on":""}" data-sprog="own" aria-pressed="${D.prog==="own"}"><span class="pkhead"><b>My own</b><span class="muted">Add your exercises</span></span></button></div>`;
       if(D.prog==="own")h+=secLists(D,true);
-      else if(D.prog)h+=`<p class="ts">${D.nw===3?"Workouts A, B and C are loaded.":"Workouts loaded."} You can change exercises any time in settings.</p>`;
+      else if(D.prog)h+=`<p class="ts">You can change exercises any time in settings.</p>`;
     }else if(D.cardio.target>0)h+=`<p class="ts">No weights sessions. You can add some later in settings.</p>`; // with no cardio either, the line above the choices says it
     h+=`</section>`;
   }
   else if(n===3)h+=`<section class="sset"><h3>When will you train?</h3><p class="ts sintro">Tap Gym and Cardio for the days you plan to go.</p><div class="panel shab">${secGrid(D)}</div></section>`;
-  else if(n===4)h+=`<section class="sset"><h3>Prep and weekly review</h3><p class="ts sintro">Optional reminders. Tap the days on the right to change them.</p>${secPrep(D)}</section>`;
+  else if(n===4)h+=`<section class="sset"><h3>Meal prep and weekly review</h3><p class="ts sintro">Optional reminders. Tap the days on the right to change them.</p>${secPrep(D)}</section>`;
   else{
     const on=HABIT_CATALOG.filter(c=>D.habits[c.k].on).map(c=>c.name).concat((D.custom||[]).filter(c=>c.on).map(c=>c.name));
     const days=a=>[...a].sort((x,y)=>x-y).map(d=>DAYS[d]).join(", ");
@@ -2392,7 +2404,7 @@ function renderSettings(){
   if(SD.setup){renderSetup();return}
   setBar("Cancel","set-cancel","Your routine","Save","set-save");
   h+=`<section class="sset"><h3>Daily habits</h3><div class="panel shab">${habitRows(D)}</div></section>`;
-  h+=`<section class="sset"><h3>Prep and review</h3>${secPrep(D)}</section>`;
+  h+=`<section class="sset"><h3>Meal prep and review</h3>${secPrep(D)}</section>`;
   h+=`<section class="sset"><h3>Workouts</h3><div class="panel shab">${secCounts(D)}<div class="shsep"></div>${secGrid(D)}</div>`;
   h+=secPresets(D,secLists(D,false,true))+`</section>`;
   h+=secAccount(D)+secFeedback();
@@ -2585,6 +2597,8 @@ function renderEditor(){
   // in-progress workouts get a bar that stays pinned to the top while scrolling
   let h=isDone?"":`<div class="stbar" role="timer" aria-label="Workout timer"><div class="sbl"><span class="eyebrow">Workout ${s.type} · <span id="ed-tlab">Elapsed</span></span><span class="num tbig" id="ed-timer">${clock(elapsed(s))}</span></div>
     <span class="sbp muted"><span class="num" id="ed-prog2"></span> sets</span><button class="btn" id="ed-pause" data-st="pause"></button></div>`;
+  // until the first workout is saved, explain how to read and fill in a set
+  if(!isDone&&!doneSessions().length)h+=`<div class="ttip wtip">First workout: “3 × 6–8” means 3 sets of 6 to 8 reps. Pick a weight you can lift with good form, enter the weight and reps you did, then tick the set.</div>`;
   if(isDone)h+=`<div class="panel stcard"><div class="sthrow"><div><div class="eyebrow">Saved workout · <span class="num" id="ed-prog"></span> sets</div><div class="sttitle">Workout ${s.type}</div></div>
     <div class="timer"><label class="eyebrow" for="ed-dur">Minutes</label><input type="number" id="ed-dur" class="durin" inputmode="numeric" min="0" step="1" value="${s.accMs?Math.round(s.accMs/60000):""}" placeholder="–"></div></div></div>`;
   s.items.forEach((it,xi)=>{
