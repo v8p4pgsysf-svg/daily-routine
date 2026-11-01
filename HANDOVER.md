@@ -1,5 +1,5 @@
 # Handover: Daily Routine app
-Updated: 1 Nov 2026, end of morning session.
+Updated: 1 Nov 2026, evening session.
 
 ## Current goal
 Polish the hosted Daily Routine app (GitHub Pages + Supabase) so Jack uses it daily on his iPhone and can invite his girlfriend and friends. The must-haves before sharing are done; this morning focused on the first-week experience for new people.
@@ -26,11 +26,11 @@ Polish the hosted Daily Routine app (GitHub Pages + Supabase) so Jack uses it da
 ## Working with Jack
 - Discuss options before design changes; he decides. Send short visible updates (SendUserMessage) during anything longer than a couple of minutes: text between tool calls isn't shown to him.
 
-## Next (not started; Jack hasn't chosen)
-0. Decide on an "Other activity" kind (pilates, classes, sport) with its own target and row; see RATIONALE (habits only).
-1. Backup nudge: "Last backup: X ago" in the Sunday review with one-tap Export (all data is in one free Supabase project; a server-side dump to GitHub was rejected for friends' privacy).
-2. 320px tidy-ups (all predate this session): Settings "3-day full body" and "Signed in as …" truncate; in a workout, "Set 1" wraps onto two lines.
+## Next
+- Focus (Jack, 1 Nov evening): make the app easy and intuitive for new people. Claude's new-user review is with Jack; nothing from it is decided or built yet. His starting questions: programme labels (gendered "suggested" tags vs goal-based subtitles), a programme overview on tap, prep naming ("meal") and defaults, and whether the weekly review should be optional.
+- 320px tidy-ups: done (evening).
 
 ## Parked until there's evidence
+- Backup nudge and "Other activity": Jack chose to leave both for now (1 Nov evening).
 - Feedback alerts (in-app inbox only Jack can read was Claude's pick). Wait until feedback flows.
 - Domain + Resend, if friends' reset emails keep landing in junk.

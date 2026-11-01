@@ -856,6 +856,15 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 .fbset{display:flex;justify-content:center;margin-top:-6px}
 .linkbtn.fblink{color:var(--danger);font-size:.92rem;padding:8px 12px;align-self:center}
 @media (max-width:360px){.tab{padding:10px 10px}}
+/* 320px (Display Zoom): programme name and signed-in email wrap instead of ending in …; workout set rows keep "Set 3" on one line and the rep ranges whole */
+@media (max-width:350px){
+  .prline .prname{white-space:normal;overflow:visible}
+  .acct .grow{white-space:normal;overflow-wrap:anywhere}.acct .grow b{display:block}
+  .setrow{grid-template-columns:minmax(0,1fr) 64px 8px 64px 44px!important;gap:4px!important}
+  .setrow .sn{white-space:nowrap}
+  .setrow input[type=number]{font-size:.95rem}
+  .stbar .eyebrow{white-space:nowrap}
+}
 </style>
 
 <div class="wrap">

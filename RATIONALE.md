@@ -130,3 +130,8 @@
 ## 1 Nov 2026 (photo recovery code)
 
 - **Settings → "Photo recovery code" explains before anything changes** (Jack). It was "New photo recovery code" and went straight to a new code, which wasn't clear about what a recovery code is or when the old one stops working. Now the first card says what it's for and when to make a new one, with Make a new code / Cancel; someone with no code yet is told they'll get one with their first photo. The old code is replaced only when they tap "I've saved it" on the new-code card (that was already so; the wording now says it), so walking away at any step changes nothing.
+
+## 1 Nov 2026 (320px tidy-ups)
+
+- **At 320px (Display Zoom) long text wraps instead of ending in "…"**: the programme name in Settings takes two lines, and "Signed in as" sits above the email (which can break anywhere, so a long address never runs under the arrow). Workout set rows narrow their input columns at 320px only, keeping the 44px tick button, so "Set 3" stays on one line and rep ranges like "10–15" show whole. 375px and up are unchanged.
+- **Backup nudge and "Other activity" left for now** (Jack): the focus moves to making the app easy for new people.
