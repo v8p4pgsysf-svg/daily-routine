@@ -502,6 +502,24 @@ ok(/Your weight, photos and next week's focus come from the review/.test($(w,"#s
 click(w,$(w,'[data-st="set-save"]'));click(w,$(w,"#tab-progress"));
 ok($(w,"#gallery").closest(".section").hidden&&!/weight|Weight/.test($(w,"#trends-note").textContent),"RV2. Review off: no Photos section and no weight wording on Progress");
 w.close();
+// --- habits only: no weights and no cardio
+store={"weekly-routine.settings.v1":JSON.stringify({workouts:[],cardio:{target:0,days:[]}})};w=boot("2026-10-28T12:00:00"); // a Wednesday (breakfast prep)
+ok($(w,"#tab-strength").hidden&&$(w,"#plantoggle").closest(".section").hidden,"HO1. Habits only: no Training tab and no Planned week");
+ok(!/Training anyway|Rest/.test($(w,"#today").textContent)&&/Prepare breakfasts/.test($(w,"#today").textContent),"HO2. Today has no Rest/Training anyway card; it opens with the day's tasks");
+w.close();store={"weekly-routine.settings.v1":JSON.stringify({workouts:[],cardio:{target:0,days:[]}})};w=boot("2026-10-27T12:00:00"); // a Tuesday (nothing on)
+ok(/Nothing planned today: tick your check-ins below/.test($(w,"#today").textContent),"   A day with nothing else says so");
+w.location.hash="strength";w.dispatchEvent(new w.HashChangeEvent("hashchange"));
+ok($(w,"#pane-strength").hidden&&!$(w,"#pane-week").hidden,"   A link to the Training tab lands on Today instead");
+click(w,$(w,"#setcog"));
+ok(/the Training tab is hidden/.test($(w,"#setbody").textContent),"HO3. Settings say what no sessions means");
+click(w,$(w,'[data-snw="2"]'));
+ok(!/the Training tab is hidden/.test($(w,"#setbody").textContent),"   and the line goes once a session is chosen");
+w.close();
+store={};w=boot("2026-10-27T12:00:00");
+click(w,$(w,'#today [data-st="log-cardio"]'));type(w,$(w,"#cf-min"),30);click(w,$(w,'[data-st="cf-save"]'));
+click(w,$(w,"#setcog"));click(w,$(w,'[data-snw="0"]'));chg(w,$(w,"[data-scard]"),0);click(w,$(w,'[data-st="set-save"]'));
+ok(!$(w,"#tab-strength").hidden&&$(w,"#plantoggle").closest(".section").hidden,"HO4. Someone who logged sessions before keeps the Training tab (their history) after switching sessions off");
+w.close();
 // --- past weeks keep their own targets
 store={};w=boot("2026-10-28T09:00:00");
 click(w,$(w,"#prev"));click(w,$(w,"#d-protein-0"));click(w,$(w,"#d-sleep-0"));click(w,$(w,"#next"));

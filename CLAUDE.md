@@ -37,6 +37,7 @@ Each of these lives in one list in `src/weekly-routine.html`; everything else is
 - **Early days (empty charts)**: on Progress, `foldProgress` (run after `renderCharts` and `renderStrengthTrends`) hides each chart whose content is an `.empty` box and puts one note per section (`#trends-note`, `#training-note`) naming what's still to come; a chart returns to its place as soon as it has data. On Training, history shows one note until something is logged, and Exercise progress is hidden until then (one line, no exercise menu, until a lift has data).
 - The late-review nudge shows the day after review day only (Monday for a Sunday review); after that the review is missed for its week but can still be completed there.
 - Weights per week can be 0. In that case there's no Strength row, and Training offers cardio only.
+- **Habits only** (`habitsOnly()`: 0 weights and 0 cardio): `renderTabs` hides the Training tab (unless they have logged sessions: `trainingTab()`) and Planned week; Today has no Rest card; setup skips the planned-days step.
 - Suggested programmes live in `PRESETS`.
 
 ## Making a change

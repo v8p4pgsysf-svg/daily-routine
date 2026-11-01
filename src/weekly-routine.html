@@ -488,7 +488,7 @@ button.trow{width:100%;background:none;border-left:0;border-right:0;border-botto
 .pbv{font-size:.92rem}
 .pbc .muted{font-size:.72rem!important}
 .gempty.slim{min-height:0;padding:14px 16px;place-items:start;text-align:left}
-.charts > .panel[hidden],.charts[hidden],.section[hidden],.pnote[hidden]{display:none}
+.tab[hidden],.charts > .panel[hidden],.charts[hidden],.section[hidden],.pnote[hidden]{display:none}
 .charts:not([hidden]) + .pnote{margin-top:12px}
 @media (max-width:640px){
   .planstrip .plan-grid{grid-template-columns:1fr;min-width:0}
@@ -1526,6 +1526,7 @@ function renderToday(){
     if(cToday.length){const c=cToday[cToday.length-1];
       act=`<div class="tact"><div><div class="tl">${esc(c.ctype)} done</div><div class="ts">${cardioLine(c)}${cardioCounts(c)?" · counted in this week's cardio target":" · walks don't count toward the target"}</div></div><button class="btn" data-cardio="${c.id}">View</button></div>`;}
     else act=`<div class="tact"><div><div class="tl">${esc(plan.t)}</div><div class="ts">${cN===1?"This week's session":"One of "+cN+" this week"}</div></div><button class="btn primary lg" data-st="log-cardio">Log cardio</button></div>`;}
+  else if(habitsOnly())act="";
   else act=`<div class="tact quiet"><div><div class="tl">${esc(plan.t)}</div></div><button class="btn" data-st="goto-strength">Training anyway? ›</button></div>`;
   // every line looks the same: name on the left, To do/Done on the right, and the whole line goes somewhere when tapped.
   // Prep is ticked in the grid only, so its line jumps to that day's box; review lines open the review
@@ -1545,6 +1546,7 @@ function renderToday(){
   $("tdate").textContent=DAYS_LONG[t]+" "+fmt(new Date());
   const midStart=SETTINGS.startedOn&&parseKey(SETTINGS.startedOn).getDay()!==1; // joined mid-week: the Starter week line is their intro
   let tip="";try{if(HOST&&SETTINGS.setupDone&&!midStart&&!localStorage.getItem("routine-tip-done"))tip=`<div class="ttip"><span>Tick things off as you go.${SETTINGS.review.on?` Your weekly review is on ${DAYS_LONG[SETTINGS.review.day]}.`:""}</span><button class="ttipx" data-st="tip-x" aria-label="Dismiss tip">×</button></div>`}catch(e){}
+  if(!act&&!tasks.length&&!tip)act=`<div class="tact quiet"><div><div class="ts">Nothing planned today: tick your check-ins below.</div></div></div>`;
   const starter=isStarter(cur)?`<div class="tfocus"><span class="tfl">Starter week</span> ${t===6?"Last day":(7-t)+" days left"} · then full weeks</div>`:"";
   sec.innerHTML=`${tip}${starter}${lw&&lw.improve.trim()?`<div class="tfocus"><span class="tfl">Focus</span> ${esc(lw.improve.trim())}</div>`:""}${act}
     ${tasks.length?`<div class="tgroup"><div class="eyebrow">Also today</div><div class="tlist">${tasks.join("")}</div></div>`:""}`;
@@ -1777,7 +1779,7 @@ function chartsBody(){
   $("achart").innerHTML=s+(avg!=null?`<div class="muted" style="font-size:.84rem">Average <span class="num">${avg}%</span></div>`
     :data.length===1?`<div class="muted" style="font-size:.84rem">Your first bar fills as you tick things off.</div>`:"");
 }
-function renderAll(){renderHeader();renderPlan();renderToday();renderStrengthTrends();renderDaily();renderReview();renderMetrics();renderCharts();renderGallery();renderStHistory();renderStProg();if(!editingId)renderStLanding()}
+function renderAll(){renderTabs();renderHeader();renderPlan();renderToday();renderStrengthTrends();renderDaily();renderReview();renderMetrics();renderCharts();renderGallery();renderStHistory();renderStProg();if(!editingId)renderStLanding()}
 
 /* ---------- interactions ---------- */
 let chartTimer=null;
@@ -2217,7 +2219,8 @@ function secPrep(D){let h="";
 function secCounts(D){const ct=D.cardio.target;
   return `<div class="shrow"><div class="grow"><b>Weights</b> <span class="muted">per week</span></div><div class="seg sseg" role="group" aria-label="Weights sessions a week">${[0,1,2,3,4].map(n=>`<button aria-pressed="${D.nw===n}" data-snw="${n}">${n}</button>`).join("")}</div></div>
     <div class="shsep"></div>
-    <div class="shrow"><div class="grow"><b>Cardio</b> <span class="muted">per week</span></div><select data-scard aria-label="Cardio sessions a week">${[0,1,2,3,4,5,6,7].map(n=>`<option value="${n}" ${ct===n?"selected":""}>${n===0?"None":n}</option>`).join("")}</select></div>`}
+    <div class="shrow"><div class="grow"><b>Cardio</b> <span class="muted">per week</span></div><select data-scard aria-label="Cardio sessions a week">${[0,1,2,3,4,5,6,7].map(n=>`<option value="${n}" ${ct===n?"selected":""}>${n===0?"None":n}</option>`).join("")}</select></div>
+    ${D.nw===0&&ct===0?`<div class="ts" style="margin:-4px 0 0">With no sessions, the app tracks your habits and the Training tab is hidden. You can add sessions any time.</div>`:""}`}
 function secGrid(D){const ct=D.cardio.target,dayOf=d=>D.workouts.slice(0,D.nw).findIndex(w=>w.day===d);
   return `<div class="flabel">Planned days</div>
     <div class="pgrid">${DAYS_LONG.map((dl,d)=>{const wi=dayOf(d),cd=ct>0&&D.cardio.days.includes(d);
@@ -2297,7 +2300,9 @@ function openSetup(){
   setArmed=false;flashSetErr("");renderSettings();
   $("setsheet").hidden=false;document.body.style.overflow="hidden";$("setsheet").scrollTop=0;
 }
-function setupDots(n){return `<div class="sdots" aria-label="Step ${n} of ${SETUP_STEPS}">${Array.from({length:SETUP_STEPS},(_,i)=>`<span class="${i<n?"on":""}"></span>`).join("")}</div>`}
+// with no sessions the "When will you train?" step is skipped, so the dots count one step fewer
+function setupDots(n){const skip=SD&&SD.nw===0&&SD.cardio.target===0,tot=SETUP_STEPS-(skip?1:0),at=skip&&n>3?n-1:n;
+  return `<div class="sdots" aria-label="Step ${at} of ${tot}">${Array.from({length:tot},(_,i)=>`<span class="${i<at?"on":""}"></span>`).join("")}</div>`}
 function renderSetup(){
   const D=SD,n=D.setup,last=n===SETUP_STEPS;let h=setupDots(n);
   setBar(n>1?"Back":"","set-back","Set up",last?"Start":"Next",last?"set-start":"set-next");
@@ -2311,7 +2316,7 @@ function renderSetup(){
         <button type="button" class="panel preset pick${D.prog==="own"?" on":""}" data-sprog="own" aria-pressed="${D.prog==="own"}"><b>My own</b><span class="muted">Add your exercises</span></button></div>`;
       if(D.prog==="own")h+=secLists(D,true);
       else if(D.prog)h+=`<p class="ts">${D.nw===3?"Workouts A, B and C are loaded.":"Workouts loaded."} You can change exercises any time in settings.</p>`;
-    }else h+=`<p class="ts">No weights sessions. You can add some later in settings.</p>`;
+    }else if(D.cardio.target>0)h+=`<p class="ts">No weights sessions. You can add some later in settings.</p>`; // with no cardio either, the line above the choices says it
     h+=`</section>`;
   }
   else if(n===3)h+=`<section class="sset"><h3>When will you train?</h3><p class="ts sintro">Tap Gym and Cardio for the days you plan to go.</p><div class="panel shab">${secGrid(D)}</div></section>`;
@@ -2343,7 +2348,9 @@ function setupStepError(n){const D=SD;
 }
 function setupGo(d){
   if(d>0){const e=setupStepError(SD.setup);if(e){flashSetErr(e);$("setsheet").scrollTop=0;return}}
-  flashSetErr("");SD.setup=Math.min(SETUP_STEPS,Math.max(1,SD.setup+d));SD.gymMsg="";renderSettings();$("setsheet").scrollTop=0;
+  flashSetErr("");SD.setup=Math.min(SETUP_STEPS,Math.max(1,SD.setup+d));
+  if(SD.setup===3&&SD.nw===0&&SD.cardio.target===0)SD.setup=Math.min(SETUP_STEPS,Math.max(1,SD.setup+d)); // no sessions: no days to plan
+  SD.gymMsg="";renderSettings();$("setsheet").scrollTop=0;
 }
 // everything is saved together at the end; no saved settings or data means setup hasn't been done
 const needsSetup=()=>!!HOST&&!SETTINGS.setupDone&&!SETTINGS.updatedAt&&!Object.values(weeks).some(hasData)&&!liveSessions().length;
@@ -2862,8 +2869,17 @@ function workoutsJSON(){return JSON.stringify({exported:new Date().toISOString()
 
 /* ---------- tabs ---------- */
 const TABS=["week","strength","progress"];
+// Habits only: no weights and no cardio planned. The app is a habit tracker for them: no Training tab (unless they've
+// logged sessions before, so their history stays reachable) and no Planned week of seven "Rest" days
+const habitsOnly=()=>SETTINGS.workouts.length===0&&SETTINGS.cardio.target===0;
+const trainingTab=()=>!habitsOnly()||liveSessions().some(x=>x.status==="done");
+function renderTabs(){
+  $("tab-strength").hidden=!trainingTab();
+  $("plantoggle").closest(".section").hidden=habitsOnly();
+  if(!trainingTab()&&!$("pane-strength").hidden)showTab("week");
+}
 function showTab(name){
-  if(!TABS.includes(name))name="week";
+  if(!TABS.includes(name)||(name==="strength"&&!trainingTab()))name="week";
   if($("st-msg"))stMsg("");
   TABS.forEach(t=>{$("tab-"+t).setAttribute("aria-selected",String(t===name));$("pane-"+t).hidden=t!==name});
   
