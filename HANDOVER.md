@@ -17,7 +17,7 @@ Polish the hosted Daily Routine app (GitHub Pages + Supabase) so Jack uses it da
 - Tests: the app suite and all hosted suites run on fixed calendars; hosted setup is one command (`tests/hosted/setup.sh`); flaky sign-up and photo-encryption races fixed.
 
 ## Testing
-- App: `npm i jsdom` somewhere, then `NODE_PATH=<that>/node_modules node tests/app.test.js src/weekly-routine.html` (233 checks).
+- App: `npm i jsdom` somewhere, then `NODE_PATH=<that>/node_modules node tests/app.test.js src/weekly-routine.html` (234 checks).
 - Hosted: `tests/hosted/setup.sh <folder>` then run the suites there (`run.py` 57, `photo-encryption.py` 27, `feedback.py` 20, `forgot-password.py` 18, `home-screen.py` 17, `review-photos.py` 9, `settings-workouts.py` 7; sweeps `layout-review.py`, `screens-sweep.py`). `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`.
 - Opening `src/weekly-routine.html` directly shows the photo viewer overlay, because only the build adds `[hidden]{display:none!important}`. Add that style when screenshotting the source.
 - Claude can't reach the live site or Supabase from the session; Jack checks live behaviour on his phone.
