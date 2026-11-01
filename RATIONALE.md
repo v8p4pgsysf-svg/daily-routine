@@ -73,3 +73,9 @@
 ## 1 Nov 2026 (test clock)
 
 - **The app test suite now runs on a fixed calendar.** Boots without a date used the real clock, so the suite only passed during the week of Mon 26 Oct: on Sunday 1 Nov (a cardio day) Z1 found no Start button and crashed, and from Mon 2 Nov check 5 fails. Undated boots now start at Sat 31 Oct 2026 12:00 and tick forward in real time (the W4/W5 timer checks busy-wait on real time, so a frozen clock was rejected). Dated boots stay frozen as before.
+
+## 1 Nov 2026 (Today vs the grid)
+
+- **Prep is ticked in the check-ins grid only; Today's prep lines are reminders** (Jack). Today showed prep tick boxes that duplicated the grid's. Keeping them for convenience was rejected: Jack visits the grid daily for habits anyway, so one place to tick is more consistent, and it matches taking habits out of Today earlier. Each line shows To do/Done and tapping it scrolls to that day's box in the grid with a short green ring (it doesn't tick, or it would be a tick box again). If the grid is on another week, it jumps back to this week first.
+- **The grid's Review row is gone** (Jack). It was a shortcut box, not a tick, and the review panel directly below already shows To do/Done for every week. The review still counts toward the weekly targets.
+- **Today's review row is one line** ("Weekly review" + Open/View). The "Weight, photos, three questions" hint wrapped to three lines and made Sunday's box the longest of the week; the review panel itself explains what's in it.

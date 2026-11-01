@@ -1,5 +1,5 @@
 <!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<meta name="app-version" content="20261031182726">
+<meta name="app-version" content="20261101081132">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Daily Routine</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -429,6 +429,10 @@ input[type=date],select{font:inherit;color:var(--ink);background:var(--bg);borde
 .trow{display:flex;align-items:center;gap:12px;padding:7px 0;border-top:1px solid var(--line);cursor:pointer;min-width:0}
 .tlist .trow:first-child{border-top:0}
 .trow.static{cursor:default}
+button.trow{width:100%;background:none;border-left:0;border-right:0;border-bottom:0;border-radius:0;font:inherit;color:inherit;text-align:left;-webkit-tap-highlight-color:transparent}
+.tlist button.trow:first-child{border-top:0}
+.c.flash .box{animation:cellflash 1.8s ease-out}
+@keyframes cellflash{0%,45%{box-shadow:0 0 0 3px var(--green)}100%{box-shadow:0 0 0 3px transparent}}
 .trow > span:not(.cb):not(.revpill){display:flex;flex-direction:column;min-width:0}
 .tn{font-weight:600;font-size:.94rem}
 .th{font-size:.8rem;color:var(--muted)}
@@ -611,9 +615,6 @@ input[type=date],select{font:inherit;color:var(--ink);background:var(--bg);borde
 /* every row the same height; review box looks like a tick box and opens the review */
 .dgrid .c{min-height:54px}
 @media (max-width:440px){.dgrid .lbl .n.tight{font-size:.76rem}}
-.revbox{border:0;background:none;padding:0}
-.revbox.done .box{background:var(--green);border-color:var(--green)}
-.revbox.done .box::after{content:"";width:10px;height:5px;border-left:2px solid var(--green-ink);border-bottom:2px solid var(--green-ink);transform:translateY(-1px) rotate(-45deg)}
 .dgrid .lbl .n{white-space:nowrap}
 
 @media (max-width:440px){
@@ -1490,15 +1491,15 @@ function renderDaily(){
     }
     h+=`<div class="ct num" data-ct="${x.k}"></div>`;
   });
-  if(HB.some(x=>!x.daily))h+=`<div class="subhd gap" aria-hidden="true"></div>`;
-  // each prep and review box sits on its planned day; other days show a dot
-  HB.filter(x=>!x.daily).forEach(x=>{
+  // each prep box sits on its planned day; other days show a dot. Review has no row: the review panel below shows it
+  const GR=HB.filter(x=>!x.daily&&x.k!=="review");
+  if(GR.length)h+=`<div class="subhd gap" aria-hidden="true"></div>`;
+  GR.forEach(x=>{
     const nm=GRID_LABEL[x.k]||x.short;
     h+=`<div class="lbl"><div class="n${nm.length>12?" tight":""}">${nm}</div></div>`;
     for(let d=0;d<7;d++){
       const td=isCur&&d===t?" is-today":"",i=x.days.indexOf(d);
       if(i<0)h+=`<div class="c off${td}" aria-hidden="true"></div>`;
-      else if(x.k==="review")h+=`<div class="c${td}"><button class="cb revbox${w.review[0]?" done":""}" data-goto="review" aria-label="Weekly review: ${w.review[0]?"done":"to do"}. Open the review."><span class="box"></span></button></div>`;
       else h+=`<div class="c${td}">${cb(`d-${x.k}-${i}`,x.k,i,ticks(w,x.k)[i],x.name+" "+DAYS_LONG[d])}</div>`;
     }
     h+=`<div class="ct num" data-ct="${x.k}"></div>`;
@@ -1523,14 +1524,15 @@ function renderToday(){
       act=`<div class="tact"><div><div class="tl">${esc(c.ctype)} done</div><div class="ts">${cardioLine(c)}${cardioCounts(c)?" · counted in this week's cardio target":" · walks don't count toward the target"}</div></div><button class="btn" data-cardio="${c.id}">View</button></div>`;}
     else act=`<div class="tact"><div><div class="tl">${esc(plan.t)}</div><div class="ts">One of ${SETTINGS.cardio.target} this week</div></div><button class="btn primary lg" data-st="log-cardio">Log cardio</button></div>`;}
   else act=`<div class="tact quiet"><div><div class="tl">${esc(plan.t)}</div></div><button class="btn" data-st="goto-strength">Training anyway? ›</button></div>`;
-  const row=(k,i,name,hint)=>`<label class="trow" for="t-${k}-${i}">${cb(`t-${k}-${i}`,k,i,ticks(w,k)[i],name,cur)}<span><span class="tn">${name}</span>${hint?`<span class="th">${hint}</span>`:""}</span></label>`;
+  // prep is ticked in the grid only; here it's a reminder that shows whether it's done and jumps to its box
+  const row=(k,i,name,hint)=>{const d=ticks(w,k)[i];return `<button type="button" class="trow tjump" data-prep="${k}" aria-label="${esc(name)}: ${d?"done":"to do"}. Go to its box in Check-ins."><span class="revpill${d?" done":""}" aria-hidden="true">${d?"Done":"To do"}</span><span><span class="tn">${name}</span>${hint?`<span class="th">${hint}</span>`:""}</span></button>`};
   const tasks=[];
   const lastKey=keyOf(addDays(parseKey(cur),-7)),lw=weeks[lastKey];
   if(SETTINGS.review.on&&t===0&&SETTINGS.review.day!==0&&lw&&hasData(lw)&&!lw.review[0])
     tasks.push(`<div class="trow static"><span class="revpill" aria-hidden="true">Late</span><span style="flex:1"><span class="tn">Finish last week's review</span><span class="th">Week of ${fmt(parseKey(lastKey))} · still counts for that week</span></span><button class="btn" data-goto="review-last">Open</button></div>`);
   PREP_KEYS.forEach(k=>{const P=SETTINGS.prep[k],i=P.days.indexOf(t);if(P.on&&i>=0)tasks.push(row(k,i,PREP_INFO[k].task,prepHint(P.days,t)))});
   if(SETTINGS.review.on&&t===SETTINGS.review.day){
-    tasks.push(`<div class="trow static"><span class="revpill${w.review[0]?" done":""}" aria-hidden="true">${w.review[0]?"Done":"To do"}</span><span style="flex:1"><span class="tn">Weekly review</span><span class="th">${w.review[0]?"Completed":"Weight, photos, three questions"}</span></span><button class="btn" data-goto="review-cur">${w.review[0]?"View":"Open review"}</button></div>`);
+    tasks.push(`<div class="trow static"><span class="revpill${w.review[0]?" done":""}" aria-hidden="true">${w.review[0]?"Done":"To do"}</span><span style="flex:1"><span class="tn">Weekly review</span></span><button class="btn" data-goto="review-cur">${w.review[0]?"View":"Open"}</button></div>`);
   }
   $("tdate").textContent=DAYS_LONG[t]+" "+fmt(new Date());
   let tip="";try{if(HOST&&SETTINGS.setupDone&&!localStorage.getItem("routine-tip-done"))tip=`<div class="ttip"><span>Tick things off as you go.${SETTINGS.review.on?` Your weekly review is on ${DAYS_LONG[SETTINGS.review.day]}.`:""}</span><button class="ttipx" data-st="tip-x" aria-label="Dismiss tip">×</button></div>`}catch(e){}
@@ -1745,7 +1747,7 @@ document.addEventListener("change",e=>{
     const k=el.dataset.k,i=+el.dataset.i,wk=el.dataset.wk||viewKey,w=ensureWeek(wk);
     ticks(w,k)[i]=el.checked;
     document.querySelectorAll(`input[data-k="${k}"][data-i="${i}"]`).forEach(o=>{if(o!==el&&(o.dataset.wk||viewKey)===wk)o.checked=el.checked});
-    touch(wk);renderMetrics();
+    touch(wk);renderMetrics();if(PREP_KEYS.includes(k)&&wk===currentKey())renderToday();
     clearTimeout(chartTimer);chartTimer=setTimeout(renderCharts,250);
   }else if(el.id==="photo"){ensureWeek(viewKey).photo=el.checked;touch(viewKey)}
 });
@@ -2641,6 +2643,9 @@ document.addEventListener("click",e=>{
     return}
   const ed=t.closest("[data-edit]");if(ed){editSession(ed.dataset.edit);return}
   const op=t.closest("[data-open]");if(op){openSession(op.dataset.open);return}
+  const pj=t.closest("[data-prep]");if(pj){const k=pj.dataset.prep,i=SETTINGS.prep[k].days.indexOf(todayIdx());if(viewKey!==currentKey())go(currentKey());
+    const box=$(`d-${k}-${i}`),c=box&&box.closest(".c");if(!c)return;c.scrollIntoView({behavior:reducedMotion()?"auto":"smooth",block:"center"});
+    c.classList.remove("flash");void c.offsetWidth;c.classList.add("flash");setTimeout(()=>c.classList.remove("flash"),1800);return}
   const g=t.closest("[data-goto]");if(g){showTab("week");try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}
     if(g.dataset.goto==="review-last")go(keyOf(addDays(parseKey(currentKey()),-7)));
     else if(g.dataset.goto==="review-cur"&&viewKey!==currentKey())go(currentKey());

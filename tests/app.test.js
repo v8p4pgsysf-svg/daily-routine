@@ -114,8 +114,11 @@ ok($(w,"#revbody").hidden&&/Due Sun 1 Nov/.test($(w,"#revsub").textContent),"R1.
 click(w,$(w,"#revtoggle"));ok(!$(w,"#revbody").hidden,"   Tapping the row opens it early");click(w,$(w,"#revtoggle"));
 click(w,$(w,"#d-protein-2"));
 ok(!$(w,"#t-protein-2")&&$(w,"#d-protein-2").checked&&$(w,'[data-ct="protein"]').textContent==="1/7","T3. Today has no habit boxes; grid protein tick counts");
-click(w,$(w,"#t-breakfast-1"));
-ok($(w,"#d-breakfast-1").checked&&$(w,'[data-ct="breakfast"]').textContent==="1/2","T4. Breakfast prep in Today fills the same weekly slot");
+const bp=()=>$(w,'#today [data-prep="breakfast"]');
+ok(bp()&&!$(w,"#today input[type=checkbox]")&&/To do/.test(bp().textContent),"T4. Prep in Today is a reminder (To do), with no tick box of its own");
+click(w,bp());ok($(w,"#d-breakfast-1").closest(".c").classList.contains("flash"),"   Tapping it lands on its box in the grid, highlighted");
+click(w,$(w,"#d-breakfast-1"));
+ok($(w,'[data-ct="breakfast"]').textContent==="1/2"&&/Done/.test(bp().textContent),"   Ticking the grid box counts it and turns the reminder to Done");
 click(w,$(w,'#today [data-st="start-today"]'));
 ok(!$(w,"#pane-strength").hidden&&/Workout B/.test($(w,"#st-main .stbar").textContent)&&$(w,"#ed-date").value==="2026-10-28","T5. Start goes straight into Workout B dated today");
 type(w,$(w,"#w-0-0"),100);type(w,$(w,"#r-0-0"),8);click(w,$(w,'[data-tick="0-0"]'));
@@ -132,18 +135,21 @@ ok($(w,'[data-st="rev-complete"]').disabled,"   Still disabled with an answer bu
 type(w,$(w,"#weight"),"79.4");
 ok(!$(w,'[data-st="rev-complete"]').disabled,"   Enabled with weight plus one answer");
 type(w,$(w,"#way"),"Late nights");type(w,$(w,"#improve"),"Bed by 11");
-click(w,$(w,'[data-st="rev-complete"]'));
-ok($(w,'[data-ct="review"]').textContent==="1/1"&&!!$(w,"#daily .revbox.done")&&/Done/.test($(w,"#today .revpill").textContent),"S3. Completing the review updates the weekly target, grid and Today");
+const hits=()=>+$(w,"#revsum .sumdl dd").textContent.split("/")[0];
+ok(!$(w,'[data-ct="review"]')&&!/Review/.test($(w,"#daily").textContent),"S2b. The grid has no Review row (the review panel shows it)");
+const h0=hits();click(w,$(w,'[data-st="rev-complete"]'));
+ok(hits()===h0+1&&/Done/.test($(w,"#revpillh").textContent)&&/Done/.test($(w,'#today [data-goto="review-cur"]').closest(".trow").querySelector(".revpill").textContent),"S3. Completing the review counts as a target hit and shows Done in the panel and Today");
+ok(!/Weight, photos/.test($(w,"#today").textContent)&&$(w,'#today [data-goto="review-cur"]').textContent==="View","   Today's review row is one line: Weekly review + View");
 click(w,$(w,'[data-st="rev-undo"]'));
-ok($(w,'[data-ct="review"]').textContent==="0/1","   Marking it not done reverses the count");
+ok(hits()===h0,"   Marking it not done reverses the count");
 ok(!$(w,"#revbody").hidden,"R2. On Sunday the review is open automatically");
 save(w);w.close();w=boot("2026-11-02T08:00:00");
 ok(/Bed by 11/.test($(w,"#today .tfocus").textContent),"R3. Monday's Today shows last week's improvement as this week's focus");
 ok(/Finish last week's review/.test($(w,"#today").textContent),"R4. Monday prompts to finish last week's incomplete review");
 click(w,$(w,'[data-goto="review-last"]'));
 ok($(w,"#weeklabel").textContent==="26 Oct – 1 Nov"&&!$(w,"#revbody").hidden&&$(w,"#well").value==="Hit all sessions","   Prompt opens last week's review with its answers");
-click(w,$(w,'[data-st="rev-complete"]'));
-ok($(w,'[data-ct="review"]').textContent==="1/1","   Completing it late counts for last week");
+const h1=hits();click(w,$(w,'[data-st="rev-complete"]'));
+ok(hits()===h1+1&&$(w,"#weeklabel").textContent==="26 Oct – 1 Nov","   Completing it late counts for last week");
 // --- timer and swap
 store={};w=boot();
 click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="type"][data-type="A"]'));click(w,$(w,'[data-st="start"]'));
@@ -282,10 +288,12 @@ const tgt0=$(w,"#targetshit").textContent,p0=$(w,"#pct").textContent;
 click(w,$(w,"#prev"));
 ok(!$(w,"#today").hidden&&/Wednesday 28 Oct/.test($(w,"#tdate").textContent),"WK1. Looking back a week keeps the Today box on today");
 ok($(w,"#pct").textContent===p0&&$(w,"#weeklabel").textContent==="19 Oct – 25 Oct"&&$(w,'[data-ct="protein"]').textContent==="0/7","   Weekly targets stay on this week; the grid shows last week (0/7)");
-click(w,$(w,"#t-breakfast-1"));
+click(w,$(w,'#today [data-prep="breakfast"]'));
+ok($(w,"#weeklabel").textContent==="This week"&&$(w,"#d-breakfast-1").closest(".c").classList.contains("flash"),"   Tapping a prep reminder while on last week jumps back to this week's box");
+click(w,$(w,"#d-breakfast-1"));
 const wk=JSON.parse(w.localStorage.getItem("weekly-routine.v1"));
-ok(wk["2026-10-26"].breakfast[1]===true&&!(wk["2026-10-19"]&&wk["2026-10-19"].breakfast[1]),"   Ticking prep in Today saves to this week, not the week on screen");
-click(w,$(w,"#weeklabel"));ok($(w,"#weeklabel").textContent==="This week"&&$(w,"#d-breakfast-1").checked,"WK2. Tapping the dates returns to this week, where the tick shows");
+ok(wk["2026-10-26"].breakfast[1]===true&&!(wk["2026-10-19"]&&wk["2026-10-19"].breakfast[1]),"   The tick saves to this week");
+click(w,$(w,"#prev"));click(w,$(w,"#weeklabel"));ok($(w,"#weeklabel").textContent==="This week"&&$(w,"#d-breakfast-1").checked,"WK2. Tapping the dates returns to this week, where the tick shows");
 // --- master export
 // --- routine settings
 store={};w=boot("2026-10-28T09:00:00");
