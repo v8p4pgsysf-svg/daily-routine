@@ -115,7 +115,8 @@ try:
   # signing out from another tab, then back in, starts on Today
   pg.click("#tab-progress");pg.wait_for_timeout(100)
   # change password, sign out, sign back in with it
-  pg.click("#setcog");pg.click('[data-st="acct"]');pg.click('[data-st="pw-open"]');pg.fill("#pw1","short");pg.fill("#pw2","short");pg.click('[data-st="pw-save"]')
+  pg.click("#setcog");ok("Units" in pg.inner_text("#setbody") and "Weights in" not in pg.inner_text("#setbody"),"   Settings: the kg/lb row is called Units")
+  pg.click('[data-st="acct"]');pg.click('[data-st="pw-open"]');pg.fill("#pw1","short");pg.fill("#pw2","short");pg.click('[data-st="pw-save"]')
   ok("at least 8" in pg.inner_text("#pwmsg"),"H15a. Too-short new password is refused")
   pg.fill("#pw1","New-pass-99");pg.fill("#pw2","New-pass-99");pg.click('[data-st="pw-save"]');pg.wait_for_timeout(300)
   ok("Password changed" in pg.inner_text("#setbody"),"H15b. Password can be changed in settings")

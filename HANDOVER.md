@@ -27,9 +27,8 @@ Polish the hosted Daily Routine app (GitHub Pages + Supabase) so Jack uses it da
 - Discuss options before design changes; he decides. Send short visible updates (SendUserMessage) during anything longer than a couple of minutes: text between tool calls isn't shown to him.
 
 ## Next
-- Focus (Jack, 1 Nov evening): make the app easy and intuitive for new people. First batch shipped (programme descriptions and overview, meal prep heading and lunch default, amber review pill, "% of target", grid "Logged in Training", first-workout hint; see RATIONALE).
-- Done: "Weights" everywhere for weight training; meal prep step wording (see RATIONALE).
-- 320px tidy-ups: done (evening).
+- Focus (Jack, 1 Nov evening): new-user clarity. Done in four batches (see RATIONALE 1 Nov evening entries). Claude's suggestion before changing more: watch the first invitee set up and use the app for ten minutes without help, then fix where they hesitate.
+- Discussed, not built: a guided walkthrough (Claude advised against a tour; if needed, a three-line "How your week works" card replacing the first-day tip, also shown to mid-week joiners).
 
 ## Parked until there's evidence
 - Backup nudge and "Other activity": Jack chose to leave both for now (1 Nov evening).

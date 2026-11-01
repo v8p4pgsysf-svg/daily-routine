@@ -1,5 +1,5 @@
 <!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<meta name="app-version" content="20261101202645">
+<meta name="app-version" content="20261101205425">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Daily Routine</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -900,6 +900,7 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 .fbdone{padding:48px 0;text-align:center;font-size:1.05rem}
 .fbset{display:flex;justify-content:center;margin-top:-6px}
 .linkbtn.fblink{color:var(--danger);font-size:.92rem;padding:8px 12px;align-self:center}
+.tday .dshort{display:none}
 @media (max-width:360px){.tab{padding:10px 10px}}
 /* 320px (Display Zoom): programme name and signed-in email wrap instead of ending in …; workout set rows keep "Set 3" on one line and the rep ranges whole */
 @media (max-width:350px){
@@ -909,6 +910,7 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
   .setrow .sn{white-space:nowrap}
   .setrow input[type=number]{font-size:.95rem}
   .stbar .eyebrow{white-space:nowrap}
+  .tday .dlong{display:none}.tday .dshort{display:inline}
   .pgrid{gap:8px 6px}.pgrid .pgc{padding:7px 8px;min-width:62px} /* "Weights" and "Cardio" leave room for "Workout C" */
 }
 </style>
@@ -928,7 +930,7 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 
 
   <section class="panel dash" aria-label="Dashboard">
-  <div class="dhead"><span class="tday" id="tdate"></span><span class="dtarget"><span class="num" id="pct">0%</span><span class="muted"> of target</span><span hidden><span class="num" id="targetshit">0</span><span class="num" id="ticks">0/36</span></span></span></div>
+  <div class="dhead"><span class="tday" id="tdate"></span><span class="dtarget"><span class="num" id="pct">0%</span><span class="muted"> of check-ins</span><span hidden><span class="num" id="targetshit">0</span><span class="num" id="ticks">0/36</span></span></span></div>
   <div class="todaycard" id="today" aria-label="Today"></div>
   <div class="dbar" aria-hidden="true"><i id="pctbar" style="width:0%"></i></div>
   </section>
@@ -1312,10 +1314,12 @@ function saveLocal(){try{localStorage.setItem(LS_KEY,JSON.stringify(weeks))}catc
 const LS_S="weekly-routine.workouts.v1";
 let sessions={};
 const numOrNull=v=>(typeof v==="number"&&isFinite(v)&&v>=0)?v:null;
-/* Cardio types offered as chips. counts:false = logged, but not counted toward the weekly cardio target. */
-const CARDIO_CATALOG=[{name:"Run"},{name:"Cycle"},{name:"Row"},{name:"Swim"},{name:"Elliptical"},{name:"Walk",counts:false}];
+/* Cardio types offered as chips. Anything logged counts toward the weekly cardio target (see WALKS_COUNT_FROM for old walks). */
+const CARDIO_CATALOG=[{name:"Run"},{name:"Cycle"},{name:"Row"},{name:"Swim"},{name:"Elliptical"}];
 const CARDIO_TYPES=CARDIO_CATALOG.map(c=>c.name);
-const NO_COUNT=new Set(CARDIO_CATALOG.filter(c=>c.counts===false).map(c=>c.name.toLowerCase()));
+// Walk used to be a chip that was logged but not counted. The chip is gone and anything logged counts; walks logged
+// before 2 Nov 2026 keep not counting, so past weeks keep their scores.
+const WALKS_COUNT_FROM="2026-11-02";
 const EFFORTS=["Easy","Moderate","Hard"];
 function normaliseSession(s){
   if(s&&s.kind==="cardio"){
@@ -1351,7 +1355,7 @@ const isCardio=s=>s.kind==="cardio";
 const doneSessions=()=>liveSessions().filter(s=>!isCardio(s)&&s.status==="done").sort(byDate);
 const currentDraft=()=>liveSessions().filter(s=>!isCardio(s)&&s.status==="draft").sort(byDate).pop()||null;
 const cardioSessions=()=>liveSessions().filter(isCardio).sort(byDate);
-const cardioCounts=c=>!NO_COUNT.has(c.ctype.trim().toLowerCase()); // walks are logged but are recovery, not cardio sessions
+const cardioCounts=c=>!(c.ctype.trim().toLowerCase()==="walk"&&String(c.date)<WALKS_COUNT_FROM);
 function cardioByDay(weekKey){
   const mon=parseKey(weekKey),out=[[],[],[],[],[],[],[]];
   cardioSessions().filter(cardioCounts).forEach(c=>{const d=Math.round((parseKey(c.date)-mon)/864e5);if(d>=0&&d<7)out[d].push(c)});
@@ -1604,7 +1608,7 @@ function renderToday(){
     tasks.push(line(`data-prep="${k}"`,(d?"done":"to do")+". Go to its box in Check-ins.",PREP_INFO[k].task,prepHint(P.days,t),d?"Done":"To do",d))});
   if(SETTINGS.review.on&&t===SETTINGS.review.day){const d=w.review[0];
     tasks.push(line('data-goto="review-cur"',(d?"done":"to do")+". Open the review.",isStarter(cur)?"Starter review":"Weekly review","",d?"Done":"To do",d||"due"));}
-  $("tdate").textContent=DAYS_LONG[t]+" "+fmt(new Date());
+  $("tdate").innerHTML=`<span class="dlong">${DAYS_LONG[t]}</span><span class="dshort">${DAYS[t]}</span> ${fmt(new Date())}`; // 320px shows "Wed", so the date and % stay on one line
   const midStart=SETTINGS.startedOn&&parseKey(SETTINGS.startedOn).getDay()!==1; // joined mid-week: the Starter week line is their intro
   let tip="";try{if(HOST&&SETTINGS.setupDone&&!midStart&&!localStorage.getItem("routine-tip-done"))tip=`<div class="ttip"><span>Tick things off as you go.${SETTINGS.review.on?` Your weekly review is on ${DAYS_LONG[SETTINGS.review.day]}.`:""}</span><button class="ttipx" data-st="tip-x" aria-label="Dismiss tip">×</button></div>`}catch(e){}
   if(!act&&!tasks.length&&!tip)act=`<div class="tact quiet"><div><div class="ts">Nothing planned today: tick your check-ins below.</div></div></div>`;
@@ -1647,7 +1651,7 @@ function renderRevSum(){
   const look=[below.length&&!cur?`Missed: ${below.join(", ")}`:"",stalled.length?`Stalled: ${stalled.join(", ")}`:""].filter(Boolean);
   const sx=startIdx(viewKey);
   $("revsum").innerHTML=`<div class="eyebrow">${sx?`Your starter week · ${7-sx} day${7-sx===1?"":"s"}`:"This week at a glance"}</div>
-    <dl class="hdl sumdl"><div><dt>Targets hit</dt><dd class="num">${st.hit}/${st.n} · ${st.pct}%</dd></div>${tg("strength")?`<div><dt>Weights</dt><dd class="num">${st.per.strength||0}/${tg("strength")}</dd></div>`:""}
+    <dl class="hdl sumdl"><div><dt>Check-ins</dt><dd class="num">${st.done}/${st.total} · ${st.pct}%</dd></div>${tg("strength")?`<div><dt>Weights</dt><dd class="num">${st.per.strength||0}/${tg("strength")}</dd></div>`:""}
     ${tg("cardio")?`<div><dt>Cardio</dt><dd><span class="num">${st.per.cardio||0}/${tg("cardio")}</span> <span class="muted">· ${cmin} min</span></dd></div>`:""}${extra}</dl>
     ${look.length?`<div class="sumlook">${look.map(esc).join("<br>")}</div>`:(cur?"":`<div class="sumlook ok">Every target hit.</div>`)}`;
 }
@@ -1734,7 +1738,7 @@ function trendsBody(){
   const rows=keyLifts().map(id=>{const h=exHistory(id);if(!h.length)return "";
     const pts=h.map(x=>({k:x.s.date,e:Math.max(...x.sets.map(l=>e1rm(l.w,l.r)))}));
     const last=pts[pts.length-1],base=pts.find(p=>p.k>=since)||pts[0],ch=Math.round((last.e-base.e)*2)/2;
-    return `<button class="lrow" data-lift="${id}"><span class="ln">${esc((EX_BY_ID[id]&&EX_BY_ID[id].short)||exLabel(id))}</span><span class="num lv">${fmtLift(last.e)} ${unitW()}</span><span class="num lc${ch>0?" up":""}">${pts.length<2?"–":(ch>0?"+":ch<0?"−":"±")+fmtLift(Math.abs(ch))+" "+unitW()}</span></button>`}).filter(Boolean);
+    return `<button class="lrow" data-lift="${id}"><span class="ln">${esc((EX_BY_ID[id]&&EX_BY_ID[id].short)||exLabel(id))}</span><span class="num lv">${fmtEst(last.e)} ${unitW()}</span><span class="num lc${ch>0?" up":""}">${pts.length<2?"–":(ch>0?"+":ch<0?"−":"±")+fmtEst(Math.abs(ch))+" "+unitW()}</span></button>`}).filter(Boolean);
   $("pslifts").innerHTML=rows.length?`<div class="lifts"><div class="lrow lhd"><span>Lift</span><span>Est. 1RM</span><span>12 wks</span></div>${rows.join("")}</div>`
     :`<div class="empty">Your main lifts appear here once you've logged them.</div>`;
 }
@@ -1776,7 +1780,7 @@ function renderMetrics(){
   if($("revsum")&&!$("revbody").hidden)setTimeout(renderRevSum,0);
   const w=getWeek(viewKey),s=stats(w),tw=stats(getWeek(currentKey()));
   $("targetshit").textContent=tw.hit;
-  $("pct").textContent=tw.pct+"%";$("pct").nextElementSibling.textContent=" of target"; // a starter week says so on the Starter week line below
+  $("pct").textContent=tw.pct+"%";$("pct").nextElementSibling.textContent=" of check-ins"; // same in a starter week: the Starter week line below says so
   $("ticks").textContent=tw.done+"/"+tw.total;
   $("pctbar").style.width=tw.pct+"%";
   const HBm=habitsFor(w);document.querySelectorAll("[data-ct]").forEach(el=>{const h=HBm.find(x=>x.k===el.dataset.ct);if(!h)return;
@@ -2011,6 +2015,8 @@ const toU=kg=>kg==null?null:isLb()?kg*LB:kg;
 const fromU=v=>v==null?null:isLb()?Math.round(v/LB*1000)/1000:Math.round(v*100)/100;
 const liftU=kg=>kg==null?null:isLb()?Math.round(kg*LB*2)/2:Math.round(kg*100)/100; // lifts: lb to the half pound
 const fmtLift=kg=>kg==null?"–":String(liftU(kg));
+// estimated 1RM: an estimate, so to the nearest 0.5 kg or 1 lb
+const fmtEst=kg=>kg==null?"–":String(isLb()?Math.round(kg*LB):Math.round(kg*2)/2);
 const fmtBody=kg=>kg==null?"–":toU(kg).toFixed(1);
 const setTxt=l=>`${fmtLift(l.w)}×${l.r==null?"–":l.r}`;
 const e1rm=(w,r)=>(w||0)*(1+r/30);
@@ -2170,7 +2176,7 @@ function openCardio(id,date){
 }
 function cardioCard(){
   if(!cfOpen)return `<div class="panel stcard"><div class="sthrow"><div><div class="eyebrow">Cardio</div><div class="sttitle">Log a cardio session</div></div><button class="btn primary lg" data-st="log-cardio">Log cardio</button></div></div>`;
-  const d=cfDraft,today=keyOf(new Date()),isWalk=NO_COUNT.has(d.type.trim().toLowerCase());
+  const d=cfDraft,today=keyOf(new Date());
   return `<div class="panel stcard" id="cf-card"><div class="sttitle">${cfEdit?"Edit cardio session":"Log cardio"}</div>
     <div class="field"><label for="cf-type">Type</label><div class="chiprow">${CARDIO_TYPES.map(t=>`<button class="tchip" aria-pressed="${t.toLowerCase()===d.type.trim().toLowerCase()}" data-ctype="${t}">${t}</button>`).join("")}<button class="tchip" aria-pressed="${!knownType(d.type)}" data-ctype="__other">Other</button></div>
       <input type="text" id="cf-type" class="cfin" value="${esc(d.type)}" maxlength="40" placeholder="What did you do?" autocomplete="off"${knownType(d.type)?" hidden":""}></div>
@@ -2181,13 +2187,12 @@ function cardioCard(){
     </div>
     <div class="field"><span class="flabel">Effort</span><div class="seg" role="group" aria-label="Effort">${EFFORTS.map(e=>`<button aria-pressed="${e===d.effort}" data-ceff="${e}">${e}</button>`).join("")}</div></div>
     <div class="field"><label for="cf-notes">Notes <span class="muted" style="font-weight:400">optional</span></label><input type="text" id="cf-notes" class="cfin" value="${esc(d.notes)}" maxlength="500" autocomplete="off"></div>
-    <div class="muted" id="cf-walk" style="font-size:.8rem"${isWalk?"":" hidden"}>Walks are saved to your history but don't count toward the 2 cardio sessions.</div>
     <div class="phmsg err" id="cf-err"></div>
     <div class="edactions"><button class="btn primary lg" data-st="cf-save">Save cardio</button><button class="btn" data-st="cf-cancel">Cancel</button>${cfEdit?`<button class="btn ghost" data-st="cf-delete">Delete</button>`:""}</div></div>`;
 }
 function readCf(){if(!cfOpen||!$("cf-card"))return;cfDraft={date:$("cf-date").value,type:$("cf-type").value,min:$("cf-min").value,km:$("cf-km").value,effort:(document.querySelector("[data-ceff][aria-pressed=true]")||{dataset:{ceff:"Easy"}}).dataset.ceff,notes:$("cf-notes").value}}
 const knownType=v=>CARDIO_TYPES.some(t=>t.toLowerCase()===String(v).trim().toLowerCase());
-function syncCfChips(){const inp=$("cf-type"),v=inp.value.trim().toLowerCase(),other=!inp.hidden;document.querySelectorAll("[data-ctype]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.ctype==="__other"?other:!other&&b.dataset.ctype.toLowerCase()===v)));$("cf-walk").hidden=v!=="walk"}
+function syncCfChips(){const inp=$("cf-type"),v=inp.value.trim().toLowerCase(),other=!inp.hidden;document.querySelectorAll("[data-ctype]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.ctype==="__other"?other:!other&&b.dataset.ctype.toLowerCase()===v)))}
 function saveCardio(){
   readCf();const d=cfDraft,min=parseFloat(d.min),km=d.km===""?null:parseFloat(d.km);
   if(!d.type.trim()){$("cf-err").textContent="Choose or type the kind of cardio.";$("cf-type").focus();return}
@@ -2349,7 +2354,7 @@ function secPresets(D,after=""){ // after: the workout rows, shown below the Pro
         <div class="pwrow"><button type="button" class="btn primary" data-preset="${P.id}">Switch to ${esc(P.name)}</button><button type="button" class="btn ghost" data-st="pr-cancel">Cancel</button></div></div>`:""}</div>`}).join("");
   return h+(SD.presets?"":after)+`</div>`}
 function secAccount(D){let h="";
-  const units=`<div class="shrow"><div class="grow"><b>Weights</b> <span class="muted">in</span></div>${unitSeg(D)}</div>`;
+  const units=`<div class="shrow"><div class="grow"><b>Units</b></div>${unitSeg(D)}</div>`;
   if(!(HOST&&HOST.email))return `<section class="sset"><h3>Units</h3><div class="panel shab">${units}</div></section>`;
   const open=!!(SD.acct||SD.pw||SD.del||SD.pwDone);
   h+=`<section class="sset"><h3>Account</h3><div class="panel shab">${units}<div class="shsep"></div>
@@ -2624,9 +2629,9 @@ function renderStLanding(){
     <div class="field"><label for="st-date">Date</label><input type="date" id="st-date" value="${prevDate||today}" max="${today}"></div>
     ${isC?`<button class="btn primary lg" data-st="log-cardio">Log cardio</button>`:`<button class="btn primary lg" data-st="start" ${dr?"disabled":""}>Start Workout ${stType}</button>`}</div>
     ${dr&&!isC?`<div class="muted" style="font-size:.84rem">Finish or discard the workout in progress before starting another.</div>`:""}
-    ${isC?"":`<details class="plistd"${plistOpen?" open":""}><summary>${PROGRAMME[stType].items.length} exercise${PROGRAMME[stType].items.length===1?"":"s"}${(()=>{const n=PROGRAMME[stType].items.filter(([ex])=>{const p=prevFor(ex,null);return p&&ready(p.it)}).length;return n?` · <span class="flag up">${n} ready to add weight</span>`:""})()}</summary>
+    ${isC?"":`<details class="plistd"${plistOpen?" open":""}><summary>${PROGRAMME[stType].items.length} exercise${PROGRAMME[stType].items.length===1?"":"s"}${(()=>{const n=PROGRAMME[stType].items.filter(([ex])=>{const p=prevFor(ex,null);return p&&ready(p.it)}).length;return n?` · <span class="flag up">${n} lift${n===1?" goes":"s go"} up in weight</span>`:""})()}</summary>
     <div class="plist">${PROGRAMME[stType].items.map(([ex,sets,lo,hi])=>{const p=prevFor(ex,null);
-      return `<div class="prow"><div style="min-width:0"><div class="pn">${esc(EXERCISES[ex])}</div><div class="rx num">${sets} × ${lo}–${hi}</div></div>${p&&ready(p.it)?`<span class="flag up">Ready to add weight</span>`:""}</div>`}).join("")}</div></details>`}</div>`;
+      return `<div class="prow"><div style="min-width:0"><div class="pn">${esc(EXERCISES[ex])}</div><div class="rx num">${sets} × ${lo}–${hi}</div></div>${p&&ready(p.it)?`<span class="flag up">Weight goes up</span>`:""}</div>`}).join("")}</div></details>`}</div>`;
   $("st-main").innerHTML=h;
 }
 function renderEditor(){
@@ -2637,14 +2642,14 @@ function renderEditor(){
   let h=isDone?"":`<div class="stbar" role="timer" aria-label="Workout timer"><div class="sbl"><span class="eyebrow">Workout ${s.type} · <span id="ed-tlab">Elapsed</span></span><span class="num tbig" id="ed-timer">${clock(elapsed(s))}</span></div>
     <span class="sbp muted"><span class="num" id="ed-prog2"></span> sets</span><button class="btn" id="ed-pause" data-st="pause"></button></div>`;
   // until the first workout is saved, explain how to read and fill in a set
-  if(!isDone&&!doneSessions().length)h+=`<div class="ttip wtip">First workout: “3 × 6–8” means 3 sets of 6 to 8 reps. Pick a weight you can lift with good form, enter the weight and reps you did, then tick the set.</div>`;
+  if(!isDone&&!doneSessions().length)h+=`<div class="ttip wtip">First workout: “3 × 6–8” means 3 sets of 6 to 8 reps. Pick a weight you can lift with good form, enter the weight and reps you did, then tick the set. When every set reaches the top of the range, the weight goes up next time.</div>`;
   if(isDone)h+=`<div class="panel stcard"><div class="sthrow"><div><div class="eyebrow">Saved workout · <span class="num" id="ed-prog"></span> sets</div><div class="sttitle">Workout ${s.type}</div></div>
     <div class="timer"><label class="eyebrow" for="ed-dur">Minutes</label><input type="number" id="ed-dur" class="durin" inputmode="numeric" min="0" step="1" value="${s.accMs?Math.round(s.accMs/60000):""}" placeholder="–"></div></div></div>`;
   s.items.forEach((it,xi)=>{
     const p=prevFor(it.ex,s),nm=esc(exName(it));
     h+=`<div class="panel ex" id="ex-${xi}"><div class="exh"><div style="min-width:0"><div class="nm">${nm}</div><div class="rx num">${it.sets} × ${it.lo}–${it.hi}${it.swappedFrom?` <span class="swnote">· swapped for ${esc(EXERCISES[it.swappedFrom]||it.swappedFrom)}</span>`:""}${it.added?` <span class="swnote">· added</span>`:""}</div></div><div class="exside"><div class="exflags" id="exf-${xi}"></div>${it.added?`<button class="swapbtn" data-exrm="${xi}" aria-label="Remove ${nm}"${it.log.some(l=>l.done)?" hidden":""}>Remove</button>`:`<button class="swapbtn" data-swap="${xi}" aria-label="Swap ${nm} for another exercise">Swap</button>`}</div></div>
       <div class="swapbox" id="sw-${xi}" hidden><input type="text" id="swin-${xi}" data-swapin="${xi}" placeholder="Alternative exercise" aria-label="Alternative exercise" autocomplete="off"><button class="btn primary" data-swapgo="${xi}">Use this</button><button class="btn ghost" data-swapcancel="${xi}">Cancel</button>${it.swappedFrom?`<button class="btn ghost" data-swapback="${xi}">Back to ${esc(EXERCISES[it.swappedFrom]||it.swappedFrom)}</button>`:""}</div>
-      ${p&&ready(p.it)?`<div class="exprev"><span class="flag up">${isDone?"Ready to add weight":`${ASSISTED.has(it.ex)?"−"+incU(it.ex,exName(it))+" "+unitW()+" assistance":"+"+incU(it.ex,exName(it))+" "+unitW()+" from last time"}`}</span></div>`:""}
+      ${p&&ready(p.it)?`<div class="exprev"><span class="flag up">${isDone?"Weight goes up next time":`${ASSISTED.has(it.ex)?"−"+incU(it.ex,exName(it))+" "+unitW()+" assistance":"+"+incU(it.ex,exName(it))+" "+unitW()+" from last time"}`}</span></div>`:""}
 `;
     it.log.forEach((l,si)=>{
       const pl=p&&p.it.log[si]&&p.it.log[si].done?p.it.log[si]:null;
@@ -2895,7 +2900,7 @@ function renderStProg(){
     const hv=all.reduce((a,b)=>heavier(a.l,b.l)?b:a);
     const be=all.reduce((a,b)=>e1rm(b.l.w,b.l.r)>e1rm(a.l.w,a.l.r)?b:a);
     const mr=all.reduce((a,b)=>b.l.r>a.l.r||(b.l.r===a.l.r&&(b.l.w||0)>(a.l.w||0))?b:a);
-    body=`<div class="pbs">${pbCard("Heaviest set",`${fmtLift(hv.l.w)} ${unitW()} × ${hv.l.r}`,hv.d)}${pbCard("Best est. 1RM",`${fmtLift(e1rm(be.l.w,be.l.r))} ${unitW()}`,be.d)}${pbCard("Most reps",`${mr.l.r} @ ${fmtLift(mr.l.w)} ${unitW()}`,mr.d)}</div>
+    body=`<div class="pbs">${pbCard("Heaviest set",`${fmtLift(hv.l.w)} ${unitW()} × ${hv.l.r}`,hv.d)}${pbCard("Best est. 1RM",`${fmtEst(e1rm(be.l.w,be.l.r))} ${unitW()}`,be.d)}${pbCard("Most reps",`${mr.l.r} @ ${fmtLift(mr.l.w)} ${unitW()}`,mr.d)}</div>
       <div class="panel chart"><div class="eyebrow">Top set · ${unitW()}, reps above</div>${lineChart(pts.map(p=>({k:p.k,v:liftU(p.top.w||0),lab:p.top.r})),"Top set weight by session")}</div>
       <div class="panel recent">${pts.slice(-6).reverse().map(p=>`<div class="rrow"><span>${dateLabel(p.k)}</span><span class="num">${p.sets.map(setTxt).join(" · ")}</span></div>`).join("")}</div>`;
   }
@@ -2951,7 +2956,8 @@ function liftOverview(){
   all.sort((a,b)=>exLabel(a).localeCompare(exLabel(b))).forEach(id=>groups[liftStatus(ser[id])].push(id));
   const chips=ids2=>ids2.map(id=>`<button class="lchip" data-prog-ex="${esc(id)}">${esc(exLabel(id))}</button>`).join("");
   const line=`<div class="sline3"><span class="sst stalled"><span class="bdot"></span>Stalled <b class="num">${groups.stalled.length}</b></span><span class="sst hold"><span class="bdot"></span>Holding <b class="num">${groups.hold.length}</b></span><span class="sst up"><span class="bdot"></span>Progressing <b class="num">${groups.up.length}</b></span></div>`;
-  return `<div class="panel stcard ovw">${line}
+  const rated=groups.stalled.length+groups.hold.length+groups.up.length; // until a lift has a status, only "Building data"
+  return `<div class="panel stcard ovw">${rated?line:""}
     ${groups.stalled.length?`<div class="bchips"><span class="muted sline">Stalled:</span>${chips(groups.stalled)}</div>`:""}
     ${groups.hold.length?`<div class="bchips"><span class="muted sline">Holding:</span>${chips(groups.hold)}</div>`:""}
     ${groups.up.length?(showProgressing?`<div class="bchips"><span class="muted sline">Progressing:</span>${chips(groups.up)}</div><button class="linkbtn" data-st="prog-toggle">Hide</button>`:`<button class="linkbtn" data-st="prog-toggle">Show progressing lifts</button>`):""}

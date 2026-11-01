@@ -159,3 +159,13 @@
 - **Completing the weekly review folds the panel closed** (Jack). The header shows Done and "Completed · tap to view"; reopening it is where Mark not done lives. If the panel's header has scrolled off the top, the page brings it back into view.
 - **Reversal: the starter week header says "x% of target" like every other week** (Jack; Claude agreed). "x% starter week" was chosen this morning so smaller numbers explained themselves, but it read unclearly, and the Starter week line directly underneath already says it.
 - **"Workout A/B/C" vs "Weights A/B/C" discussed**; Claude's view was to keep "Workout" (see the chat). Jack to decide.
+
+## 1 Nov 2026 (final new-user review)
+
+- **"Workout A/B/C" stays** (Jack agreed): "Weights A" reads oddly as a noun ("Start Weights A"), and "workout" only ever means a weights session in the app.
+- **The weekly % is "of check-ins" everywhere** (Jack): the Today header ("x% of check-ins", replacing "of target" from earlier today) and the review summary ("Check-ins 9/36 · 25%", replacing "Targets hit 0/7 · 4%", which looked contradictory: nothing hit yet a non-zero %). The Progress chart already said "Check-ins completed". The count of targets fully met is gone from the summary; the per-row lines (Weights 1/3, Cardio 0/2) and "Missed: …" still show it. Exports keep both figures. At 320px the header shows "Wed" instead of "Wednesday" so the date and % stay on one line.
+- **Estimated 1RM is rounded** to the nearest 0.5 kg (1 lb), as is its 12-week change and the "Best est. 1RM" card (Jack: keep the 1RM name). It's an estimate, so 50.67 kg was false precision.
+- **Exercise progress hides Stalled / Holding / Progressing until a lift has a status**; before that it shows only "Building data: …".
+- **Settings: "Weights in kg/lb" is now "Units"**, since "Weights" now means weight training.
+- **Walk chip removed** (Jack): no chip with a special rule. Anything logged counts, including a walk typed under Other. Walks logged before 2 Nov 2026 keep not counting (`WALKS_COUNT_FROM`), so past weeks' scores don't move (the app's rule that history doesn't change). The "walks don't count" note in the cardio form is gone.
+- **"Ready to add weight" explained** (Jack didn't follow it): the app uses double progression; when every set of a lift reaches the top of its rep range, it adds one step of weight next time (and pre-fills it). Training now says "2 lifts go up in weight", the exercise list "Weight goes up", a saved workout "Weight goes up next time", and the first-workout hint adds "When every set reaches the top of the range, the weight goes up next time." The workout screen already said "+2.5 kg from last time".
