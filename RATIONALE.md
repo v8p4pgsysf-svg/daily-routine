@@ -69,3 +69,7 @@
 
 - **Sign-in cards now shrink to the screen** (`#login` grid column `minmax(0,1fr)`, inputs `min-width:0`). They sized to the inputs' natural width and overflowed by ~25px at 320px (Display Zoom); this predated tonight.
 - **Invite code box lost its placeholder**: it was cut off at 320px, and the line above already says to enter the code you were given.
+
+## 1 Nov 2026 (test clock)
+
+- **The app test suite now runs on a fixed calendar.** Boots without a date used the real clock, so the suite only passed during the week of Mon 26 Oct: on Sunday 1 Nov (a cardio day) Z1 found no Start button and crashed, and from Mon 2 Nov check 5 fails. Undated boots now start at Sat 31 Oct 2026 12:00 and tick forward in real time (the W4/W5 timer checks busy-wait on real time, so a frozen clock was rejected). Dated boots stay frozen as before.

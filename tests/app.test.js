@@ -1,9 +1,14 @@
 const {JSDOM}=require("jsdom");const fs=require("fs");
 const html=fs.readFileSync(process.argv[2],"utf8");
 let store={};
+const REF_DAY="2026-10-31T12:00:00";
 function boot(now){
   const dom=new JSDOM("<!doctype html><html><head></head><body>"+html+"</body></html>",{runScripts:"dangerously",url:"https://artifact.test/",pretendToBeVisual:true,
-    beforeParse(w){if(now){const RD=w.Date;const t=new RD(now).getTime();class FD extends RD{constructor(...a){a.length?super(...a):super(t)}static now(){return t}};w.Date=FD}
+    // Every boot runs on a fixed calendar so the suite doesn't depend on the real date. A boot without `now` starts on the
+    // reference day (Sat 31 Oct 2026, the week of Mon 26 Oct the checks are written against) and ticks forward in real time,
+    // which the timer checks (W4/W5) need. A boot with `now` stays frozen at that moment.
+    beforeParse(w){const RD=w.Date,t=new RD(now||REF_DAY).getTime(),s=RD.now(),clock=()=>now?t:t+(RD.now()-s);
+      class FD extends RD{constructor(...a){a.length?super(...a):super(clock())}static now(){return clock()}};w.Date=FD;
       for(const k in store)w.localStorage.setItem(k,store[k]);w.scrollTo=()=>{};w.scrollBy=()=>{};w.Element.prototype.scrollIntoView=function(){};
       w.addEventListener("error",e=>console.log("PAGE ERROR",e.message));}});
   return dom.window;
