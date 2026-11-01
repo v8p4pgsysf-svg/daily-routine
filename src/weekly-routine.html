@@ -391,12 +391,13 @@ input[type=date],select{font:inherit;color:var(--ink);background:var(--bg);borde
 .tlist{display:flex;flex-direction:column}
 .trow{display:flex;align-items:center;gap:12px;padding:7px 0;border-top:1px solid var(--line);cursor:pointer;min-width:0}
 .tlist .trow:first-child{border-top:0}
-.trow.static{cursor:default}
+.trow .tbody{flex:1;display:flex;flex-direction:column;min-width:0}
+.trow .tchev{transform:rotate(-45deg);margin:0 2px 0 -4px}
 button.trow{width:100%;background:none;border-left:0;border-right:0;border-bottom:0;border-radius:0;font:inherit;color:inherit;text-align:left;-webkit-tap-highlight-color:transparent}
 .tlist button.trow:first-child{border-top:0}
 .c.flash .box{animation:cellflash 1.8s ease-out}
 @keyframes cellflash{0%,45%{box-shadow:0 0 0 3px var(--green)}100%{box-shadow:0 0 0 3px transparent}}
-.trow > span:not(.cb):not(.revpill){display:flex;flex-direction:column;min-width:0}
+.trow > span:not(.cb):not(.revpill):not(.chev){display:flex;flex-direction:column;min-width:0}
 .tn{font-weight:600;font-size:.94rem}
 .th{font-size:.8rem;color:var(--muted)}
 .trow .cb{width:36px;height:36px}
@@ -1487,26 +1488,27 @@ function renderToday(){
       act=`<div class="tact"><div><div class="tl">${esc(c.ctype)} done</div><div class="ts">${cardioLine(c)}${cardioCounts(c)?" · counted in this week's cardio target":" · walks don't count toward the target"}</div></div><button class="btn" data-cardio="${c.id}">View</button></div>`;}
     else act=`<div class="tact"><div><div class="tl">${esc(plan.t)}</div><div class="ts">One of ${SETTINGS.cardio.target} this week</div></div><button class="btn primary lg" data-st="log-cardio">Log cardio</button></div>`;}
   else act=`<div class="tact quiet"><div><div class="tl">${esc(plan.t)}</div></div><button class="btn" data-st="goto-strength">Training anyway? ›</button></div>`;
-  // prep is ticked in the grid only; here it's a reminder that shows whether it's done and jumps to its box
-  const row=(k,i,name,hint)=>{const d=ticks(w,k)[i];return `<button type="button" class="trow tjump" data-prep="${k}" aria-label="${esc(name)}: ${d?"done":"to do"}. Go to its box in Check-ins."><span class="revpill${d?" done":""}" aria-hidden="true">${d?"Done":"To do"}</span><span><span class="tn">${name}</span>${hint?`<span class="th">${hint}</span>`:""}</span></button>`};
+  // every line looks the same: name on the left, To do/Done on the right, and the whole line goes somewhere when tapped.
+  // Prep is ticked in the grid only, so its line jumps to that day's box; review lines open the review
+  const line=(attr,label,name,hint,pill,done)=>`<button type="button" class="trow" ${attr} aria-label="${esc(name)}: ${esc(label)}"><span class="tbody"><span class="tn">${esc(name)}</span>${hint?`<span class="th">${hint}</span>`:""}</span><span class="revpill${done?" done":""}" aria-hidden="true">${pill}</span><span class="chev tchev" aria-hidden="true"></span></button>`;
   const tasks=[];
   const lastKey=keyOf(addDays(parseKey(cur),-7)),lw=weeks[lastKey];
   if(SETTINGS.review.on&&t===0&&SETTINGS.review.day!==0&&lw&&hasData(lw)&&!lw.review[0])
-    tasks.push(`<div class="trow static"><span class="revpill" aria-hidden="true">Late</span><span style="flex:1"><span class="tn">Finish last week's review</span><span class="th">Week of ${fmt(parseKey(lastKey))} · still counts for that week</span></span><button class="btn" data-goto="review-last">Open</button></div>`);
-  PREP_KEYS.forEach(k=>{const P=SETTINGS.prep[k],i=P.days.indexOf(t);if(P.on&&i>=0)tasks.push(row(k,i,PREP_INFO[k].task,prepHint(P.days,t)))});
-  if(SETTINGS.review.on&&t===SETTINGS.review.day){
-    tasks.push(`<div class="trow static"><span class="revpill${w.review[0]?" done":""}" aria-hidden="true">${w.review[0]?"Done":"To do"}</span><span style="flex:1"><span class="tn">Weekly review</span></span><button class="btn" data-goto="review-cur">${w.review[0]?"View":"Open"}</button></div>`);
-  }
+    tasks.push(line('data-goto="review-last"',"late. Open it.","Finish last week's review",`Week of ${fmt(parseKey(lastKey))} · still counts for that week`,"Late",false));
+  PREP_KEYS.forEach(k=>{const P=SETTINGS.prep[k],i=P.days.indexOf(t);if(!P.on||i<0)return;const d=ticks(w,k)[i];
+    tasks.push(line(`data-prep="${k}"`,(d?"done":"to do")+". Go to its box in Check-ins.",PREP_INFO[k].task,prepHint(P.days,t),d?"Done":"To do",d))});
+  if(SETTINGS.review.on&&t===SETTINGS.review.day){const d=w.review[0];
+    tasks.push(line('data-goto="review-cur"',(d?"done":"to do")+". Open the review.","Weekly review","",d?"Done":"To do",d));}
   $("tdate").textContent=DAYS_LONG[t]+" "+fmt(new Date());
   let tip="";try{if(HOST&&SETTINGS.setupDone&&!localStorage.getItem("routine-tip-done"))tip=`<div class="ttip"><span>Tick things off as you go.${SETTINGS.review.on?` Your weekly review is on ${DAYS_LONG[SETTINGS.review.day]}.`:""}</span><button class="ttipx" data-st="tip-x" aria-label="Dismiss tip">×</button></div>`}catch(e){}
   sec.innerHTML=`${tip}${lw&&lw.improve.trim()?`<div class="tfocus"><span class="tfl">Focus</span> ${esc(lw.improve.trim())}</div>`:""}${act}
     ${tasks.length?`<div class="tgroup"><div class="eyebrow">Also today</div><div class="tlist">${tasks.join("")}</div></div>`:""}`;
 }
-let revOpen=null; // null = automatic: open on Sunday, or for a past week still to do
+let revOpen=null; // null = automatic: closed for this week (Today's review line opens it), open for a past week still to do
 function revIsOpen(){
   if(revOpen!==null)return revOpen;
   const cur=currentKey();
-  if(viewKey===cur)return todayIdx()===SETTINGS.review.day;
+  if(viewKey===cur)return false;
   return viewKey<cur&&!getWeek(viewKey).review[0];
 }
 function renderRevHeader(){

@@ -9,12 +9,13 @@ Polish the hosted Daily Routine app (GitHub Pages + Supabase) so Jack uses it da
 
 ## Shipped this session (all live; all tests green)
 - App test suite runs on a fixed calendar (it had silently expired: only passed in the week of 26 Oct).
-- Today: prep lines are reminders (To do/Done) that jump to the grid box; prep is ticked in the grid only. Review row in Today is one line. The grid's Review row is gone.
+- Today's "Also today" lines all share one pattern (name, To do/Done/Late, ›; whole line tappable). Prep is ticked in the grid only: its line jumps to the box. The grid's Review row is gone. The review panel is closed by default on review day.
 
 ## Testing
-- App: `npm i jsdom` somewhere, then `NODE_PATH=<that>/node_modules node tests/app.test.js src/weekly-routine.html` (184 checks).
+- App: `npm i jsdom` somewhere, then `NODE_PATH=<that>/node_modules node tests/app.test.js src/weekly-routine.html` (185 checks).
 - Hosted: follow `tests/hosted/README.md`. `mock-supabase.js` must sit next to the scripts as well as in `site/`, and `node_modules/jszip` must be in the same folder (npm installs into the nearest parent with a package.json). Playwright + Chromium: `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`. The mock's email code is always 123456.
 - Opening `src/weekly-routine.html` directly (outside the hosted build) shows the photo viewer overlay, because only the build adds `[hidden]{display:none!important}`. Add that style when screenshotting the source.
+- `photo-encryption.py` sometimes stalls in the forgot-password steps (waiting for `#pk-none` or `#pk-rc`); it did so on the 31 Oct build too, and reruns pass 27/27. Worth fixing the wait if it keeps happening.
 - Claude can't reach the live site or Supabase from the session; Jack checks live behaviour on his phone and in the dashboard.
 
 ## Next (Claude's suggested order; Jack hasn't chosen)
