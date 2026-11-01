@@ -410,7 +410,8 @@ button.trow{width:100%;background:none;border-left:0;border-right:0;border-botto
 .trow .cb{width:36px;height:36px}
 .trow .cb .box{width:26px;height:26px;border-radius:7px}
 .revpill{display:inline-flex;align-items:center;border:1px solid var(--line-strong);background:var(--surface);border-radius:99px;padding:2px 10px;font-size:.76rem;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap}
-.rectag{display:block;font-size:.74rem;font-weight:600;color:var(--green)} /* a sub-line under the row name, like habit rows' "5+ a day" */
+.rectag{display:block;font-size:.74rem;font-weight:600;color:var(--green)}
+.psub{display:block;font-size:.78rem;font-weight:400;color:var(--muted);line-height:1.3;margin-top:1px} /* a sub-line under the row name, like habit rows' "5+ a day" */
 .revpill.done{background:var(--green);border-color:var(--green);color:var(--green-ink)}
 /* the review on its day and the day after, not yet done: amber */
 .revpill.due{background:color-mix(in srgb,var(--warn) 14%,var(--surface));border-color:color-mix(in srgb,var(--warn) 55%,transparent);color:var(--warn)}
@@ -871,6 +872,7 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
   .setrow .sn{white-space:nowrap}
   .setrow input[type=number]{font-size:.95rem}
   .stbar .eyebrow{white-space:nowrap}
+  .pgrid{gap:8px 6px}.pgrid .pgc{padding:7px 8px;min-width:62px} /* "Weights" and "Cardio" leave room for "Workout C" */
 }
 </style>
 
@@ -977,7 +979,7 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
   <section class="section">
     <div class="sec-head"><h2>Training</h2></div>
     <div class="charts">
-      <div class="panel chart"><div class="eyebrow" id="pschart-h">Strength workouts per week</div><div id="pschart"></div></div>
+      <div class="panel chart"><div class="eyebrow" id="pschart-h">Weights sessions per week</div><div id="pschart"></div></div>
       <div class="panel chart"><div class="eyebrow">Cardio minutes per week</div><div id="pccchart"></div></div>
       <div class="panel chart"><div class="eyebrow">Strength index · all lifts</div><div id="psindex"></div></div>
       <div class="panel chart"><div class="eyebrow">Key lifts · estimated 1RM</div><div id="pslifts"></div></div>
@@ -1105,7 +1107,7 @@ const habitDefaults=pick=>Object.fromEntries(HABIT_CATALOG.map(c=>[c.k,c.daysTar
 DEFAULT_SETTINGS.habits=habitDefaults("jack");
 /* Prep tasks. To add one, add an entry here (Jack's days in jack:). It then appears in setup, settings,
    Today, the planned week and the check-ins grid. Never change a key once used. */
-const PREP_INFO={lunch:{name:"Lunch prep",task:"Prepare lunches",jack:[6]},breakfast:{name:"Breakfast prep",task:"Prepare breakfasts",jack:[6,2]}};
+const PREP_INFO={lunch:{name:"Lunch prep",task:"Prepare lunches",hint:"Days you batch\u2011prepare lunches",jack:[6]},breakfast:{name:"Breakfast prep",task:"Prepare breakfasts",hint:"Days you batch\u2011prepare breakfasts",jack:[6,2]}};
 const PREP_KEYS=Object.keys(PREP_INFO);
 DEFAULT_SETTINGS.prep=Object.fromEntries(Object.entries(PREP_INFO).map(([k,v])=>[k,{on:true,days:v.jack.slice()}]));
 const LS_SET="weekly-routine.settings.v1";
@@ -1156,7 +1158,7 @@ function applySettings(S){
   S.workouts.forEach((w,i)=>{if(w.day>=0&&!STRENGTH_DAY[w.day])STRENGTH_DAY[w.day]=LETTERS[i]});
   const nW=S.workouts.length,H=S.habits,ct=S.cardio.target;
   HABITS.length=0;
-  if(nW>0)HABITS.push({k:"strength",name:"Strength",short:"Strength",x:nW+" sessions",n:7,target:nW,daily:true});
+  if(nW>0)HABITS.push({k:"strength",name:"Weights",short:"Weights",x:nW+" sessions",n:7,target:nW,daily:true});
   if(ct>0)HABITS.push({k:"cardio",name:"Cardio",short:"Cardio",x:ct+" sessions",n:7,target:ct,daily:true});
   HABIT_CATALOG.forEach(c=>{const h=H[c.k];if(!h||!h.on)return;const tgt=c.daysTarget?h.target:7;
     HABITS.push({k:c.k,name:c.long||c.name,short:c.grid||c.name,x:c.daysTarget?tgt+" days":"Daily",n:7,target:tgt,daily:true})});
@@ -1504,12 +1506,12 @@ function renderDaily(){
       const td=isCur&&d===t?" is-today":"";
       if(x.off||d<(x.from||0))h+=`<div class="c off${td}" aria-hidden="true"></div>`; // before they started
       else if(x.k==="strength"&&wk[d].length){const types=wk[d].map(s=>s.type);
-        h+=`<div class="c${td}"><button class="wk" data-open="${wk[d][0].id}" title="Workout ${types.join(", ")} logged · open in Strength" aria-label="Workout ${types.join(" and ")} logged on ${DAYS_LONG[d]}. Open it.">${types.join("")}</button></div>`;}
+        h+=`<div class="c${td}"><button class="wk" data-open="${wk[d][0].id}" title="Workout ${types.join(", ")} logged · open in Training" aria-label="Workout ${types.join(" and ")} logged on ${DAYS_LONG[d]}. Open it.">${types.join("")}</button></div>`;}
       // strength comes only from saved workouts; ticks recorded by hand before the tracker existed still show (and can be cleared)
       else if(x.k==="cardio"&&cw[d].length){const c=cw[d][0],tot=cw[d].reduce((a,z)=>a+z.minutes,0);
         h+=`<div class="c${td}"><button class="wk cw" data-cardio="${c.id}" title="${esc(cw[d].map(z=>z.ctype+" · "+z.minutes+" min").join(", "))} · open" aria-label="${esc(c.ctype)}, ${tot} minutes, ${DAYS_LONG[d]}. Open it.">${tot}</button></div>`;}
       else if(x.k==="cardio")h+=w.cardio[d]?`<div class="c${td}">${cb(`d-cardio-${d}`,"cardio",d,true,"Cardio "+DAYS_LONG[d]+", recorded by hand. Untick to clear.")}</div>`:`<div class="c off${td}" aria-hidden="true"></div>`;
-      else if(x.k==="strength")h+=w.strength[d]?`<div class="c${td}">${cb(`d-strength-${d}`,"strength",d,true,"Strength "+DAYS_LONG[d]+", recorded by hand. Untick to clear.")}</div>`:`<div class="c off${td}" aria-hidden="true"></div>`;
+      else if(x.k==="strength")h+=w.strength[d]?`<div class="c${td}">${cb(`d-strength-${d}`,"strength",d,true,"Weights "+DAYS_LONG[d]+", recorded by hand. Untick to clear.")}</div>`:`<div class="c off${td}" aria-hidden="true"></div>`;
       else if(x.k==="af"&&drinkMode(w))h+=`<div class="c${td}"><span class="cb drinkcb"><input type="checkbox" id="d-drink-${d}" data-k="drink" data-i="${d}" ${w.drink[d]?"checked":""} aria-label="Drank on ${DAYS_LONG[d]}"><span class="box"></span></span></div>`;
       else h+=`<div class="c${td}">${cb(`d-${x.k}-${d}`,x.k,d,ticks(w,x.k)[d],x.name+" "+DAYS_LONG[d])}</div>`;
     }
@@ -1540,7 +1542,7 @@ function renderToday(){
   const cH=habitsFor(w).find(h=>h.k==="cardio"),cN=cH?cH.target:SETTINGS.cardio.target; // fitted in a starter week
   let act;
   if(doneToday.length){const last=doneToday[doneToday.length-1],p=setsDone(last);
-    act=`<div class="tact"><div><div class="tl">Workout ${doneToday.map(s=>s.type).join(" + ")} done</div><div class="ts"><span class="num">${p.d}/${p.t}</span> sets logged${last.accMs?" in "+durTxt(last):""} · counted in this week's strength target</div></div><button class="btn" data-open="${last.id}">View workout</button></div>`;}
+    act=`<div class="tact"><div><div class="tl">Workout ${doneToday.map(s=>s.type).join(" + ")} done</div><div class="ts"><span class="num">${p.d}/${p.t}</span> sets logged${last.accMs?" in "+durTxt(last):""} · counted in this week's weights target</div></div><button class="btn" data-open="${last.id}">View workout</button></div>`;}
   else if(dr){const p=setsDone(dr);
     act=`<div class="tact"><div><div class="tl">Workout ${dr.type} in progress</div><div class="ts"><span class="num">${p.d}/${p.t}</span> sets done · started ${dateLabel(dr.date)}</div></div><button class="btn primary lg" data-st="resume">Resume workout</button></div>`;}
   else if(sDay)act=`<div class="tact"><div><div class="tl">${esc(plan.t)}</div><div class="ts">${PROGRAMME[sDay].items.length} exercise${PROGRAMME[sDay].items.length===1?"":"s"}</div></div><button class="btn primary lg" data-st="start-today" data-type="${sDay}">Start Workout ${sDay}</button></div>`;
@@ -1608,7 +1610,7 @@ function renderRevSum(){
   const look=[below.length&&!cur?`Missed: ${below.join(", ")}`:"",stalled.length?`Stalled: ${stalled.join(", ")}`:""].filter(Boolean);
   const sx=startIdx(viewKey);
   $("revsum").innerHTML=`<div class="eyebrow">${sx?`Your starter week · ${7-sx} day${7-sx===1?"":"s"}`:"This week at a glance"}</div>
-    <dl class="hdl sumdl"><div><dt>Targets hit</dt><dd class="num">${st.hit}/${st.n} · ${st.pct}%</dd></div>${tg("strength")?`<div><dt>Strength</dt><dd class="num">${st.per.strength||0}/${tg("strength")}</dd></div>`:""}
+    <dl class="hdl sumdl"><div><dt>Targets hit</dt><dd class="num">${st.hit}/${st.n} · ${st.pct}%</dd></div>${tg("strength")?`<div><dt>Weights</dt><dd class="num">${st.per.strength||0}/${tg("strength")}</dd></div>`:""}
     ${tg("cardio")?`<div><dt>Cardio</dt><dd><span class="num">${st.per.cardio||0}/${tg("cardio")}</span> <span class="muted">· ${cmin} min</span></dd></div>`:""}${extra}</dl>
     ${look.length?`<div class="sumlook">${look.map(esc).join("<br>")}</div>`:(cur?"":`<div class="sumlook ok">Every target hit.</div>`)}`;
 }
@@ -1686,8 +1688,8 @@ function trendsBody(){
   const cur=currentKey(),span=[];for(let i=11;i>=0;i--)span.push(keyOf(addDays(parseKey(cur),-7*i)));
   const first=keyOf(mondayOf(parseKey(ds[0].date)));
   const counts=span.filter(k=>k>=first||k===cur).map(k=>({k,n:workoutsByDay(k).reduce((a,l)=>a+l.length,0)}));
-  const s=barChart(counts,cur,{min:4,step:m=>m>6?2:1,full:SETTINGS.workouts.length,target:SETTINGS.workouts.length,aria:"Strength workouts per week",tip:n=>n+" workout"+(n===1?"":"s")});
-  $("pschart-h").textContent="Strength workouts per week"+(SETTINGS.workouts.length?" · target "+SETTINGS.workouts.length:"");
+  const s=barChart(counts,cur,{min:4,step:m=>m>6?2:1,full:SETTINGS.workouts.length,target:SETTINGS.workouts.length,aria:"Weights sessions per week",tip:n=>n+" workout"+(n===1?"":"s")});
+  $("pschart-h").textContent="Weights sessions per week"+(SETTINGS.workouts.length?" · target "+SETTINGS.workouts.length:"");
   const pastC=counts.filter(c=>c.k!==cur);
   const avgC=pastC.length?pastC.reduce((a,c)=>a+c.n,0)/pastC.length:null;
   $("pschart").innerHTML=s+(avgC==null?"":`<div class="muted" style="font-size:.84rem">Average <span class="num">${(Math.round(avgC*10)/10).toFixed(1)}</span> a week</div>`);
@@ -1711,7 +1713,7 @@ function foldProgress(){
     if(W&&!SETTINGS.review.on)return A?"Your check-in trend appears here as you log.":""; // weight comes from the review, which is off
     return W&&A?"Weight and check-in trends appear here as you log them.":W?"Your weight trend appears after your second weigh-in.":A?"Your check-in trend appears here as you log.":""});
   const hasW=SETTINGS.workouts.length>0,hasC=SETTINGS.cardio.target>0;
-  const P={pschart:hasW&&["workouts per week","Workouts per week appear here after your first workout."],
+  const P={pschart:hasW&&["weights sessions per week","Weights sessions per week appear here after your first workout."],
     pccchart:hasC&&["cardio minutes per week","Cardio minutes per week appear here after your first cardio session."],
     psindex:hasW&&["your strength index","Your strength index appears once a lift has two logged sessions."],
     pslifts:hasW&&["key lifts","Key lifts appear here after your first workout."]};
@@ -2248,7 +2250,7 @@ const swRow=(attr,on,label,extra)=>`<div class="shrow"><label class="sw"><input 
 function secPrep(D){let h="";
   const daysShort=a=>a.length?[...a].sort((x,y)=>x-y).map(d=>DAYS[d]).join(" · "):"Pick days";
   const pRow=(k,label,on,attr,days,chips,offNote,tag)=>{const open=on&&SD.pexp===k;
-    return `<div class="shrow inl pinl"><label class="sw"><input type="checkbox" ${attr} ${on?"checked":""} aria-label="${esc(label)}"><span></span></label><b>${esc(label)}${tag?`<span class="rectag">${tag}</span>`:""}</b>
+    return `<div class="shrow inl pinl"><label class="sw"><input type="checkbox" ${attr} ${on?"checked":""} aria-label="${esc(label)}"><span></span></label><b>${esc(label)}${tag?`<span class="rectag">${tag}</span>`:""}${PREP_INFO[k]?`<span class="psub">${esc(PREP_INFO[k].hint)}</span>`:""}</b>
       ${on?`<button type="button" class="pdays${days.length?"":" none"}" data-pexp="${k}" aria-expanded="${open}" aria-label="${esc(label)} days: ${esc(daysShort(days))}. Change">${esc(daysShort(days))}<span class="pchev" aria-hidden="true"></span></button>`:`<span class="pdays off">Off</span>`}</div>
       ${open?chips:""}${!on&&offNote?`<div class="ts" style="margin:-4px 0 0">${offNote}</div>`:""}`};
   h+=`<div class="panel shab">
@@ -2266,10 +2268,10 @@ function secGrid(D){const ct=D.cardio.target,dayOf=d=>D.workouts.slice(0,D.nw).f
   return `<div class="flabel">Planned days</div>
     <div class="pgrid">${DAYS_LONG.map((dl,d)=>{const wi=dayOf(d),cd=ct>0&&D.cardio.days.includes(d);
       const what=[wi>=0?"Workout "+LETTERS[wi]:"",cd?"Cardio":""].filter(Boolean).join(" + ");
-      return `<div class="pgd">${DAYS[d]}</div><div class="pgw${what?"":" rest"}">${what||"Rest"}</div>${D.nw>0?`<button type="button" class="dchip pgc" aria-pressed="${wi>=0}" data-pgym="${d}" aria-label="${dl}: gym">Gym</button>`:"<span></span>"}${ct>0?`<button type="button" class="dchip pgc" aria-pressed="${cd}" data-pcard="${d}" aria-label="${dl}: cardio">Cardio</button>`:"<span></span>"}`}).join("")}</div>
+      return `<div class="pgd">${DAYS[d]}</div><div class="pgw${what?"":" rest"}">${what||"Rest"}</div>${D.nw>0?`<button type="button" class="dchip pgc" aria-pressed="${wi>=0}" data-pgym="${d}" aria-label="${dl}: weights">Weights</button>`:"<span></span>"}${ct>0?`<button type="button" class="dchip pgc" aria-pressed="${cd}" data-pcard="${d}" aria-label="${dl}: cardio">Cardio</button>`:"<span></span>"}`}).join("")}</div>
     ${(()=>{const g=SD.gym.length,c=D.cardio.days.length,okG=g===D.nw,okC=ct===0||c===ct;
       return SD.gymMsg?`<div class="ts gmsg" style="margin-top:0">${esc(SD.gymMsg)}</div>`
-        :`<div class="ts pcount" style="margin-top:0">${D.nw>0?`<span class="${okG?"":"gmsg"}">Gym days <span class="num">${g}/${D.nw}</span></span>`:""}${D.nw>0&&ct>0?" · ":""}${ct>0?`<span class="${okC?"":"gmsg"}">Cardio days <span class="num">${c}/${ct}</span></span>`:""}</div>`})()}
+        :`<div class="ts pcount" style="margin-top:0">${D.nw>0?`<span class="${okG?"":"gmsg"}">Weights days <span class="num">${g}/${D.nw}</span></span>`:""}${D.nw>0&&ct>0?" · ":""}${ct>0?`<span class="${okC?"":"gmsg"}">Cardio days <span class="num">${c}/${ct}</span></span>`:""}</div>`})()}
 `}
 function secLists(D,openAll,grouped){let h=""; // grouped: rows inside the Programme box, not panels of their own
   D.workouts.slice(0,D.nw).forEach((w,i)=>{
@@ -2363,8 +2365,8 @@ function renderSetup(){
     }else if(D.cardio.target>0)h+=`<p class="ts">No weights sessions. You can add some later in settings.</p>`; // with no cardio either, the line above the choices says it
     h+=`</section>`;
   }
-  else if(n===3)h+=`<section class="sset"><h3>When will you train?</h3><p class="ts sintro">Tap Gym and Cardio for the days you plan to go.</p><div class="panel shab">${secGrid(D)}</div></section>`;
-  else if(n===4)h+=`<section class="sset"><h3>Meal prep and weekly review</h3><p class="ts sintro">Optional reminders. Tap the days on the right to change them.</p>${secPrep(D)}</section>`;
+  else if(n===3)h+=`<section class="sset"><h3>When will you train?</h3><p class="ts sintro">Tap Weights and Cardio for the days you plan to train.</p><div class="panel shab">${secGrid(D)}</div></section>`;
+  else if(n===4)h+=`<section class="sset"><h3>Meal prep and weekly review</h3><p class="ts sintro">Optional reminders.</p>${secPrep(D)}</section>`;
   else{
     const on=HABIT_CATALOG.filter(c=>D.habits[c.k].on).map(c=>c.name).concat((D.custom||[]).filter(c=>c.on).map(c=>c.name));
     const days=a=>[...a].sort((x,y)=>x-y).map(d=>DAYS[d]).join(", ");
@@ -2386,7 +2388,7 @@ function setupStepError(n){const D=SD;
     if(!D.prog)return "Choose a programme, or My own.";
     for(let i=0;i<D.nw;i++)if(!D.workouts[i].items.some(r=>String(r.name||"").trim()))return `Add at least one exercise to Workout ${LETTERS[i]}.`;
   }
-  if(n===3){if(SD.gym.length!==D.nw)return `Pick ${D.nw} gym day${D.nw===1?"":"s"} (${SD.gym.length} picked).`;
+  if(n===3){if(SD.gym.length!==D.nw)return `Pick ${D.nw} weights day${D.nw===1?"":"s"} (${SD.gym.length} picked).`;
     if(D.cardio.target>0&&D.cardio.days.length!==D.cardio.target)return `Pick ${D.cardio.target} cardio day${D.cardio.target===1?"":"s"} (${D.cardio.days.length} picked).`}
   return "";
 }
@@ -2474,7 +2476,7 @@ document.addEventListener("click",e=>{
   const dl=t.closest("[data-sexdel]");if(dl){SD.editing=null;const [i,j]=dl.dataset.sexdel.split("-").map(Number);SD.workouts[i].items.splice(j,1);renderSettings();return}
   const pg=t.closest("[data-pgym]");if(pg){const d=+pg.dataset.pgym,i=SD.gym.indexOf(d);SD.gymMsg="";
     if(i>=0)SD.gym.splice(i,1);
-    else if(SD.gym.length>=SD.nw)SD.gymMsg=`You have ${SD.nw} weights session${SD.nw===1?"":"s"} a week. Untick a gym day first, or add a session above.`;
+    else if(SD.gym.length>=SD.nw)SD.gymMsg=`You have ${SD.nw} weights session${SD.nw===1?"":"s"} a week. Untick a weights day first, or add a session above.`;
     else SD.gym.push(d);
     assignGym();renderSettings();return}
   const pe=t.closest("[data-pexp]");if(pe){SD.pexp=SD.pexp===pe.dataset.pexp?null:pe.dataset.pexp;renderSettings();return}
@@ -2529,7 +2531,7 @@ function saveFromDraft(){
     if(!items.length)err=err||`Workout ${LETTERS[i]} needs at least one exercise.`;
     return {day:w.day,items};
   });
-  if(!err&&SD.gym.length!==D.nw)err=`Pick ${D.nw} gym day${D.nw===1?"":"s"} in Planned days (${SD.gym.length} picked).`;
+  if(!err&&SD.gym.length!==D.nw)err=`Pick ${D.nw} weights day${D.nw===1?"":"s"} in Planned days (${SD.gym.length} picked).`;
   if(!err&&D.cardio.target>0&&D.cardio.days.length!==D.cardio.target)err=`Pick ${D.cardio.target} cardio day${D.cardio.target===1?"":"s"} in Planned days (${D.cardio.days.length} picked).`;
   if(err){ws.forEach((w,i)=>{if(!w.items.length)SD.open.add(i)});renderSettings();$("setsheet").scrollTop=0;flashSetErr(err);return}
   S.workouts=ws;S.exNames=exNames;S.cardio=clone(D.cardio);S.habits=clone(D.habits);S.review=clone(D.review);S.unit=D.unit==="lb"?"lb":"kg";S.custom=clone((D.custom||[]).filter(c=>c.name.trim()));
@@ -2677,7 +2679,7 @@ function stAction(a){
   else if(act==="discard"){const id=a.dataset.id;if(!sessions[id]||!arm(a,"discard-"+id,"Discard workout?"))return;
     sessions[id].status="deleted";touchS(id);if(editingId===id)editingId=null;stMsg("Workout discarded.");renderAll();renderStMain()}
   else if(act==="finish"&&s){capIdle(s);s.accMs=elapsed(s);s.activeFrom=null;s.status="done";touchS(s.id);editingId=null;const p=setsDone(s);
-    stMsg(`Workout ${s.type} saved: ${p.d}/${p.t} sets in ${durTxt(s)}. It counts as a strength session on ${dateLabel(s.date)} in your scorecard.`);renderAll();renderStMain();window.scrollTo({top:0})}
+    stMsg(`Workout ${s.type} saved: ${p.d}/${p.t} sets in ${durTxt(s)}. It counts as a weights session on ${dateLabel(s.date)} in your scorecard.`);renderAll();renderStMain();window.scrollTo({top:0})}
   else if(act==="close"){editingId=null;renderAll();renderStMain()}
   else if(act==="reopen"&&s){const dr=currentDraft();
     if(dr&&dr.id!==s.id){stMsg(`Finish or discard Workout ${dr.type} in progress first.`);return}

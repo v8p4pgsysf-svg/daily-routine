@@ -28,7 +28,7 @@ Polish the hosted Daily Routine app (GitHub Pages + Supabase) so Jack uses it da
 
 ## Next
 - Focus (Jack, 1 Nov evening): make the app easy and intuitive for new people. First batch shipped (programme descriptions and overview, meal prep heading and lunch default, amber review pill, "% of target", grid "Logged in Training", first-workout hint; see RATIONALE).
-- Waiting on Jack: one word for weight training everywhere. Jack: it's weight training specifically (cardio is separate). Today it's "Weights" (setup), "Gym" (planned-days chips), "Strength" (grid row, Progress chart titles), "Workout A" (sessions), "Training" (tab, covers cardio too). Claude's proposal is with him.
+- Done: "Weights" everywhere for weight training; meal prep step wording (see RATIONALE).
 - 320px tidy-ups: done (evening).
 
 ## Parked until there's evidence
