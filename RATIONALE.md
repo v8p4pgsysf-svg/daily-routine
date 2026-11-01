@@ -99,3 +99,11 @@
 - **Training tab: one note until anything is logged; Exercise progress hidden until then, and its exercise menu hidden until a lift has data.** The menu listed the programme's 16 exercises, all "no data yet".
 - **The check-ins chart stays visible from day one** (it's live), with "Your first bar fills as you tick things off" until there's a second week.
 - **Wording only names what applies**: no strength items with no weights sessions, no cardio item with cardio off.
+
+## 1 Nov 2026 (review of the morning's work)
+
+- **A past starter week is frozen with its fitted targets** (Jack: why leave it?). Fitting used the current gym and cardio days, so changing them later rewrote that week's targets, against the app's rule that past weeks keep their own plan. Now the snapshot taken when settings change stores the fitted targets. Claude had first proposed leaving it as cosmetic; Jack was right that history shouldn't move.
+- **Accepted, not fixed: an old app version on a second device can drop `startedOn`** if the person saves settings there (old code doesn't know the key). Only possible during the first days of rollout, and the effect is the starter week reverting to full-week scoring.
+- **Mid-week starters get the Starter week line instead of the first-day tip** (two intro lines stacked on day one). Monday starters have no starter week and keep the tip.
+- **All hosted suites share one fixed clock (`tests/hosted/clock.py`) and are set up with `tests/hosted/setup.sh`.** The photo-encryption stall was the same race as the sign-up one (typing within 30 ms of the forgot-password card moving focus); the tests now pause 100 ms after those steps. The exercise-menu check (only the programme's exercises) is back, with a logged workout.
+- **Deploy checks moved into CLAUDE.md's "Making a change"** so they survive handover rewrites.

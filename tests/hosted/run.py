@@ -4,14 +4,9 @@ srv=subprocess.Popen([sys.executable,"-m","http.server","8765","-d","site"],stdo
 MOCK=open("mock-supabase.js").read();JSZIP=open("node_modules/jszip/dist/jszip.min.js").read()
 res=[]
 def ok(c,m):res.append(("PASS " if c else "FAIL ")+m);print(res[-1])
-# The suite runs on a fixed calendar (Mon 26 Oct 2026, ticking forward in real time), so the person it signs up starts
-# on a Monday and gets an ordinary full week whatever the real date (a mid-week start would be a starter week).
-# One offset for every page, so two "devices" agree on the time (sync keeps the newest change by timestamp).
-import datetime as _dt
-OFF=int((_dt.datetime(2026,10,26,12,0).timestamp()-time.time())*1000)
-CLOCK="""(()=>{const RD=Date,off=%d;class FD extends RD{constructor(...a){a.length?super(...a):super(RD.now()+off)}static now(){return RD.now()+off}};window.Date=FD})()"""%OFF
+from clock import pin  # fixed calendar: see clock.py
 def routes(ctx):
-  ctx.add_init_script(CLOCK)
+  pin(ctx)
   ctx.route("https://cdn.jsdelivr.net/**",lambda r:r.fulfill(body=MOCK,content_type="application/javascript"))
   ctx.route("https://cdnjs.cloudflare.com/**",lambda r:r.fulfill(body=JSZIP,content_type="application/javascript"))
   ctx.route("https://fonts.googleapis.com/**",lambda r:r.fulfill(body="",content_type="text/css"))

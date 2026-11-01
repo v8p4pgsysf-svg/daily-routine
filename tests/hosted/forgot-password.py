@@ -2,6 +2,7 @@
 The mock's code is always 123456. Screenshots go to shots/. Run next to site/ (see README)."""
 import subprocess, time, sys, os
 from playwright.sync_api import sync_playwright
+from clock import pin  # fixed calendar: see clock.py
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 srv = subprocess.Popen([sys.executable, "-m", "http.server", "8797", "-d", "site"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(1)
 MOCK = open("mock-supabase.js").read()
@@ -18,7 +19,7 @@ err = lambda pg: (pg.inner_text("#lg-frerr") if pg.locator("#lg-frerr").is_visib
 try:
     with sync_playwright() as p:
         b = p.chromium.launch()
-        ctx = b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2)
+        ctx = pin(b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2))
         ctx.route("https://cdn.jsdelivr.net/**", lambda r: r.fulfill(body=MOCK, content_type="application/javascript"))
         ctx.route("https://fonts.googleapis.com/**", lambda r: r.fulfill(body="", content_type="text/css"))
         pg = ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)))
@@ -30,7 +31,7 @@ try:
         check("Sign-in card has a Forgot password link", pg.locator("#lg-forgot").is_visible())
 
         # step 1: email a code
-        pg.click("#lg-forgot"); pg.wait_for_timeout(100)
+        pg.click("#lg-forgot");pg.wait_for_timeout(100); pg.wait_for_timeout(100)
         check("Reset card opens with the email carried over", pg.locator("#lg-fr").is_visible() and not pg.locator("#lg-fp").is_visible()
               and pg.input_value("#lg-femail") == "jack@example.com" and pg.locator("#lg-fr1").is_visible() and not pg.locator("#lg-fr2").is_visible())
         for scheme in ("light", "dark"):
@@ -77,7 +78,7 @@ try:
 
         # back to sign in from the reset card keeps the email
         sign_out(pg)
-        pg.click("#lg-forgot"); pg.fill("#lg-femail", "someone@example.com"); pg.click("#lg-fback"); pg.wait_for_timeout(100)
+        pg.click("#lg-forgot");pg.wait_for_timeout(100); pg.fill("#lg-femail", "someone@example.com"); pg.click("#lg-fback"); pg.wait_for_timeout(100)
         check("Back to sign in returns to the sign-in card with that email", pg.locator("#lg-fp").is_visible() and pg.input_value("#lg-email") == "someone@example.com")
         sw = pg.evaluate("document.getElementById('login').scrollWidth"); check("No sideways scroll at 390px", sw <= 390)
         check("No script errors", not errs)

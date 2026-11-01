@@ -5,6 +5,7 @@ start fresh; new recovery code from Settings; export gets the real photo; delete
 Screenshots go to shots/. Run next to site/ (see README)."""
 import subprocess, time, sys, os, base64, tempfile, json
 from playwright.sync_api import sync_playwright
+from clock import pin  # fixed calendar: see clock.py
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 srv = subprocess.Popen([sys.executable, "-m", "http.server", "8799", "-d", "site"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(1)
 MOCK = open("mock-supabase.js").read()
@@ -40,7 +41,7 @@ def thumbs_ready(pg):
 try:
     with sync_playwright() as p:
         b = p.chromium.launch()
-        ctx = b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2)
+        ctx = pin(b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2))
         ctx.route("https://cdn.jsdelivr.net/**", lambda r: r.fulfill(body=MOCK, content_type="application/javascript"))
         ctx.route("https://fonts.googleapis.com/**", lambda r: r.fulfill(body="", content_type="text/css"))
         pg = ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)))
@@ -98,7 +99,7 @@ try:
         check("After a password change, signing in shows photos with no prompts", not pg.locator("#pk-pw").is_visible() and not pg.locator("#pk-rc").is_visible())
 
         # 5. forgot password: the recovery code unlocks the photos
-        sign_out(pg); pg.click("#lg-forgot"); pg.fill("#lg-femail", "jack@example.com"); pg.click("#lg-fsend"); pg.wait_for_selector("#lg-fcode", state="visible")
+        sign_out(pg); pg.click("#lg-forgot");pg.wait_for_timeout(100); pg.fill("#lg-femail", "jack@example.com"); pg.click("#lg-fsend"); pg.wait_for_selector("#lg-fcode", state="visible"); pg.wait_for_timeout(100)
         pg.fill("#lg-fcode", "123456"); pg.fill("#lg-fp1", "Third-pass-1"); pg.fill("#lg-fp2", "Third-pass-1"); pg.click("#lg-fset")
         pg.wait_for_selector("#pk-rc", timeout=10000)
         check("After a reset: asks for the recovery code", "Enter your recovery code" in pg.inner_text("#login"))
@@ -121,7 +122,7 @@ try:
         pg.click('[data-st="set-cancel"]'); pg.wait_for_timeout(200)
 
         # 7. reset again without the code: start fresh; old photos show locked; new ones work
-        sign_out(pg); pg.click("#lg-forgot"); pg.fill("#lg-femail", "jack@example.com"); pg.click("#lg-fsend"); pg.wait_for_selector("#lg-fcode", state="visible")
+        sign_out(pg); pg.click("#lg-forgot");pg.wait_for_timeout(100); pg.fill("#lg-femail", "jack@example.com"); pg.click("#lg-fsend"); pg.wait_for_selector("#lg-fcode", state="visible"); pg.wait_for_timeout(100)
         pg.fill("#lg-fcode", "123456"); pg.fill("#lg-fp1", "Fourth-pass-1"); pg.fill("#lg-fp2", "Fourth-pass-1"); pg.click("#lg-fset")
         pg.wait_for_selector("#pk-none", timeout=10000); pg.click("#pk-none")
         check("I don't have it: explains what happens", "Start without your old photos" in pg.inner_text("#login"))

@@ -28,6 +28,7 @@ Also: `python3 settings-workouts.py` checks the Settings Workouts box (Programme
 
 Also: `python3 home-screen.py` (same `site/` folder) checks the Add to Home Screen card on iPhone Safari, Instagram's browser, the Home Screen app, desktop and Android, at 390px.
 
-1. Make a folder `site/` from `docs/`, then replace `site/supabase.js` with `mock-supabase.js` and set `site/config.js` to any URL and key.
-2. Copy `run.py` and `routine-export.zip` (a made-up backup: 22 sessions, 1 photo) next to `site/`, and run `npm i jszip` there.
-3. Run `python3 run.py`.
+1. Run `tests/hosted/setup.sh <folder>` (default `./hosted-run`). It copies the app into `<folder>/site/` with the mock in place of supabase-js, puts the suites and the sample backup next to it and installs jszip. Rerun it after `python3 tools/build.py`.
+2. `cd <folder>` and run `python3 run.py` (or any suite above). If Chromium isn't found, set `PLAYWRIGHT_BROWSERS_PATH` (e.g. `/opt/pw-browsers`).
+
+Every suite runs on a fixed calendar (Mon 26 Oct 2026, see `clock.py`), so results don't depend on the real date.

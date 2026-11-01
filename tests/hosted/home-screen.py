@@ -1,5 +1,6 @@
 import http.server, threading, functools, os, sys
 from playwright.sync_api import sync_playwright
+from clock import pin  # fixed calendar: see clock.py
 HERE = os.path.dirname(os.path.abspath(__file__))
 SITE = os.path.join(HERE, "site"); OUT = os.path.join(HERE, "shots"); os.makedirs(OUT, exist_ok=True)
 srv = http.server.ThreadingHTTPServer(("127.0.0.1", 8791), functools.partial(http.server.SimpleHTTPRequestHandler, directory=SITE))
@@ -14,7 +15,7 @@ def check(name, cond):
 with sync_playwright() as p:
     b = p.chromium.launch()
     def page(ua, scheme="light", touch=True, init=""):
-        ctx = b.new_context(user_agent=ua, viewport={"width": 390, "height": 844}, color_scheme=scheme, has_touch=touch, is_mobile=touch, device_scale_factor=2)
+        ctx = pin(b.new_context(user_agent=ua, viewport={"width": 390, "height": 844}, color_scheme=scheme, has_touch=touch, is_mobile=touch, device_scale_factor=2))
         if init: ctx.add_init_script(init)
         pg = ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)))
         pg.goto(URL); pg.wait_for_selector("#login:not([hidden])"); pg.wait_for_timeout(300); return pg, errs

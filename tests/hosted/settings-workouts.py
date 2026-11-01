@@ -1,5 +1,6 @@
 import subprocess, time, sys, os
 from playwright.sync_api import sync_playwright
+from clock import pin  # fixed calendar: see clock.py
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 srv = subprocess.Popen([sys.executable, "-m", "http.server", "8792", "-d", "site"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(1)
 MOCK = open("mock-supabase.js").read()
@@ -13,7 +14,7 @@ def check(name, cond):
 try:
     with sync_playwright() as p:
         b = p.chromium.launch()
-        ctx = b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2); routes(ctx)
+        ctx = pin(b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2)); routes(ctx)
         pg = ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)))
         pg.goto("http://localhost:8792/"); pg.wait_for_selector("#lg-email")
         pg.fill("#lg-email", "jack@example.com"); pg.fill("#lg-pass", "Start-1234"); pg.click("#lg-btn")

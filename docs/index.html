@@ -1,5 +1,5 @@
 <!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<meta name="app-version" content="20261101102004">
+<meta name="app-version" content="20261101103429">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Daily Routine</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -1195,11 +1195,12 @@ const HKEYS=new Set(["strength","cardio",...HABIT_CATALOG.map(c=>c.k),...PREP_KE
 function normalisePlan(p){
   if(!p||typeof p!=="object"||!Array.isArray(p.habits))return null;
   const habits=p.habits.filter(h=>h&&isHabitKey(h.k)).map(h=>{const daily=!!h.daily,n=intIn(h.n,1,7,daily?7:1);
-    const o={k:h.k,name:String(h.name||h.k).slice(0,40),short:String(h.short||h.name||h.k).slice(0,40),x:String(h.x||"").slice(0,60),n,target:intIn(h.target,1,7,n),daily};
+    const o={k:h.k,name:String(h.name||h.k).slice(0,40),short:String(h.short||h.name||h.k).slice(0,40),x:String(h.x||"").slice(0,60),n,target:h.off?0:intIn(h.target,1,7,n),daily};
+    if(h.off)o.off=true;if(h.from)o.from=intIn(h.from,0,6,0);
     if(!daily)o.days=dayList(h.days).slice(0,n);return o}).filter(h=>h.daily||h.days.length);
   if(!habits.length)return null;
   const grid={};if(p.grid&&typeof p.grid==="object")for(const k in p.grid)if(isHabitKey(k)&&typeof p.grid[k]==="string")grid[k]=p.grid[k].slice(0,24);
-  return {v:1,habits,grid};
+  return {v:1,habits,grid,...(p.fitted?{fitted:true}:{})};
 }
 // Starter week: the week someone joins counts only from the day they finished setup. Each target is fitted to the
 // days they have (protein x/4 from a Thursday, strength = gym days left), so the week can still reach 100%.
@@ -1216,7 +1217,7 @@ function fitStarter(base,s){
     if(!o.target)o.off=true; // nothing planned in the days left: shown, but not counted ("From Monday")
     return o});
 }
-const habitsFor=w=>{const base=w&&w.plan&&w.week<currentKey()?w.plan.habits:HABITS,s=w?startIdx(w.week):0;return s?fitStarter(base,s):base};
+const habitsFor=w=>{const past=w&&w.plan&&w.week<currentKey(),base=past?w.plan.habits:HABITS,s=w?startIdx(w.week):0;return s&&!(past&&w.plan.fitted)?fitStarter(base,s):base};
 const gridFor=w=>w&&w.plan&&w.week<currentKey()?w.plan.grid:GRID_TARGET;
 // which planned days a prep session covers: from tomorrow up to and including the next prep day
 function prepHint(days,t){
@@ -1377,7 +1378,11 @@ function stampPastWeeks(){
   const cur=currentKey(),snap=planSnapshot();
   new Set(Object.keys(weeks).concat(trainedWeeks())).forEach(k=>{
     if(k>=cur)return;const w=ensureWeek(k);if(w.plan)return;
-    if(!hasData(w))return;w.plan=clone(snap);touch(k)});
+    if(!hasData(w))return;w.plan=clone(snap);
+    // a past starter week is frozen with the targets it was fitted with (from the settings in force then), so later
+    // changes to gym or cardio days don't rewrite its history
+    const s=startIdx(k);if(s){w.plan.habits=fitStarter(snap.habits,s);w.plan.fitted=true}
+    touch(k)});
 }
 function saveSettings(S){
   stampPastWeeks();
@@ -1569,7 +1574,8 @@ function renderToday(){
   if(SETTINGS.review.on&&t===SETTINGS.review.day){const d=w.review[0];
     tasks.push(line('data-goto="review-cur"',(d?"done":"to do")+". Open the review.",isStarter(cur)?"Starter review":"Weekly review","",d?"Done":"To do",d));}
   $("tdate").textContent=DAYS_LONG[t]+" "+fmt(new Date());
-  let tip="";try{if(HOST&&SETTINGS.setupDone&&!localStorage.getItem("routine-tip-done"))tip=`<div class="ttip"><span>Tick things off as you go.${SETTINGS.review.on?` Your weekly review is on ${DAYS_LONG[SETTINGS.review.day]}.`:""}</span><button class="ttipx" data-st="tip-x" aria-label="Dismiss tip">×</button></div>`}catch(e){}
+  const midStart=SETTINGS.startedOn&&parseKey(SETTINGS.startedOn).getDay()!==1; // joined mid-week: the Starter week line is their intro
+  let tip="";try{if(HOST&&SETTINGS.setupDone&&!midStart&&!localStorage.getItem("routine-tip-done"))tip=`<div class="ttip"><span>Tick things off as you go.${SETTINGS.review.on?` Your weekly review is on ${DAYS_LONG[SETTINGS.review.day]}.`:""}</span><button class="ttipx" data-st="tip-x" aria-label="Dismiss tip">×</button></div>`}catch(e){}
   const starter=isStarter(cur)?`<div class="tfocus"><span class="tfl">Starter week</span> ${t===6?"Last day":(7-t)+" days left"} · then full weeks</div>`:"";
   sec.innerHTML=`${tip}${starter}${lw&&lw.improve.trim()?`<div class="tfocus"><span class="tfl">Focus</span> ${esc(lw.improve.trim())}</div>`:""}${act}
     ${tasks.length?`<div class="tgroup"><div class="eyebrow">Also today</div><div class="tlist">${tasks.join("")}</div></div>`:""}`;

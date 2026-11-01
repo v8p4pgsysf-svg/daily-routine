@@ -2,6 +2,7 @@
 Run next to site/ (see README). Screenshots go to shots/."""
 import subprocess, time, sys, os, base64, tempfile
 from playwright.sync_api import sync_playwright
+from clock import pin  # fixed calendar: see clock.py
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 srv = subprocess.Popen([sys.executable, "-m", "http.server", "8798", "-d", "site"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(1)
 MOCK = open("mock-supabase.js").read()
@@ -13,7 +14,7 @@ stored = lambda pg: pg.evaluate("Object.keys(JSON.parse(localStorage.getItem('mo
 try:
     with sync_playwright() as p:
         b = p.chromium.launch()
-        ctx = b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2)
+        ctx = pin(b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2))
         ctx.route("https://cdn.jsdelivr.net/**", lambda r: r.fulfill(body=MOCK, content_type="application/javascript"))
         ctx.route("https://fonts.googleapis.com/**", lambda r: r.fulfill(body="", content_type="text/css"))
         pg = ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)))

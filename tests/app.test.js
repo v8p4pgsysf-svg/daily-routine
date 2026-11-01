@@ -437,6 +437,8 @@ ok(!$(w,"#prog-ex")&&/Each lift's progress appears here/.test($(w,"#st-prog").te
 click(w,$(w,'[data-st="type"][data-type="A"]'));click(w,$(w,'[data-st="start"]'));click(w,$(w,'[data-swap="1"]'));
 const sin=$(w,"#swin-1");focus(w,sin);ok($$(w,".swapbox .exsug [data-exsug]").length>10,"EP3. Swap shows the full exercise list before typing");
 type(w,sin,"lat p");click(w,$(w,'.swapbox .exsug [data-exsug="Lat Pulldown"]'));ok(sin.value==="Lat Pulldown","   and picking from it fills the swap box");
+type(w,$(w,"#w-0-0"),40);type(w,$(w,"#r-0-0"),10);click(w,$(w,'[data-tick="0-0"]'));click(w,$(w,'[data-st="finish"]'));click(w,$(w,"#tab-strength"));
+{const o=$$(w,"#prog-ex option").map(x=>x.value).filter(Boolean);ok(o.includes("hip_thrust_machine")&&!o.includes("squat")&&o.length===16,"EP4. Once a lift is logged, the exercise menu lists only the programme's 16 exercises (squat swapped out is gone)");}
 w.close();
 // --- cancel with unsaved changes
 store={};w=boot("2026-10-28T09:00:00");
@@ -499,6 +501,15 @@ ok($(w,"#d-protein-0")&&$(w,"#d-protein-0").checked&&$(w,'[data-ct="cardio"]').t
 {const wk=JSON.parse(w.localStorage.getItem("weekly-routine.v1"))["2026-10-19"];ok(wk&&wk.plan&&wk.plan.habits.some(h=>h.k==="protein")&&!JSON.parse(w.localStorage.getItem("weekly-routine.v1"))["2026-10-26"]?.plan,"   The plan is stored on last week's record; this week has none and follows settings");}
 save(w);w.close();w=boot("2026-10-28T09:00:00");click(w,$(w,"#prev"));
 ok($(w,"#d-protein-0")&&$(w,'[data-ct="af"]').textContent==="0/6","   Still true after a reload");
+w.close();
+// a past starter week keeps the targets it was fitted with, even after gym or cardio days change
+store={"weekly-routine.settings.v1":JSON.stringify({startedOn:"2026-10-29"})};w=boot("2026-10-30T12:00:00");
+click(w,$(w,"#d-protein-4"));save(w);w.close();w=boot("2026-11-03T12:00:00");
+click(w,$(w,'#setcog'));chg(w,$(w,"[data-scard]"),3);click(w,$(w,'[data-pcard="4"]'));click(w,$(w,'[data-st="set-save"]'));
+click(w,$(w,"#prev"));
+ok($(w,'[data-ct="cardio"]').textContent==="0/1"&&$(w,'[data-ct="protein"]').textContent==="1/4"&&!$(w,"#d-protein-0"),"SW11. After adding Friday cardio, the past starter week still shows cardio 0/1 and protein 1/4 (frozen, not refitted)");
+save(w);w.close();w=boot("2026-11-03T12:00:00");click(w,$(w,"#prev"));
+ok($(w,'[data-ct="cardio"]').textContent==="0/1"&&$(w,'[data-ct="protein"]').textContent==="1/4","   Still frozen after a reload");
 w.close();
 store={};w=boot("2026-10-28T09:00:00");
 ok(!$(w,"#exp-week")&&!$(w,'[data-st="exp-csv"]')&&$(w,"#exp-master"),"EX1. Exports removed from Today and Training; one Export on Progress");

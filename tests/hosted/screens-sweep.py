@@ -1,6 +1,7 @@
 """Presentation sweep of tonight's new screens at 390/375/320, light and dark; flags overflow."""
 import subprocess, time, sys, os, json, base64, tempfile
 from playwright.sync_api import sync_playwright
+from clock import pin  # fixed calendar: see clock.py
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 srv = subprocess.Popen([sys.executable, "-m", "http.server", "8800", "-d", "site"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(1)
 MOCK = open("mock-supabase.js").read()
@@ -26,7 +27,7 @@ def snap(pg, name, sel="body"):
     f = pg.evaluate(PROBE, sel)
     if f: findings[f"{name}-{w}"] = f
 def ctx_for(b, w, ua=None):
-    c = b.new_context(viewport={"width": w, "height": 760}, device_scale_factor=2, **({"user_agent": ua, "is_mobile": True, "has_touch": True} if ua else {}))
+    c = pin(b.new_context(viewport={"width": w, "height": 760}, device_scale_factor=2, **({"user_agent": ua, "is_mobile": True, "has_touch": True} if ua else {})))
     c.route("https://cdn.jsdelivr.net/**", lambda r: r.fulfill(body=MOCK, content_type="application/javascript"))
     c.route("https://fonts.googleapis.com/**", lambda r: r.fulfill(body="", content_type="text/css"))
     return c
@@ -44,8 +45,8 @@ try:
             pg.fill("#lg-email", "jack@example.com"); pg.fill("#lg-pass", "nope"); pg.click("#lg-btn"); pg.wait_for_selector("#lg-err", state="visible")
             snap(pg, "signin-error", "#login")
             pg.click("#lg-new"); pg.wait_for_timeout(100); snap(pg, "create-account", "#login")
-            pg.click("#lg-have"); pg.click("#lg-forgot"); pg.wait_for_timeout(100); snap(pg, "forgot-1", "#login")
-            pg.click("#lg-fsend"); pg.wait_for_selector("#lg-fcode", state="visible"); snap(pg, "forgot-2", "#login")
+            pg.click("#lg-have"); pg.click("#lg-forgot");pg.wait_for_timeout(100); pg.wait_for_timeout(100); snap(pg, "forgot-1", "#login")
+            pg.click("#lg-fsend"); pg.wait_for_selector("#lg-fcode", state="visible"); pg.wait_for_timeout(100); snap(pg, "forgot-2", "#login")
             pg.fill("#lg-fcode", "123456"); pg.fill("#lg-fp1", "Start-1234"); pg.fill("#lg-fp2", "Start-1234"); pg.click("#lg-fset")
             pg.wait_for_selector("#setsheet", state="visible"); pg.fill("#su-weight", "80"); pg.click('[data-st="set-next"]'); pg.click('[data-sprog="fullbody"]')
             for _ in range(3): pg.click('[data-st="set-next"]')
