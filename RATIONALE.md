@@ -92,3 +92,10 @@
 - **The late-review nudge is the day after review day, once; then the review is missed for its week** (Jack agreed). It was hard-wired to Monday, so a Wednesday review was nudged five days late and a Monday review never. Rolling a missed review into the next week was rejected: it would mix two weeks' scores.
 - **The hosted suite runs on a fixed Monday (26 Oct 2026)** with one clock offset shared by every page; per-page clocks made the second "device" run behind the first, so its newer change lost the sync. Its intermittent H18 failure was the test typing within 30 ms of opening sign-up, before the form moves focus to the email box; the test now pauses 150 ms.
 - **Push in batches, and only after the hosted suites are clean** (Jack). Five pushes in an hour tripped GitHub Pages ("in progress deployment") and two deploys were rejected.
+
+## 1 Nov 2026 (early days: empty charts)
+
+- **Charts with nothing to show fold into one note per section** (Jack's option: tidy, but one line per section rather than per chart). A new user's Progress tab was ~1,900px of five dashed "appears once…" boxes; now ~1,000px with headings kept, so the shape of the page still shows. A single "what's coming" checklist card with unlock counts was offered (Claude's first pick) and passed over for this simpler version; faint example charts were rejected (sample data reads as your own).
+- **Training tab: one note until anything is logged; Exercise progress hidden until then, and its exercise menu hidden until a lift has data.** The menu listed the programme's 16 exercises, all "no data yet".
+- **The check-ins chart stays visible from day one** (it's live), with "Your first bar fills as you tick things off" until there's a second week.
+- **Wording only names what applies**: no strength items with no weights sessions, no cardio item with cardio off.

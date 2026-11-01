@@ -487,6 +487,8 @@ button.trow{width:100%;background:none;border-left:0;border-right:0;border-botto
 .pbv{font-size:.92rem}
 .pbc .muted{font-size:.72rem!important}
 .gempty.slim{min-height:0;padding:14px 16px;place-items:start;text-align:left}
+.charts > .panel[hidden],.charts[hidden],.section[hidden],.pnote[hidden]{display:none}
+.charts:not([hidden]) + .pnote{margin-top:12px}
 @media (max-width:640px){
   .planstrip .plan-grid{grid-template-columns:1fr;min-width:0}
   .planstrip .pday{flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:2px 10px;border-left:0;border-top:1px solid var(--line);padding:10px 14px}
@@ -947,6 +949,7 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
       <div class="panel chart"><div class="eyebrow" id="wchart-h">Weight · kg</div><div id="wchart"></div></div>
       <div class="panel chart"><div class="eyebrow">Check-ins completed · %</div><div id="achart"></div></div>
     </div>
+    <div class="gempty slim pnote" id="trends-note" hidden></div>
   </section>
 
   <section class="section">
@@ -957,6 +960,7 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
       <div class="panel chart"><div class="eyebrow">Strength index · all lifts</div><div id="psindex"></div></div>
       <div class="panel chart"><div class="eyebrow">Key lifts · estimated 1RM</div><div id="pslifts"></div></div>
     </div>
+    <div class="gempty slim pnote" id="training-note" hidden></div>
   </section>
   <section class="section">
     <div class="sec-head"><h2>Export</h2></div>
@@ -1633,7 +1637,8 @@ function renderCardioTrends(){
   $("pccchart").innerHTML=barChart(data,cur,{min:60,step:m=>m>240?60:30,aria:"Cardio minutes per week",tip:n=>n+" min"})
     +`<div class="muted" style="font-size:.84rem">This week <span class="num">${wk.reduce((a,c)=>a+c.minutes,0)} min</span> across ${wk.length} session${wk.length===1?"":"s"}${walks.length?` · walks <span class="num">${walks.reduce((a,c)=>a+c.minutes,0)} min</span>, not counted`:""}</div>`;
 }
-function renderStrengthTrends(){
+function renderStrengthTrends(){trendsBody();foldProgress()}
+function trendsBody(){
   renderCardioTrends();renderStrengthIndex();
   const ds=doneSessions();
   if(!ds.length){
@@ -1655,6 +1660,23 @@ function renderStrengthTrends(){
     return `<button class="lrow" data-lift="${id}"><span class="ln">${esc((EX_BY_ID[id]&&EX_BY_ID[id].short)||exLabel(id))}</span><span class="num lv">${fmtLift(last.e)} ${unitW()}</span><span class="num lc${ch>0?" up":""}">${pts.length<2?"–":(ch>0?"+":ch<0?"−":"±")+fmtLift(Math.abs(ch))+" "+unitW()}</span></button>`}).filter(Boolean);
   $("pslifts").innerHTML=rows.length?`<div class="lifts"><div class="lrow lhd"><span>Lift</span><span>Est. 1RM</span><span>12 wks</span></div>${rows.join("")}</div>`
     :`<div class="empty">Your main lifts appear here once you've logged them.</div>`;
+}
+// Progress: in each section, charts with nothing to show yet fold into one short note at the end of the section,
+// naming what's still to come. Each chart takes its normal place as soon as it has data; the note goes when all have.
+function foldProgress(){
+  const isE=id=>{const el=$(id),f=el&&el.firstElementChild;return !!(f&&f.classList.contains("empty"))};
+  const fold=(ids,noteId,msg)=>{const e=ids.filter(isE),note=$(noteId),txt=msg(e);
+    ids.forEach(id=>$(id).closest(".panel").hidden=e.includes(id));note.innerHTML=txt;note.hidden=!txt;
+    $(ids[0]).closest(".charts").hidden=e.length===ids.length; // nothing left in the grid: the note sits under the heading
+    note.closest(".section").hidden=e.length===ids.length&&!txt};
+  fold(["wchart","achart"],"trends-note",e=>e.map(id=>$(id).firstElementChild.innerHTML).join(" "));
+  const hasW=SETTINGS.workouts.length>0,hasC=SETTINGS.cardio.target>0;
+  const P={pschart:hasW&&["workouts per week","Workouts per week appear here after your first workout."],
+    pccchart:hasC&&["cardio minutes per week","Cardio minutes per week appear here after your first cardio session."],
+    psindex:hasW&&["your strength index","Your strength index appears once a lift has two logged sessions."],
+    pslifts:hasW&&["key lifts","Key lifts appear here after your first workout."]};
+  fold(["pschart","pccchart","psindex","pslifts"],"training-note",e=>{const l=e.map(id=>P[id]).filter(Boolean);if(!l.length)return "";if(l.length===1)return l[0][1];
+    const n=l.map(x=>x[0]),t=n.slice(0,-1).join(", ")+" and "+n[n.length-1];return t[0].toUpperCase()+t.slice(1)+" appear here as you log sessions."});
 }
 function renderReview(){
   $("review-sec").hidden=!SETTINGS.review.on;
@@ -1682,7 +1704,8 @@ function renderMetrics(){
     if(h.off){el.textContent="—";el.classList.remove("done");return}const c=s.per[h.k];
     const xt=h.extra&&w[h.k+"X"][0];el.textContent=c+"/"+h.target+(xt?" +1":"");el.classList.toggle("done",c>=h.target)});
 }
-function renderCharts(){
+function renderCharts(){chartsBody();foldProgress()}
+function chartsBody(){
   const cur=currentKey();
   const keys=[...new Set(Object.keys(weeks).concat(trainedWeeks()))].filter(k=>hasData(getWeek(k))&&k<=cur);
   if(!keys.includes(cur))keys.push(cur);
@@ -1737,7 +1760,8 @@ function renderCharts(){
   s+=`</svg>`;
   const past=data.filter(d=>d.k!==cur&&!isStarter(d.k)); // a starter week isn't a full week, so it stays out of the average
   const avg=past.length?Math.round(past.reduce((a,d)=>a+d.s.pct,0)/past.length):null;
-  $("achart").innerHTML=s+(avg==null?"":`<div class="muted" style="font-size:.84rem">Average <span class="num">${avg}%</span></div>`);
+  $("achart").innerHTML=s+(avg!=null?`<div class="muted" style="font-size:.84rem">Average <span class="num">${avg}%</span></div>`
+    :data.length===1?`<div class="muted" style="font-size:.84rem">Your first bar fills as you tick things off.</div>`:"");
 }
 function renderAll(){renderHeader();renderPlan();renderToday();renderStrengthTrends();renderDaily();renderReview();renderMetrics();renderCharts();renderGallery();renderStHistory();renderStProg();if(!editingId)renderStLanding()}
 
@@ -2692,7 +2716,8 @@ function histDetail(s){
 const HIST_N=5;
 function renderStHistory(){
   const list=liveSessions().filter(s=>s.status==="done").sort(byDate).reverse();
-  if(!list.length){$("st-history").innerHTML=`<div class="gempty">Finished workouts and cardio appear here, newest first. Tap one to see the detail.</div>`;return}
+  if(!list.length){const W=SETTINGS.workouts.length>0,C=SETTINGS.cardio.target>0;
+    $("st-history").innerHTML=`<div class="gempty slim">${W?`Your ${C?"workouts and cardio are":"workouts are"} listed here, with each lift's progress once you've logged it a couple of times.`:C?"Your cardio sessions are listed here.":"Workouts and cardio you log are listed here."}</div>`;return}
   const pages=Math.ceil(list.length/HIST_N);histPage=Math.min(histPage,pages-1);const from=histPage*HIST_N;
   $("st-history").innerHTML=`<div class="panel hlist">${list.slice(from,from+HIST_N).map(s=>{
     const open=histOpen===s.id;let line;
@@ -2732,6 +2757,10 @@ function activeExIds(){const ids=programmeIds(),since=keyOf(addDays(new Date(),-
 function renderStProg(){
   const ids=activeExIds();
   const withData=ids.filter(id=>exHistory(id).length);
+  // nothing logged yet: the history note covers this section too. Cardio logged but no lifts: one line, no exercise menu
+  const sec=$("st-prog").closest(".section"),any=liveSessions().some(x=>x.status==="done");
+  sec.hidden=!withData.length&&(!any||!SETTINGS.workouts.length);
+  if(!withData.length){$("st-prog").innerHTML=`<div class="gempty slim">Each lift's progress appears here once you've logged it a couple of times.</div>`;return}
   if(!progEx||!ids.includes(progEx))progEx=withData[0]||ids[0];
   const nameOf=exLabel;
   const sel=`<div class="field"><label for="prog-ex">${progChosen?"Exercise":"View an exercise"}</label><select id="prog-ex">${progChosen?"":`<option value="" selected>Choose an exercise…</option>`}${ids.map(id=>`<option value="${esc(id)}"${progChosen&&id===progEx?" selected":""}>${esc(nameOf(id))}${withData.includes(id)?"":" · no data yet"}</option>`).join("")}</select></div>`;

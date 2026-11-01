@@ -339,6 +339,22 @@ ok(!/Finish/.test($(w,"#today").textContent),"   The day after, the nudge is gon
 w.close();w=boot("2026-11-02T08:00:00");
 ok(!/Finish/.test($(w,"#today").textContent),"   And Monday doesn't nudge about a Wednesday review");
 w.close();
+// --- early days: empty charts fold into one note per section
+store={};w=boot("2026-10-28T12:00:00");
+const hid=id=>$(w,"#"+id).closest(".panel").hidden;
+click(w,$(w,"#tab-progress"));
+ok(hid("wchart")&&hid("achart")&&!$(w,"#trends-note").hidden&&/Enter your weight in the weekly review/.test($(w,"#trends-note").textContent),"NP1. New user, Trends: both empty charts fold into one note");
+ok(["pschart","pccchart","psindex","pslifts"].every(hid)&&$(w,"#training-note").textContent==="Workouts per week, cardio minutes per week, your strength index and key lifts appear here as you log sessions.","   Training: four empty boxes become one line naming what's coming");
+click(w,$(w,"#tab-strength"));
+ok(/Your workouts and cardio are listed here/.test($(w,"#st-history").textContent)&&$(w,"#st-prog").closest(".section").hidden,"NP2. Training tab: one note under Training history; Exercise progress is hidden until something is logged");
+click(w,$(w,"#tab-week"));click(w,$(w,"#d-protein-2"));click(w,$(w,"#tab-progress"));
+ok(!hid("achart")&&/Your first bar fills as you tick things off/.test($(w,"#achart").textContent)&&hid("wchart")&&!/check-in rate/.test($(w,"#trends-note").textContent),"NP3. After the first tick the check-ins chart appears (first-bar caption); only weight stays in the note");
+click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="start"]'));type(w,$(w,"#w-0-0"),60);type(w,$(w,"#r-0-0"),8);click(w,$(w,'[data-tick="0-0"]'));click(w,$(w,'[data-st="finish"]'));
+click(w,$(w,"#tab-progress"));
+ok(!hid("pschart")&&!hid("pslifts")&&hid("psindex")&&hid("pccchart")&&$(w,"#training-note").textContent==="Cardio minutes per week and your strength index appear here as you log sessions.","NP4. After the first workout: workouts per week and key lifts appear; the note names only what's left");
+click(w,$(w,"#tab-strength"));
+ok(!$(w,"#st-prog").closest(".section").hidden&&$(w,"#prog-ex")&&$(w,"#st-history .hlist"),"   Training tab: history lists it and Exercise progress appears with its menu");
+w.close();
 // --- master export
 // --- routine settings
 store={};w=boot("2026-10-28T09:00:00");
@@ -417,7 +433,7 @@ ok(ein.value==="Hip Thrust Machine"&&!$(w,"#setbody .exsug"),"   Picking one fil
 type(w,$(w,'[data-sexf="0-1-lo"]'),"10");type(w,$(w,'[data-sexf="0-1-hi"]'),"8");click(w,$(w,'[data-st="set-save"]'));ok(/the second reps number should be the higher one/.test($(w,".serr").textContent),"EP1b. A reps range the wrong way round is caught on save");
 type(w,$(w,'[data-sexf="0-1-lo"]'),"5");type(w,$(w,'[data-sexf="0-1-hi"]'),"7");
 click(w,$(w,'[data-st="set-save"]'));click(w,$(w,"#tab-strength"));
-{const o=$$(w,"#prog-ex option").map(x=>x.value).filter(Boolean);ok(o.includes("hip_thrust_machine")&&!o.includes("squat")&&o.length===16,"EP2. Exercise progress lists only the programme's 16 exercises (squat swapped out is gone)");}
+ok(!$(w,"#prog-ex")&&/Each lift's progress appears here/.test($(w,"#st-prog").textContent),"EP2. With no lifts logged, Exercise progress is one line and no exercise menu");
 click(w,$(w,'[data-st="type"][data-type="A"]'));click(w,$(w,'[data-st="start"]'));click(w,$(w,'[data-swap="1"]'));
 const sin=$(w,"#swin-1");focus(w,sin);ok($$(w,".swapbox .exsug [data-exsug]").length>10,"EP3. Swap shows the full exercise list before typing");
 type(w,sin,"lat p");click(w,$(w,'.swapbox .exsug [data-exsug="Lat Pulldown"]'));ok(sin.value==="Lat Pulldown","   and picking from it fills the swap box");
