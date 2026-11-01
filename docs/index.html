@@ -1,5 +1,5 @@
 <!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<meta name="app-version" content="20261101112759">
+<meta name="app-version" content="20261101114655">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Daily Routine</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -194,6 +194,11 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .swapbtn{border:1px solid var(--line-strong);background:transparent;border-radius:99px;padding:2px 10px;font-size:.74rem;font-weight:600;color:var(--muted);cursor:pointer}
 .swapbtn:hover{color:var(--ink);border-color:var(--muted)}
 .swnote{color:var(--warn);font-family:var(--sans)}
+.exmore{display:flex;gap:16px;padding-top:2px}
+.exmore [hidden],.exside [hidden]{display:none}
+.exmore .linkbtn{font-size:.82rem}
+.addex{display:flex;flex-direction:column;gap:8px;margin:2px 0 4px}
+.addex > .btn{align-self:flex-start}
 .swapbox{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px;border-radius:10px;background:var(--bg)}
 .swapbox input{flex:1 1 180px;min-width:0;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px}
 .swapbox input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
@@ -1310,6 +1315,7 @@ function normaliseSession(s){
     while(log.length<sets)log.push({w:null,r:null,done:false});
     const o={ex:it.ex,name:typeof it.name==="string"?it.name:(EXERCISES[it.ex]||it.ex),sets,lo:+it.lo||0,hi:+it.hi||0,log};
     if(typeof it.swappedFrom==="string")o.swappedFrom=it.swappedFrom;
+    if(it.added)o.added=true; // added on the day, not part of the programme
     return o;
   });
   return {id:s.id,type:LETTERS.includes(s.type)?s.type:"A",
@@ -1988,7 +1994,7 @@ const fmtLift=kg=>kg==null?"–":String(liftU(kg));
 const fmtBody=kg=>kg==null?"–":toU(kg).toFixed(1);
 const setTxt=l=>`${fmtLift(l.w)}×${l.r==null?"–":l.r}`;
 const e1rm=(w,r)=>(w||0)*(1+r/30);
-function setsDone(s){let d=0,t=0;s.items.forEach(it=>{t+=it.sets;d+=Math.min(it.sets,it.log.filter(l=>l.done).length)});return {d,t}}
+function setsDone(s){let d=0,t=0;s.items.forEach(it=>{const n=Math.max(it.sets,it.log.length);t+=n;d+=Math.min(n,it.log.filter(l=>l.done).length)});return {d,t}}
 const isBefore=(a,b)=>a.date<b.date||(a.date===b.date&&a.startedAt<b.startedAt);
 // most recent completed session before `cur` (or overall) with completed sets of this exercise, from any workout
 // double progression step: dumbbell and small isolation lifts go up 1 kg, everything else 2.5 kg
@@ -2111,6 +2117,23 @@ document.addEventListener("click",e=>{
   else if(b.dataset.swapback!=null){const it=sessions[editingId].items[+b.dataset.swapback];applySwap(+b.dataset.swapback,it.swappedFrom,EXERCISES[it.swappedFrom]||it.swappedFrom)}
 });
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.dataset&&e.target.dataset.swapin!=null){e.preventDefault();doSwap(+e.target.dataset.swapin)}});
+// changing today's workout without touching the programme: extra sets, extra exercises
+function addExercise(){
+  const s=sessions[editingId],inp=$("addin");if(!s||!inp)return;const v=inp.value.trim();if(!v){inp.focus();return}
+  const id=exIdFor(v),p=prevFor(id,s),it={ex:id,name:EXERCISES[id]||v,sets:3,lo:8,hi:12,added:true,log:[]};
+  for(let i=0;i<3;i++)it.log.push({w:nextW(p,id,i),r:null,done:false});
+  s.items.push(it);touchS(s.id);renderEditor();const c=$("ex-"+(s.items.length-1));if(c&&c.scrollIntoView)c.scrollIntoView({block:"center"});
+}
+document.addEventListener("click",e=>{
+  const t=e.target,s=editingId&&sessions[editingId];if(!s)return;
+  const sa=t.closest("[data-setadd]");if(sa){const it=s.items[+sa.dataset.setadd];if(it.log.length<10){it.log.push({w:null,r:null,done:false});touchS(s.id);renderEditor()}return}
+  const sr=t.closest("[data-setrm]");if(sr){const it=s.items[+sr.dataset.setrm],l=it.log[it.log.length-1];if(it.log.length>it.sets&&!l.done){it.log.pop();touchS(s.id);renderEditor()}return}
+  const xr=t.closest("[data-exrm]");if(xr){const xi=+xr.dataset.exrm,it=s.items[xi];if(it&&it.added&&!it.log.some(l=>l.done)){s.items.splice(xi,1);touchS(s.id);renderEditor()}return}
+  if(t.closest("[data-addopen]")){const b=$("addbox");b.hidden=!b.hidden;if(!b.hidden)$("addin").focus();return}
+  if(t.closest("[data-addcancel]")){$("addbox").hidden=true;return}
+  if(t.closest("[data-addgo]")){addExercise();return}
+});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="addin"){e.preventDefault();addExercise()}});
 /* cardio log: one record per session, in the same store as workouts */
 let cfOpen=false,cfEdit=null,cfDraft=null;
 const cardioLine=c=>[c.minutes+" min",c.km!=null?fmtW(c.km)+" km":"",c.effort].filter(Boolean).join(" · ");
@@ -2171,7 +2194,7 @@ function renderStMain(){editingId?renderEditor():renderStLanding()}
 /* exercise picker: type to filter the exercises you know, or pick from the list */
 function knownExercises(){const names=new Set(Object.values(EXERCISES));liveSessions().forEach(x=>(x.items||[]).forEach(it=>names.add(exName(it))));return [...names].sort((a,b)=>a.localeCompare(b))}
 let exSugFor=null,exSugQuiet=false;
-const isExIn=el=>!!(el&&el.matches&&el.matches("[data-sexn],[data-swapin]"));
+const isExIn=el=>!!(el&&el.matches&&el.matches("[data-sexn],[data-swapin],[data-addin]"));
 function closeExSug(){document.querySelectorAll(".exsug").forEach(b=>b.remove());exSugFor=null}
 function showExSug(inp){
   closeExSug();
@@ -2406,6 +2429,10 @@ function renderSettings(){
 const parseReps=v=>{const t=String(v).trim(),m=t.match(/^(\d{1,2})\s*(?:-|–|—|to)\s*(\d{1,2})$/i),one=t.match(/^(\d{1,2})$/);
   if(m){const a=+m[1],b=+m[2];return a>=1&&b>=a&&b<=50?[a,b]:null}if(one){const a=+one[1];return a>=1&&a<=50?[a,a]:null}return null};
 // gym days are lettered in week order: the first gym day is Workout A, the next B, and so on
+// switching programme keeps the gym days already chosen; only missing days are filled, from the programme's own
+// suggestion first, then the first free days
+function keepGym(n,suggested){const g=[...new Set(SD.gym)].sort((a,b)=>a-b).slice(0,n);
+  for(const d of suggested.concat([0,1,2,3,4,5,6]))if(g.length<n&&!g.includes(d))g.push(d);return g.sort((a,b)=>a-b)}
 function assignGym(){SD.gym=[...new Set(SD.gym)].sort((a,b)=>a-b);SD.workouts.forEach((w,i)=>{w.day=i<SD.nw&&i<SD.gym.length?SD.gym[i]:-1})}
 // one line per habit: switch, name, and its target on the right (shared by settings and setup)
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target&&e.target.id==="ch-name"){e.preventDefault();const b=document.querySelector('[data-st="ch-add"]');if(b)b.click()}});
@@ -2445,13 +2472,13 @@ document.addEventListener("click",e=>{
   const sp=t.closest("[data-sprog]");if(sp&&SD.setup){const id=sp.dataset.sprog;SD.prog=id;
     if(id==="own"){for(let i=0;i<4;i++)if(!SD.workouts[i].items.length||SD.workouts[i].items.every(r=>!String(r.name).trim()))SD.workouts[i]={day:SD.workouts[i].day,items:[{name:"",sets:3,lo:8,hi:12}]}}
     else{const P=PRESETS.find(x=>x.id===id);P.workouts.forEach((items,i)=>{SD.workouts[i]={day:-1,items:items.map(([ex,sets,lo,hi])=>({name:EXERCISES[ex]||BASE_EXERCISES[ex]||ex,sets,lo,hi}))}});
-      if(SD.nw!==P.workouts.length){SD.nw=P.workouts.length;SD.gym=SD.gym.slice(0,SD.nw)}}
+      if(SD.nw!==P.workouts.length){SD.nw=P.workouts.length;SD.gym=keepGym(SD.nw,P.days)}}
     assignGym();flashSetErr("");renderSettings();return}
   const pr=t.closest("[data-preset]");if(pr){const P=PRESETS.find(x=>x.id===pr.dataset.preset);if(!P)return;
     if(setArmed!==P.id){setArmed=P.id;renderSettings();return}
     setArmed=false;SD.presets=false;SD.gymMsg="";SD.nw=P.workouts.length;SD.open=new Set();
     P.workouts.forEach((items,i)=>{SD.workouts[i]={day:-1,items:items.map(([ex,sets,lo,hi])=>({name:EXERCISES[ex]||BASE_EXERCISES[ex]||ex,sets,lo,hi}))}});
-    SD.gym=P.days.slice(0,SD.nw);assignGym();renderSettings();return}
+    SD.gym=keepGym(SD.nw,P.days);assignGym();renderSettings();return}
   const cd=t.closest("[data-scdel]");if(cd){SD.custom.splice(+cd.dataset.scdel,1);renderSettings();return}
   const un=t.closest("[data-sunit]");if(un){const was=SD.unit;SD.unit=un.dataset.sunit;
     if(SD.setup&&was!==SD.unit){const v=parseFloat(String(SD.weight).replace(",","."));if(isFinite(v))SD.weight=String(Math.round((SD.unit==="lb"?v*LB:v/LB)*10)/10)}
@@ -2590,7 +2617,7 @@ function renderEditor(){
     <div class="timer"><label class="eyebrow" for="ed-dur">Minutes</label><input type="number" id="ed-dur" class="durin" inputmode="numeric" min="0" step="1" value="${s.accMs?Math.round(s.accMs/60000):""}" placeholder="–"></div></div></div>`;
   s.items.forEach((it,xi)=>{
     const p=prevFor(it.ex,s),nm=esc(exName(it));
-    h+=`<div class="panel ex" id="ex-${xi}"><div class="exh"><div style="min-width:0"><div class="nm">${nm}</div><div class="rx num">${it.sets} × ${it.lo}–${it.hi}${it.swappedFrom?` <span class="swnote">· swapped for ${esc(EXERCISES[it.swappedFrom]||it.swappedFrom)}</span>`:""}</div></div><div class="exside"><div class="exflags" id="exf-${xi}"></div><button class="swapbtn" data-swap="${xi}" aria-label="Swap ${nm} for another exercise">Swap</button></div></div>
+    h+=`<div class="panel ex" id="ex-${xi}"><div class="exh"><div style="min-width:0"><div class="nm">${nm}</div><div class="rx num">${it.sets} × ${it.lo}–${it.hi}${it.swappedFrom?` <span class="swnote">· swapped for ${esc(EXERCISES[it.swappedFrom]||it.swappedFrom)}</span>`:""}${it.added?` <span class="swnote">· added today</span>`:""}${it.log.length>it.sets?` <span class="swnote">· +${it.log.length-it.sets} set${it.log.length-it.sets===1?"":"s"}</span>`:""}</div></div><div class="exside"><div class="exflags" id="exf-${xi}"></div>${it.added?`<button class="swapbtn" data-exrm="${xi}" aria-label="Remove ${nm}"${it.log.some(l=>l.done)?" hidden":""}>Remove</button>`:`<button class="swapbtn" data-swap="${xi}" aria-label="Swap ${nm} for another exercise">Swap</button>`}</div></div>
       <div class="swapbox" id="sw-${xi}" hidden><input type="text" id="swin-${xi}" data-swapin="${xi}" placeholder="Alternative exercise" aria-label="Alternative exercise" autocomplete="off"><button class="btn primary" data-swapgo="${xi}">Use this</button><button class="btn ghost" data-swapcancel="${xi}">Cancel</button>${it.swappedFrom?`<button class="btn ghost" data-swapback="${xi}">Back to ${esc(EXERCISES[it.swappedFrom]||it.swappedFrom)}</button>`:""}</div>
       ${p&&ready(p.it)?`<div class="exprev"><span class="flag up">${isDone?"Ready to add weight":`${ASSISTED.has(it.ex)?"−"+incU(it.ex,exName(it))+" "+unitW()+" assistance":"+"+incU(it.ex,exName(it))+" "+unitW()+" from last time"}`}</span></div>`:""}
 `;
@@ -2601,8 +2628,13 @@ function renderEditor(){
         <span class="sx" aria-hidden="true">×</span><input type="number" inputmode="numeric" step="1" min="0" id="r-${xi}-${si}" data-x="${xi}" data-s="${si}" data-f="r" value="${l.r==null?"":l.r}" placeholder="${pl&&pl.r!=null?pl.r:it.lo+"–"+it.hi}" aria-label="${nm} set ${si+1} reps">
         <button class="tickbtn" aria-pressed="${l.done}" data-tick="${xi}-${si}" aria-label="${nm} set ${si+1} complete"></button></div>`;
     });
+    // today only: one more set, or take back a set added today while it's unticked (planned sets are skipped by leaving them unticked)
+    const extraSet=it.log.length>it.sets;
+    h+=`<div class="exmore">${it.log.length<10?`<button type="button" class="linkbtn" data-setadd="${xi}" aria-label="Add a set to ${nm}">+ Set</button>`:""}${extraSet?`<button type="button" class="linkbtn" data-setrm="${xi}" aria-label="Remove the added set from ${nm}"${it.log[it.log.length-1].done?" hidden":""}>Remove set</button>`:""}</div>`;
     h+=`</div>`;
   });
+  h+=`<div class="addex"><button type="button" class="btn" data-addopen>+ Add exercise</button>
+    <div class="swapbox" id="addbox" hidden><input type="text" id="addin" data-addin placeholder="Exercise" aria-label="Exercise to add" autocomplete="off"><button class="btn primary" data-addgo>Add</button><button class="btn ghost" data-addcancel>Cancel</button></div></div>`;
   h+=`<div class="panel stcard"><div class="field"><label for="ed-notes">Session notes <span class="muted" style="font-weight:400">(optional)</span></label><textarea id="ed-notes" rows="2" placeholder="How it felt, technique cues, anything to change">${esc(s.notes)}</textarea></div>
     <div class="field edate"><label for="ed-date">Date</label><input type="date" id="ed-date" value="${s.date}" max="${today}"></div>
     <div class="edactions">${isDone
@@ -2638,6 +2670,9 @@ function toggleSet(xi,si){
   }else l.done=false;
   const row=$(`sr-${xi}-${si}`);row.classList.toggle("done",l.done);row.querySelector(".tickbtn").setAttribute("aria-pressed",String(l.done));
   touchS(s.id);updateEditorStatus();
+  // the Remove links only show while removing can't lose a ticked set
+  const xr=document.querySelector(`[data-exrm="${xi}"]`);if(xr)xr.hidden=it.log.some(z=>z.done);
+  const sr=document.querySelector(`[data-setrm="${xi}"]`);if(sr)sr.hidden=it.log[it.log.length-1].done;
   if(l.done&&s.activeFrom&&allSetsDone(s))setTimer(false);
 }
 // two-tap confirmation for destructive buttons
@@ -2768,7 +2803,7 @@ function histDetail(s){
       <div class="row"><button class="btn" data-cardio-edit="${s.id}">Edit</button><button class="btn ghost" data-st="hdel" data-id="${s.id}">Delete</button></div></div>`;
   }
   return `<div class="hdetail"><div class="hex">${s.items.map(it=>{const d=it.log.filter(l=>l.done);
-      return `<div class="hexr"><span class="hexn">${esc(exName(it))}${it.swappedFrom?` <span class="swnote">· swapped for ${esc(EXERCISES[it.swappedFrom]||it.swappedFrom)}</span>`:""}</span><span class="num hexs">${d.length?d.map(setTxt).join(" · "):"<span class=\"muted\">not done</span>"}</span></div>`}).join("")}</div>
+      return `<div class="hexr"><span class="hexn">${esc(exName(it))}${it.swappedFrom?` <span class="swnote">· swapped for ${esc(EXERCISES[it.swappedFrom]||it.swappedFrom)}</span>`:""}${it.added?` <span class="swnote">· added</span>`:""}</span><span class="num hexs">${d.length?d.map(setTxt).join(" · "):"<span class=\"muted\">not done</span>"}</span></div>`}).join("")}</div>
     ${s.notes?`<div class="hnotes">${esc(s.notes)}</div>`:""}
     <div class="row"><button class="btn" data-edit="${s.id}">Edit</button><button class="btn ghost" data-st="hdel" data-id="${s.id}">Delete</button></div></div>`;
 }

@@ -409,7 +409,7 @@ click(w,$(w,'[data-pcard="5"]'));ok(/You have 1 cardio session a week/.test($(w,
 click(w,$(w,'[data-st="set-presets"]'));ok($$(w,"#setbody .pritem").length===2,"SET7. Suggested programmes: full body and glute focus");
 click(w,$(w,'[data-preset="fullbody"]'));ok(/Switch to 3-day full body/.test($(w,'[data-preset="fullbody"]').textContent)&&/replaces Workouts A–C/.test($(w,".prconfirm").textContent),"   Choosing one asks to confirm the switch");
 click(w,$(w,'[data-preset="fullbody"]'));
-ok($$(w,"#setbody details.swk").length===3&&$(w,'[data-sname="0-0"]').textContent==="Barbell Squat"&&["0","2","5"].every(d=>$(w,`[data-pgym="${d}"]`).getAttribute("aria-pressed")==="true"),"   It loads A/B/C with the original exercises on Mon, Wed, Sat");
+ok($$(w,"#setbody details.swk").length===3&&$(w,'[data-sname="0-0"]').textContent==="Barbell Squat"&&["0","2","3"].every(d=>$(w,`[data-pgym="${d}"]`).getAttribute("aria-pressed")==="true")&&$(w,'[data-pgym="5"]').getAttribute("aria-pressed")==="false","   It loads A/B/C with the original exercises, keeping your Mon and Thu and adding Wed (its first free suggested day) for the third");
 click(w,$(w,'[data-st="set-save"]'));click(w,$(w,"#tab-week"));
 ok($(w,"#setsheet").hidden&&$(w,'[data-ct="strength"]').textContent==="0/3"&&$(w,'[data-ct="af"]').textContent==="0/5"&&$(w,'[data-ct="cardio"]').textContent==="0/1","   Saved: 3 workouts again, while habits and cardio keep your own settings");
 w.close();
@@ -418,6 +418,14 @@ store={};w=boot("2026-10-28T09:00:00");
 click(w,$(w,'#setcog'));ok($(w,".prline .prname").textContent==="3-day full body","PR1. Programme row names the programme you're on");
 click(w,$(w,'[data-st="set-presets"]'));ok(/Current/.test($$(w,"#setbody .pritem")[0].textContent)&&!$(w,'.pritem [data-preset="fullbody"]'),"   The current one is marked Current, with no Switch button");
 click(w,$(w,'[data-preset="glute"]'));click(w,$(w,'[data-preset="glute"]'));ok($(w,".prline .prname").textContent==="3-day glute focus","   After switching it names the new programme");
+w.close();
+// switching programme keeps the gym days you chose
+store={};w=boot("2026-10-28T09:00:00");click(w,$(w,'#setcog'));
+["0","2"].forEach(d=>click(w,$(w,`[data-pgym="${d}"]`)));["1","3"].forEach(d=>click(w,$(w,`[data-pgym="${d}"]`)));
+const gymOn=()=>[0,1,2,3,4,5,6].filter(d=>$(w,`[data-pgym="${d}"]`)&&$(w,`[data-pgym="${d}"]`).getAttribute("aria-pressed")==="true").join(",");
+ok(gymOn()==="1,3,5","GD1. Gym days changed to Tue, Thu, Sat ("+gymOn()+")");
+click(w,$(w,'[data-st="set-presets"]'));click(w,$(w,'[data-preset="glute"]'));click(w,$(w,'[data-preset="glute"]'));
+ok(gymOn()==="1,3,5"&&$(w,".prline .prname").textContent==="3-day glute focus","   Switching to the glute programme keeps Tue, Thu, Sat ("+gymOn()+")");
 ok($(w,'[data-sname="0-0"]').textContent==="Hip Thrust Machine"&&$(w,'[data-sname="1-0"]').textContent==="Reverse Dumbbell Lunge"&&$(w,'[data-sname="2-5"]').textContent==="Reverse Pec Deck"&&$(w,'[data-sexf="1-1-sets"]').value==="3","GL1. Glute focus loads A/B/C with its exercises");
 {const f=$(w,'[data-sexf="1-1-sets"]');type(w,f,"4");ok($(w,".prline .prname").textContent==="Custom","PR2. Editing a workout makes the programme Custom");type(w,$(w,'[data-sexf="1-1-sets"]'),"3");}
 click(w,$(w,'[data-st="set-save"]'));click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="type"][data-type="A"]'));click(w,$(w,'[data-st="start"]'));
@@ -501,6 +509,33 @@ chg(w,$(w,"[data-srev]"),false);
 ok(/Your weight, photos and next week's focus come from the review/.test($(w,"#setbody").textContent),"   Switching it off says what it powers");
 click(w,$(w,'[data-st="set-save"]'));click(w,$(w,"#tab-progress"));
 ok($(w,"#gallery").closest(".section").hidden&&!/weight|Weight/.test($(w,"#trends-note").textContent),"RV2. Review off: no Photos section and no weight wording on Progress");
+w.close();
+// --- changing today's workout without touching the programme
+store={};w=boot("2026-10-26T12:00:00");click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="start"]'));
+const prog=()=>$(w,"#ed-prog2").textContent,rows=xi=>$$(w,`#ex-${xi} .setrow`).length;
+const wxStart=prog();
+click(w,$(w,'[data-setadd="0"]'));
+ok(rows(0)===4&&/\+1 set/.test($(w,"#ex-0 .rx").textContent)&&prog()==="0/17"&&$(w,'[data-setrm="0"]'),"WX1. + Set adds a fourth set to squat for today (0/17 sets, '+1 set')");
+click(w,$(w,'[data-setrm="0"]'));
+ok(rows(0)===3&&prog()===wxStart&&!$(w,'[data-setrm="0"]'),"   Remove set takes it back");
+click(w,$(w,'[data-setadd="0"]'));type(w,$(w,"#w-0-3"),60);type(w,$(w,"#r-0-3"),8);click(w,$(w,'[data-tick="0-3"]'));
+ok($(w,'[data-setrm="0"]').hidden,"   Once the added set is ticked, its Remove set goes");click(w,$(w,'[data-tick="0-3"]'));click(w,$(w,'[data-setrm="0"]'));
+ok(!$(w,'[data-setrm="1"]'),"   Planned sets have no Remove (skip them by leaving them unticked)");
+click(w,$(w,"[data-addopen]"));type(w,$(w,"#addin"),"Biceps Curl");click(w,$(w,"[data-addgo]"));
+const nx=$$(w,"#st-main .panel.ex").length-1;
+ok(nx===6&&/Biceps Curl/.test($(w,`#ex-${nx} .nm`).textContent)&&/added today/.test($(w,`#ex-${nx}`).textContent)&&$(w,`[data-exrm="${nx}"]`)&&!$(w,`[data-swap="${nx}"]`)&&rows(nx)===3,"WX2. + Add exercise adds Biceps Curl (3 sets, 'added today', Remove instead of Swap)");
+click(w,$(w,`[data-exrm="${nx}"]`));
+ok($$(w,"#st-main .panel.ex").length===6,"   Remove takes it out again");
+click(w,$(w,"[data-addopen]"));type(w,$(w,"#addin"),"Biceps Curl");click(w,$(w,"[data-addgo]"));
+type(w,$(w,`#w-6-0`),12);type(w,$(w,`#r-6-0`),10);click(w,$(w,'[data-tick="6-0"]'));
+ok($(w,'[data-exrm="6"]').hidden,"   Once a set is ticked, Remove goes (so logged sets can't be lost by a slip)");
+click(w,$(w,'[data-tick="6-0"]'));ok(!$(w,'[data-exrm="6"]').hidden,"   and comes back if the set is unticked");click(w,$(w,'[data-tick="6-0"]'));
+type(w,$(w,"#w-0-0"),60);type(w,$(w,"#r-0-0"),8);click(w,$(w,'[data-tick="0-0"]'));click(w,$(w,'[data-st="finish"]'));
+click(w,$(w,"#tab-strength"));
+ok(/Biceps Curl\s*· added/.test($(w,"#st-history").textContent)||($$(w,"#st-history [data-hist]")[0]&&(click(w,$$(w,"#st-history [data-hist]")[0]),/Biceps Curl\s*· added/.test($(w,"#st-history").textContent))),"WX3. The saved workout notes Biceps Curl as added");
+ok($$(w,"#prog-ex option").some(o=>o.value==="biceps_curl"),"   and its sets count toward Biceps Curl's history");
+click(w,$(w,'[data-st="start"]'));
+ok($$(w,"#st-main .panel.ex").length===6&&!/Biceps Curl|added today/.test($(w,"#st-main").textContent),"WX4. The programme is untouched: the next workout has its usual 6 exercises");
 w.close();
 // --- habits only: no weights and no cardio
 store={"weekly-routine.settings.v1":JSON.stringify({workouts:[],cardio:{target:0,days:[]}})};w=boot("2026-10-28T12:00:00"); // a Wednesday (breakfast prep)
