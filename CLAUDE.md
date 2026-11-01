@@ -31,6 +31,8 @@ Each of these lives in one list in `src/weekly-routine.html`; everything else is
 - The settings page and the first-time setup share pieces: `habitRows`, `secCounts`, `secGrid`, `secLists`, `secPrep` and `secPresets`.
 - Setup runs once, in the hosted app only. It starts after cloud data has loaded, and only when the person has no saved settings, no data and no `setupDone` marker. Finishing setup saves `setupDone: true` with their settings.
   - New people start from neutral defaults (`newcomerDraft`). Jack's routine stays the default only for the Claude version.
+- **Starter week**: setup saves `settings.startedOn` (the day they finished it, never changed). The week containing it counts only from that day: `habitsFor` runs `fitStarter`, which fits each target to the days left (daily habits out of the days left, "6+ days" targets scaled, strength/cardio/prep = planned days left; a row with nothing left is `off`: shown as "From Monday", not counted). Days before the start are dots. Header says "% starter week", Today has a Starter week line, the review is "Starter review" with starter questions, and the chart shades that week and leaves it out of the average. No `startedOn` (Jack, older data, a restored backup) or a Monday start = an ordinary week.
+- The late-review nudge shows the day after review day only (Monday for a Sunday review); after that the review is missed for its week but can still be completed there.
 - Weights per week can be 0. In that case there's no Strength row, and Training offers cardio only.
 - Suggested programmes live in `PRESETS`.
 

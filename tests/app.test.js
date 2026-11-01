@@ -296,6 +296,49 @@ click(w,$(w,"#d-breakfast-1"));
 const wk=JSON.parse(w.localStorage.getItem("weekly-routine.v1"));
 ok(wk["2026-10-26"].breakfast[1]===true&&!(wk["2026-10-19"]&&wk["2026-10-19"].breakfast[1]),"   The tick saves to this week");
 click(w,$(w,"#prev"));click(w,$(w,"#weeklabel"));ok($(w,"#weeklabel").textContent==="This week"&&$(w,"#d-breakfast-1").checked,"WK2. Tapping the dates returns to this week, where the tick shows");
+// --- starter week: the week someone joins counts from their first day
+const SETK="weekly-routine.settings.v1";
+store={[SETK]:JSON.stringify({startedOn:"2026-10-29"})}; // a Thursday
+w=boot("2026-10-29T12:00:00");
+const ct=k=>{const e=$(w,`[data-ct="${k}"]`);return e&&e.textContent};
+ok($(w,"#pct").nextElementSibling.textContent===" starter week"&&/Starter week\s*4 days left · then full weeks/.test($(w,"#today").textContent),"SW1. Joining on Thursday: header says starter week; Today says 4 days left, then full weeks");
+ok(!$(w,"#d-protein-0")&&!$(w,"#d-protein-2")&&$(w,"#d-protein-3")&&ct("protein")==="0/4","SW2. Days before they joined are dots; protein counts out of 4");
+ok(ct("strength")==="0/1"&&ct("cardio")==="0/1"&&ct("af")==="0/3"&&/3\+ days/.test($(w,"#daily").textContent)&&ct("breakfast")==="0/1"&&!$(w,"#d-breakfast-1"),"SW3. Targets fit the days left: strength 0/1 (Sat), cardio 0/1 (Sun), no alcohol 3+ days, breakfast prep 0/1 (Sun only)");
+$$(w,"#daily input[type=checkbox][data-k]").filter(e=>["protein","fv","sleep","af"].includes(e.dataset.k)).forEach(e=>click(w,e));
+ok(ct("protein")==="4/4"&&$(w,"#pct").textContent==="75%","SW4. Ticking every habit day from Thursday makes 75% (15 of 20), so 100% is reachable");
+save(w);w.close();w=boot("2026-11-01T18:00:00");
+click(w,$(w,'#today [data-goto="review-cur"]'));
+ok($(w,"#revtoggle .rh-title").textContent==="Starter review"&&$(w,'label[for="well"]').textContent==="What went well in your first days?"&&$(w,'label[for="improve"]').textContent==="Your focus for your first full week?"&&$(w,"#ph-l").textContent==="Starting photos"&&/Starter review/.test($(w,"#today").textContent),"SW5. Sunday: Today and the panel say Starter review; it asks starter questions (starting photos, first full week)");
+ok(/Your starter week · 4 days/.test($(w,"#revsum").textContent)&&/Starter week\s*Last day · then full weeks/.test($(w,"#today").textContent),"   Its summary is 'Your starter week · 4 days'; Today says last day");
+save(w);w.close();w=boot("2026-11-02T08:00:00");
+ok($(w,"#pct").nextElementSibling.textContent===" this week"&&$(w,"#d-protein-0")&&/Finish your starter review/.test($(w,"#today").textContent)&&!/Starter week/.test($(w,"#today").textContent),"SW6. Monday: an ordinary week with full boxes; the missed review is 'Finish your starter review'");
+click(w,$(w,"#prev"));
+ok(!/\/7/.test($(w,"#revsum .sumlook").textContent)&&!/Protein/.test($(w,"#revsum .sumlook").textContent)&&$(w,"#revtoggle .rh-title").textContent==="Starter review","   Looking back, 'Missed' only covers days they had (no x/7, protein hit)");
+click(w,$(w,"#weeklabel"));click(w,$(w,"#tab-progress"));
+ok($(w,"#achart rect.abar.starter")&&!/Average/.test($(w,"#achart").textContent),"SW7. The chart marks the starter week and leaves it out of the average");
+w.close();
+store={[SETK]:JSON.stringify({startedOn:"2026-11-01"})}; // a Sunday
+w=boot("2026-11-01T09:00:00");
+ok(ct("strength")==="—"&&/From Monday/.test($(w,"#daily").textContent)&&ct("protein")==="0/1"&&ct("cardio")==="0/1"&&/Starter review/.test($(w,"#today").textContent)&&/This week's session/.test($(w,"#today").textContent),"SW8. Joining on Sunday: no gym day left (— · From Monday), protein 0/1, cardio 0/1 ('this week's session'), starter review offered today");
+w.close();
+const starts=["2026-10-26","2026-10-27","2026-10-28","2026-10-29","2026-10-30","2026-10-31","2026-11-01"];
+ok(starts.every((d,i)=>{store={[SETK]:JSON.stringify({startedOn:d})};const v=boot(d+"T12:00:00");
+  const r=v.document.querySelector('[data-ct="protein"]').textContent===`0/${7-i}`&&v.document.querySelector("#pct").nextElementSibling.textContent===(i?" starter week":" this week")&&/^\d+%$/.test(v.document.querySelector("#pct").textContent);v.close();return r}),
+  "SW9. Every start day works: protein out of the days left; a Monday start is an ordinary week");
+store={[SETK]:JSON.stringify({startedOn:"2026-10-29"})};w=boot("2026-10-30T12:00:00");
+click(w,$(w,"#setcog"));click(w,$(w,'[data-st="set-save"]'));
+ok(JSON.parse(w.localStorage.getItem(SETK)).startedOn==="2026-10-29","SW10. Saving settings keeps the start date");
+w.close();
+// --- the late-review nudge comes the day after review day, whatever day that is
+store={[SETK]:JSON.stringify({review:{on:true,day:2}})}; // Wednesday review
+w=boot("2026-10-27T12:00:00");click(w,$(w,"#d-protein-1"));save(w);w.close();
+w=boot("2026-10-29T08:00:00");
+ok(/Finish your weekly review/.test($(w,"#today").textContent)&&/Was due Wednesday/.test($(w,"#today").textContent),"LR1. Wednesday review not done: Thursday nudges 'Finish your weekly review · was due Wednesday'");
+w.close();w=boot("2026-10-30T08:00:00");
+ok(!/Finish/.test($(w,"#today").textContent),"   The day after, the nudge is gone");
+w.close();w=boot("2026-11-02T08:00:00");
+ok(!/Finish/.test($(w,"#today").textContent),"   And Monday doesn't nudge about a Wednesday review");
+w.close();
 // --- master export
 // --- routine settings
 store={};w=boot("2026-10-28T09:00:00");

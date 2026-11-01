@@ -1,5 +1,5 @@
 <!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<meta name="app-version" content="20261101085949">
+<meta name="app-version" content="20261101094115">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Daily Routine</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -297,6 +297,7 @@ input[type=number]:focus,textarea:focus{outline:none;border-color:var(--green);b
 .wpt.last{fill:var(--green)}
 .abar{fill:var(--green)}
 .abar.cur{fill:var(--green);opacity:.4}
+.abar.starter:not(.cur){opacity:.6}
 
 /* tabs */
 .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-top:-12px}
@@ -928,7 +929,7 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
           <input type="number" id="weight" inputmode="decimal" step="0.1" min="30" max="550" placeholder="kg">
         </div>
         <div class="field">
-          <span class="flabel">Progress photos <span class="muted" style="font-weight:400">up to 3</span></span>
+          <span class="flabel"><span id="ph-l">Progress photos</span> <span class="muted" style="font-weight:400">up to 3</span></span>
           <div class="photos" id="photos"></div>
           <div class="phmsg" id="phmsg" role="status"></div>
           <input type="file" id="phfile" accept="image/*" hidden>
@@ -1141,6 +1142,7 @@ function normaliseSettings(o){
     S.prep[k].on=h.on!==false;if(Array.isArray(h.days))S.prep[k].days=dayList(h.days)}
   for(const k of PREP_KEYS)if(!S.prep[k].days.length)S.prep[k].on=false;
   if(o.setupDone)S.setupDone=true;
+  if(typeof o.startedOn==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(o.startedOn))S.startedOn=o.startedOn;
   // people's own habits: {k, name, sub, target (days a week), on}
   S.custom=(Array.isArray(o.custom)?o.custom:[]).filter(c=>c&&/^x_[a-z0-9]{4,12}$/.test(c.k)&&typeof c.name==="string"&&c.name.trim()).slice(0,8)
     .map(c=>({k:c.k,name:c.name.trim().slice(0,24),sub:typeof c.sub==="string"?c.sub.trim().slice(0,24):"",target:intIn(c.target,1,7,7),on:c.on!==false}));
@@ -1195,7 +1197,22 @@ function normalisePlan(p){
   const grid={};if(p.grid&&typeof p.grid==="object")for(const k in p.grid)if(isHabitKey(k)&&typeof p.grid[k]==="string")grid[k]=p.grid[k].slice(0,24);
   return {v:1,habits,grid};
 }
-const habitsFor=w=>w&&w.plan&&w.week<currentKey()?w.plan.habits:HABITS;
+// Starter week: the week someone joins counts only from the day they finished setup. Each target is fitted to the
+// days they have (protein x/4 from a Thursday, strength = gym days left), so the week can still reach 100%.
+// No start date (Jack, anyone with older data, a restored backup) or a Monday start = an ordinary week.
+function startIdx(wk){const s=SETTINGS.startedOn;if(!s)return 0;const d=parseKey(s);return keyOf(mondayOf(d))===wk?(d.getDay()+6)%7:0}
+const isStarter=wk=>startIdx(wk)>0;
+function fitStarter(base,s){
+  const left=7-s;
+  return base.map(h=>{const o=Object.assign({},h,{from:s});
+    if(h.k==="strength")o.target=Math.min(h.target,left,SETTINGS.workouts.filter(x=>x.day<0||x.day>=s).length);
+    else if(h.k==="cardio"){const cd=SETTINGS.cardio.days;o.target=Math.min(h.target,left,cd.length?cd.filter(d=>d>=s).length:left)}
+    else if(h.daily)o.target=h.target>=7?left:Math.max(1,Math.min(left,Math.round(h.target*left/7)));
+    else o.target=h.days.filter(d=>d>=s).length;
+    if(!o.target)o.off=true; // nothing planned in the days left: shown, but not counted ("From Monday")
+    return o});
+}
+const habitsFor=w=>{const base=w&&w.plan&&w.week<currentKey()?w.plan.habits:HABITS,s=w?startIdx(w.week):0;return s?fitStarter(base,s):base};
 const gridFor=w=>w&&w.plan&&w.week<currentKey()?w.plan.grid:GRID_TARGET;
 // which planned days a prep session covers: from tomorrow up to and including the next prep day
 function prepHint(days,t){
@@ -1327,14 +1344,15 @@ function hasData(w){
 // a week with nothing logged at all doesn't earn automatic alcohol-free days
 const afCredited=w=>w.week===currentKey()||!!weeks[w.week]||liveSessions().some(x=>x.status==="done"&&keyOf(mondayOf(parseKey(x.date)))===w.week);
 function stats(w){
-  let hit=0,done=0;const per={},HB=habitsFor(w),TT=HB.reduce((a,h)=>a+h.target,0);
+  let hit=0,done=0;const per={},HB=habitsFor(w).filter(h=>!h.off),TT=HB.reduce((a,h)=>a+h.target,0);
   const wk=workoutsByDay(w.week),cw=cardioByDay(w.week);
   HB.forEach(h=>{
     // strength: each logged workout counts once on its date; a manual tick only counts on days with no logged workout
-    const c=h.k==="strength"?wk.reduce((a,l,d)=>a+Math.max(w.strength[d]?1:0,l.length),0)
-      :h.k==="cardio"?cw.reduce((a,l,d)=>a+Math.max(w.cardio[d]?1:0,l.length),0)
+    const f=h.from||0;
+    const c=h.k==="strength"?wk.reduce((a,l,d)=>d<f?a:a+Math.max(w.strength[d]?1:0,l.length),0)
+      :h.k==="cardio"?cw.reduce((a,l,d)=>d<f?a:a+Math.max(w.cardio[d]?1:0,l.length),0)
       :h.k==="af"&&drinkMode(w)?(afCredited(w)?Math.max(0,daysElapsed(w.week)-w.drink.slice(0,daysElapsed(w.week)).filter(Boolean).length):0)
-      :ticks(w,h.k).slice(0,h.n).filter(Boolean).length;const capped=Math.min(c,h.target);per[h.k]=c;done+=capped;if(capped>=h.target)hit++});
+      :ticks(w,h.k).slice(0,h.n).filter((v,i)=>v&&(h.daily?i>=f:!(h.days&&h.days[i]<f))).length;const capped=Math.min(c,h.target);per[h.k]=c;done+=capped;if(capped>=h.target)hit++});
   return {hit,done,pct:Math.round(done/TT*100),per,n:HB.length,total:TT};
 }
 
@@ -1479,10 +1497,13 @@ function renderDaily(){
   const HB=habitsFor(w),GT=gridFor(w);
   HB.filter(x=>x.daily).forEach(x=>{
     const dm=x.k==="af"&&drinkMode(w);
-    h+=`<div class="lbl"><div class="n">${GRID_LABEL[x.k]||x.short}</div><div class="x${dm||GT[x.k]?" keep":""}">${GT[x.k]||(x.k==="strength"?"Filled by saved workouts":x.k==="cardio"?"Filled by logged cardio":dm?"Tap drinking nights":x.x)}</div></div>`;
+    // starter week: a "6+ days" target shows as its fitted number; rows with nothing left this week say when they start
+    const gl=x.off?"From Monday":x.from&&/days|Every day/.test(GT[x.k]||"")?(x.target>=7-x.from?"Every day":x.target+"+ days"):GT[x.k];
+    h+=`<div class="lbl"><div class="n">${GRID_LABEL[x.k]||x.short}</div><div class="x${dm||gl?" keep":""}">${gl||(x.k==="strength"?"Filled by saved workouts":x.k==="cardio"?"Filled by logged cardio":dm?"Tap drinking nights":x.x)}</div></div>`;
     for(let d=0;d<7;d++){
       const td=isCur&&d===t?" is-today":"";
-      if(x.k==="strength"&&wk[d].length){const types=wk[d].map(s=>s.type);
+      if(x.off||d<(x.from||0))h+=`<div class="c off${td}" aria-hidden="true"></div>`; // before they started
+      else if(x.k==="strength"&&wk[d].length){const types=wk[d].map(s=>s.type);
         h+=`<div class="c${td}"><button class="wk" data-open="${wk[d][0].id}" title="Workout ${types.join(", ")} logged · open in Strength" aria-label="Workout ${types.join(" and ")} logged on ${DAYS_LONG[d]}. Open it.">${types.join("")}</button></div>`;}
       // strength comes only from saved workouts; ticks recorded by hand before the tracker existed still show (and can be cleared)
       else if(x.k==="cardio"&&cw[d].length){const c=cw[d][0],tot=cw[d].reduce((a,z)=>a+z.minutes,0);
@@ -1502,7 +1523,7 @@ function renderDaily(){
     h+=`<div class="lbl"><div class="n${nm.length>12?" tight":""}">${nm}</div></div>`;
     for(let d=0;d<7;d++){
       const td=isCur&&d===t?" is-today":"",i=x.days.indexOf(d);
-      if(i<0)h+=`<div class="c off${td}" aria-hidden="true"></div>`;
+      if(i<0||x.off||d<(x.from||0))h+=`<div class="c off${td}" aria-hidden="true"></div>`;
       else h+=`<div class="c${td}">${cb(`d-${x.k}-${i}`,x.k,i,ticks(w,x.k)[i],x.name+" "+DAYS_LONG[d])}</div>`;
     }
     h+=`<div class="ct num" data-ct="${x.k}"></div>`;
@@ -1516,6 +1537,7 @@ function renderToday(){
   const sec=$("today"),cur=currentKey();
   const t=todayIdx(),w=getWeek(cur),tk=keyOf(new Date()),plan=PLAN[t],sDay=STRENGTH_DAY[t],cDay=SETTINGS.cardio.target>0&&SETTINGS.cardio.days.includes(t);
   const doneToday=doneSessions().filter(s=>s.date===tk),dr=currentDraft(),cToday=cardioSessions().filter(c=>c.date===tk);
+  const cH=habitsFor(w).find(h=>h.k==="cardio"),cN=cH?cH.target:SETTINGS.cardio.target; // fitted in a starter week
   let act;
   if(doneToday.length){const last=doneToday[doneToday.length-1],p=setsDone(last);
     act=`<div class="tact"><div><div class="tl">Workout ${doneToday.map(s=>s.type).join(" + ")} done</div><div class="ts"><span class="num">${p.d}/${p.t}</span> sets logged${last.accMs?" in "+durTxt(last):""} · counted in this week's strength target</div></div><button class="btn" data-open="${last.id}">View workout</button></div>`;}
@@ -1525,22 +1547,27 @@ function renderToday(){
   else if(cDay||cToday.length){
     if(cToday.length){const c=cToday[cToday.length-1];
       act=`<div class="tact"><div><div class="tl">${esc(c.ctype)} done</div><div class="ts">${cardioLine(c)}${cardioCounts(c)?" · counted in this week's cardio target":" · walks don't count toward the target"}</div></div><button class="btn" data-cardio="${c.id}">View</button></div>`;}
-    else act=`<div class="tact"><div><div class="tl">${esc(plan.t)}</div><div class="ts">One of ${SETTINGS.cardio.target} this week</div></div><button class="btn primary lg" data-st="log-cardio">Log cardio</button></div>`;}
+    else act=`<div class="tact"><div><div class="tl">${esc(plan.t)}</div><div class="ts">${cN===1?"This week's session":"One of "+cN+" this week"}</div></div><button class="btn primary lg" data-st="log-cardio">Log cardio</button></div>`;}
   else act=`<div class="tact quiet"><div><div class="tl">${esc(plan.t)}</div></div><button class="btn" data-st="goto-strength">Training anyway? ›</button></div>`;
   // every line looks the same: name on the left, To do/Done on the right, and the whole line goes somewhere when tapped.
   // Prep is ticked in the grid only, so its line jumps to that day's box; review lines open the review
   const line=(attr,label,name,hint,pill,done)=>`<button type="button" class="trow" ${attr} aria-label="${esc(name)}: ${esc(label)}"><span class="tbody"><span class="tn">${esc(name)}</span>${hint?`<span class="th">${hint}</span>`:""}</span><span class="revpill${done?" done":""}" aria-hidden="true">${pill}</span><span class="chev tchev" aria-hidden="true"></span></button>`;
   const tasks=[];
   const lastKey=keyOf(addDays(parseKey(cur),-7)),lw=weeks[lastKey];
-  if(SETTINGS.review.on&&t===0&&SETTINGS.review.day!==0&&lw&&hasData(lw)&&!lw.review[0])
-    tasks.push(line('data-goto="review-last"',"late. Open it.","Finish last week's review",`Week of ${fmt(parseKey(lastKey))} · still counts for that week`,"Late",false));
+  // a review not done gets one nudge, the day after review day (Monday for a Sunday review); after that it's recorded
+  // as missed for its week, but can still be completed from that week and counts if it is
+  const rd=SETTINGS.review.day,lateKey=rd===6?lastKey:cur,lateW=weeks[lateKey];
+  if(SETTINGS.review.on&&t===(rd+1)%7&&lateW&&hasData(lateW)&&!lateW.review[0]&&habitsFor(lateW).some(h=>h.k==="review"&&!h.off))
+    tasks.push(line(`data-goto="${rd===6?"review-last":"review-cur"}"`,"late. Open it.",isStarter(lateKey)?"Finish your starter review":rd===6?"Finish last week's review":"Finish your weekly review",
+      rd===6?`Week of ${fmt(parseKey(lastKey))} · still counts for that week`:`Was due ${DAYS_LONG[rd]} · still counts this week`,"Late",false));
   PREP_KEYS.forEach(k=>{const P=SETTINGS.prep[k],i=P.days.indexOf(t);if(!P.on||i<0)return;const d=ticks(w,k)[i];
     tasks.push(line(`data-prep="${k}"`,(d?"done":"to do")+". Go to its box in Check-ins.",PREP_INFO[k].task,prepHint(P.days,t),d?"Done":"To do",d))});
   if(SETTINGS.review.on&&t===SETTINGS.review.day){const d=w.review[0];
-    tasks.push(line('data-goto="review-cur"',(d?"done":"to do")+". Open the review.","Weekly review","",d?"Done":"To do",d));}
+    tasks.push(line('data-goto="review-cur"',(d?"done":"to do")+". Open the review.",isStarter(cur)?"Starter review":"Weekly review","",d?"Done":"To do",d));}
   $("tdate").textContent=DAYS_LONG[t]+" "+fmt(new Date());
   let tip="";try{if(HOST&&SETTINGS.setupDone&&!localStorage.getItem("routine-tip-done"))tip=`<div class="ttip"><span>Tick things off as you go.${SETTINGS.review.on?` Your weekly review is on ${DAYS_LONG[SETTINGS.review.day]}.`:""}</span><button class="ttipx" data-st="tip-x" aria-label="Dismiss tip">×</button></div>`}catch(e){}
-  sec.innerHTML=`${tip}${lw&&lw.improve.trim()?`<div class="tfocus"><span class="tfl">Focus</span> ${esc(lw.improve.trim())}</div>`:""}${act}
+  const starter=isStarter(cur)?`<div class="tfocus"><span class="tfl">Starter week</span> ${t===6?"Last day":(7-t)+" days left"} · then full weeks</div>`:"";
+  sec.innerHTML=`${tip}${starter}${lw&&lw.improve.trim()?`<div class="tfocus"><span class="tfl">Focus</span> ${esc(lw.improve.trim())}</div>`:""}${act}
     ${tasks.length?`<div class="tgroup"><div class="eyebrow">Also today</div><div class="tlist">${tasks.join("")}</div></div>`:""}`;
 }
 let revOpen=null; // null = automatic: closed for this week (Today's review line opens it), open for a past week still to do
@@ -1571,10 +1598,11 @@ function renderRevSum(){
   const cs=cardioByDay(viewKey).flat(),cmin=cs.reduce((a,c)=>a+c.minutes,0);
   const HB=habitsFor(w),tg=k=>{const h=HB.find(x=>x.k===k);return h?h.target:0};
   const extra=HABIT_CATALOG.filter(c=>c.summary&&HB.some(h=>h.k===c.k)).map(c=>`<div><dt>${esc(c.summary)}</dt><dd>${st.per[c.k]||0}/${tg(c.k)} days</dd></div>`).join("");
-  const below=HB.filter(h=>h.k!=="review"&&Math.min(st.per[h.k],h.target)<h.target&&(!cur||bestCase(w,h,st)<h.target)).map(h=>`${h.short} ${st.per[h.k]}/${h.target}`);
+  const below=HB.filter(h=>h.k!=="review"&&!h.off&&Math.min(st.per[h.k],h.target)<h.target&&(!cur||bestCase(w,h,st)<h.target)).map(h=>`${h.short} ${st.per[h.k]}/${h.target}`);
   const stalled=Object.entries(liftSeries()).filter(([,sr])=>liftStatus(sr)==="stalled").map(([id])=>exLabel(id));
   const look=[below.length&&!cur?`Missed: ${below.join(", ")}`:"",stalled.length?`Stalled: ${stalled.join(", ")}`:""].filter(Boolean);
-  $("revsum").innerHTML=`<div class="eyebrow">This week at a glance</div>
+  const sx=startIdx(viewKey);
+  $("revsum").innerHTML=`<div class="eyebrow">${sx?`Your starter week · ${7-sx} day${7-sx===1?"":"s"}`:"This week at a glance"}</div>
     <dl class="hdl sumdl"><div><dt>Targets hit</dt><dd class="num">${st.hit}/${st.n} · ${st.pct}%</dd></div>${tg("strength")?`<div><dt>Strength</dt><dd class="num">${st.per.strength||0}/${tg("strength")}</dd></div>`:""}
     ${tg("cardio")?`<div><dt>Cardio</dt><dd><span class="num">${st.per.cardio||0}/${tg("cardio")}</span> <span class="muted">· ${cmin} min</span></dd></div>`:""}${extra}</dl>
     ${look.length?`<div class="sumlook">${look.map(esc).join("<br>")}</div>`:(cur?"":`<div class="sumlook ok">Every target hit.</div>`)}`;
@@ -1669,7 +1697,13 @@ function renderReview(){
   $("review-sec").hidden=!SETTINGS.review.on;
   const w=getWeek(viewKey),a=document.activeElement;
   const wt=$("weight");if(a!==wt)wt.value=w.weight==null?"":fmtBody(w.weight);
+  // the starter review sets a baseline and looks ahead, so it makes sense after one day or six
+  const sw=isStarter(viewKey),Q=sw?["What went well in your first days?","What might get in the way next week?","Your focus for your first full week?"]
+    :["What went well this week?","What got in the way?","What's one improvement for next week?"];
+  ["well","way","improve"].forEach((f,i)=>document.querySelector(`label[for="${f}"]`).textContent=Q[i]);
+  document.querySelector("#revtoggle .rh-title").textContent=sw?"Starter review":"Weekly review";
   $("weight-l").textContent="Weight ("+unitW()+")";wt.placeholder=unitW();
+  $("ph-l").textContent=sw?"Starting photos":"Progress photos";
   renderPhotosReview();
   ["well","way","improve"].forEach(f=>{const el=$(f);if(a!==el)el.value=w[f];requestAnimationFrame(()=>{if(!$("revbody").hidden)growTA(el)})});
   renderRevStatus();renderRevSum();
@@ -1678,10 +1712,11 @@ function renderMetrics(){
   if($("revsum")&&!$("revbody").hidden)setTimeout(renderRevSum,0);
   const w=getWeek(viewKey),s=stats(w),tw=stats(getWeek(currentKey()));
   $("targetshit").textContent=tw.hit;
-  $("pct").textContent=tw.pct+"%";
+  $("pct").textContent=tw.pct+"%";$("pct").nextElementSibling.textContent=isStarter(currentKey())?" starter week":" this week";
   $("ticks").textContent=tw.done+"/"+tw.total;
   $("pctbar").style.width=tw.pct+"%";
-  const HBm=habitsFor(w);document.querySelectorAll("[data-ct]").forEach(el=>{const h=HBm.find(x=>x.k===el.dataset.ct);if(!h)return;const c=s.per[h.k];
+  const HBm=habitsFor(w);document.querySelectorAll("[data-ct]").forEach(el=>{const h=HBm.find(x=>x.k===el.dataset.ct);if(!h)return;
+    if(h.off){el.textContent="—";el.classList.remove("done");return}const c=s.per[h.k];
     const xt=h.extra&&w[h.k+"X"][0];el.textContent=c+"/"+h.target+(xt?" +1":"");el.classList.toggle("done",c>=h.target)});
 }
 function renderCharts(){
@@ -1732,12 +1767,12 @@ function renderCharts(){
   [0,50,100].forEach(t=>s+=`<line class="grid-l" x1="${L}" x2="${W-R}" y1="${y(t)}" y2="${y(t)}"/><text class="ax" x="${L-8}" y="${y(t)+4}" text-anchor="end">${t}</text>`);
   data.forEach((d,i)=>{
     const bx=x0+i*(bw+gap),by=y(d.s.pct),bh=Math.max(1.5,(H-B)-by);
-    const cls=d.k===cur?"cur":(d.s.hit===d.s.n?"full":"");
-    s+=`<rect class="abar ${cls}" x="${bx.toFixed(1)}" y="${((H-B)-bh).toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="3"><title>Week of ${fmt(parseKey(d.k))}: ${d.s.pct}% · ${d.s.hit}/${d.s.n} targets</title></rect>`;
+    const cls=(d.k===cur?"cur":(d.s.hit===d.s.n?"full":""))+(isStarter(d.k)?" starter":"");
+    s+=`<rect class="abar ${cls}" x="${bx.toFixed(1)}" y="${((H-B)-bh).toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="3"><title>${isStarter(d.k)?"Starter week":"Week"} of ${fmt(parseKey(d.k))}: ${d.s.pct}% · ${d.s.hit}/${d.s.n} targets</title></rect>`;
     if(n<=4||i===n-1||(n<=8?i%2===(n-1)%2:i%3===(n-1)%3))s+=`<text class="ax" x="${(bx+bw/2).toFixed(1)}" y="${H-8}" text-anchor="middle">${fmt(parseKey(d.k))}</text>`;
   });
   s+=`</svg>`;
-  const past=data.filter(d=>d.k!==cur);
+  const past=data.filter(d=>d.k!==cur&&!isStarter(d.k)); // a starter week isn't a full week, so it stays out of the average
   const avg=past.length?Math.round(past.reduce((a,d)=>a+d.s.pct,0)/past.length):null;
   $("achart").innerHTML=s+(avg==null?"":`<div class="muted" style="font-size:.84rem">Average <span class="num">${avg}%</span></div>`);
 }
@@ -2442,7 +2477,7 @@ function saveFromDraft(){
   if(err){ws.forEach((w,i)=>{if(!w.items.length)SD.open.add(i)});renderSettings();$("setsheet").scrollTop=0;flashSetErr(err);return}
   S.workouts=ws;S.exNames=exNames;S.cardio=clone(D.cardio);S.habits=clone(D.habits);S.review=clone(D.review);S.unit=D.unit==="lb"?"lb":"kg";S.custom=clone((D.custom||[]).filter(c=>c.name.trim()));
   S.prep=clone(D.prep);PREP_KEYS.forEach(k=>{if(!S.prep[k].days.length)S.prep[k].on=false});
-  if(D.setup){S.setupDone=true;const kg=suKg(D);if(kg){const k=currentKey(),w=ensureWeek(k);w.weight=Math.round(kg*1000)/1000;touch(k)}}
+  if(D.setup){S.setupDone=true;S.startedOn=keyOf(new Date());const kg=suKg(D);if(kg){const k=currentKey(),w=ensureWeek(k);w.weight=Math.round(kg*1000)/1000;touch(k)}}
   saveSettings(S);afterSettings();
 }
 function afterSettings(){

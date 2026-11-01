@@ -4,7 +4,14 @@ srv=subprocess.Popen([sys.executable,"-m","http.server","8765","-d","site"],stdo
 MOCK=open("mock-supabase.js").read();JSZIP=open("node_modules/jszip/dist/jszip.min.js").read()
 res=[]
 def ok(c,m):res.append(("PASS " if c else "FAIL ")+m);print(res[-1])
+# The suite runs on a fixed calendar (Mon 26 Oct 2026, ticking forward in real time), so the person it signs up starts
+# on a Monday and gets an ordinary full week whatever the real date (a mid-week start would be a starter week).
+# One offset for every page, so two "devices" agree on the time (sync keeps the newest change by timestamp).
+import datetime as _dt
+OFF=int((_dt.datetime(2026,10,26,12,0).timestamp()-time.time())*1000)
+CLOCK="""(()=>{const RD=Date,off=%d;class FD extends RD{constructor(...a){a.length?super(...a):super(RD.now()+off)}static now(){return RD.now()+off}};window.Date=FD})()"""%OFF
 def routes(ctx):
+  ctx.add_init_script(CLOCK)
   ctx.route("https://cdn.jsdelivr.net/**",lambda r:r.fulfill(body=MOCK,content_type="application/javascript"))
   ctx.route("https://cdnjs.cloudflare.com/**",lambda r:r.fulfill(body=JSZIP,content_type="application/javascript"))
   ctx.route("https://fonts.googleapis.com/**",lambda r:r.fulfill(body="",content_type="text/css"))
@@ -58,6 +65,7 @@ try:
   summ=pg.inner_text("#setbody");ok("Tracking Protein, Sleep" in summ and "3 weights sessions a week · Mon, Wed, Sat" in summ,"S3. Summary step lists the choices ("+summ.split(chr(10))[2][:60]+"…)")
   pg.screenshot(path="setup-5.png")
   pg.click('[data-st="set-start"]');pg.wait_for_selector("#setsheet",state="hidden");pg.wait_for_timeout(1200)
+  ok(pg.evaluate("JSON.parse(localStorage.getItem('weekly-routine.settings.v1')).startedOn")=="2026-10-26" and "starter" not in pg.inner_text(".dhead"),"SW. Finishing setup records the start day (a Monday start is an ordinary week)")
   ok(pg.locator("#today").is_visible() and pg.locator(".ttip").is_visible(),"H4b. Start lands on Today with a one-line tip")
   pg.click('[data-st="tip-x"]');ok(pg.locator(".ttip").count()==0,"   The tip can be dismissed")
   db=pg.evaluate("JSON.parse(localStorage.getItem('mock-db')||'{}')")
@@ -128,7 +136,7 @@ try:
   pg.click("#tab-strength");pg.wait_for_timeout(200);ok(pg.locator("#st-history .hrow").count()==0,"   (no workouts in their history)")
   # self sign-up with the invite list
   pg.click("#setcog");pg.click('[data-st="acct"]');pg.click('[data-st="sign-out"]');pg.wait_for_selector("#lg-email")
-  pg.click("#lg-new");pg.fill("#lg-semail","newfriend@example.com");pg.fill("#lg-spass","Own-pass-77");pg.fill("#lg-spass2","Own-pass-77");pg.click("#lg-sbtn");pg.wait_for_selector("#lg-serr",state="visible")
+  pg.click("#lg-new");pg.wait_for_timeout(150);pg.fill("#lg-semail","newfriend@example.com");pg.fill("#lg-spass","Own-pass-77");pg.fill("#lg-spass2","Own-pass-77");pg.click("#lg-sbtn");pg.wait_for_selector("#lg-serr",state="visible")
   ok("Enter the invite code" in pg.inner_text("#lg-serr"),"H18. Someone not invited can't create an account")
   pg.wait_for_timeout(5600);ok(pg.locator("#lg-serr").is_hidden(),"   The message fades away after about 5 seconds")
   pg.screenshot(path="h-signup.png")
@@ -144,7 +152,7 @@ try:
   pg.fill("#lg-email","newfriend@example.com");pg.fill("#lg-pass","Own-pass-77");pg.click("#lg-btn");pg.wait_for_selector("#tab-week",state="visible")
   ok(True,"H20. They can sign back in with the password they chose")
   pg.click("#setcog");pg.click('[data-st="acct"]');pg.click('[data-st="sign-out"]');pg.wait_for_selector("#lg-email")
-  pg.click("#lg-new");pg.fill("#lg-semail","newfriend@example.com");pg.fill("#lg-spass","Other-pass-1");pg.fill("#lg-spass2","Other-pass-1");pg.click("#lg-sbtn");pg.wait_for_selector("#lg-serr",state="visible")
+  pg.click("#lg-new");pg.wait_for_timeout(150);pg.fill("#lg-semail","newfriend@example.com");pg.fill("#lg-spass","Other-pass-1");pg.fill("#lg-spass2","Other-pass-1");pg.click("#lg-sbtn");pg.wait_for_selector("#lg-serr",state="visible")
   pg.wait_for_timeout(300);ok("already an account" in pg.inner_text("#lg-serr"),"H21. Signing up twice says to sign in instead: "+pg.inner_text("#lg-serr"))
   # delete my account
   pg.click("#lg-have");pg.fill("#lg-email","newfriend@example.com");pg.fill("#lg-pass","Own-pass-77");pg.click("#lg-btn");pg.wait_for_selector("#tab-week",state="visible")
