@@ -491,6 +491,17 @@ ok(lbl.some(t=>/Steps/.test(t)&&/10,000/.test(t))&&lbl.some(t=>/Water/.test(t)&&
  save(w);w.close();w=boot("2026-10-28T09:00:00");ok($(w,`#d-${k}-0`).checked,"   and the tick survives a reload");
  click(w,$(w,'#setcog'));click(w,$(w,'[data-scdel="0"]'));click(w,$(w,'[data-st="set-save"]'));ok(!$(w,`#d-${k}-0`),"H5. Deleting it removes it from the grid");}
 w.close();
+// --- settings from a newer version survive an older copy saving; review off quiets Progress
+store={"weekly-routine.settings.v1":JSON.stringify({startedOn:"2026-10-26",futureThing:{a:1},kind:"settings"})};w=boot("2026-10-28T12:00:00");
+click(w,$(w,"#setcog"));click(w,$(w,'[data-st="set-save"]'));
+{const S=JSON.parse(w.localStorage.getItem("weekly-routine.settings.v1"));ok(S.futureThing&&S.futureThing.a===1&&S.startedOn==="2026-10-26"&&!("kind" in S),"FS1. Saving settings keeps a setting this version doesn't know (but not the storage record's 'kind')");}
+click(w,$(w,"#setcog"));
+ok(/Recommended/.test($(w,"#setbody .rectag").textContent),"RV1. Settings tag the weekly review as Recommended");
+chg(w,$(w,"[data-srev]"),false);
+ok(/Your weight, photos and next week's focus come from the review/.test($(w,"#setbody").textContent),"   Switching it off says what it powers");
+click(w,$(w,'[data-st="set-save"]'));click(w,$(w,"#tab-progress"));
+ok($(w,"#gallery").closest(".section").hidden&&!/weight|Weight/.test($(w,"#trends-note").textContent),"RV2. Review off: no Photos section and no weight wording on Progress");
+w.close();
 // --- past weeks keep their own targets
 store={};w=boot("2026-10-28T09:00:00");
 click(w,$(w,"#prev"));click(w,$(w,"#d-protein-0"));click(w,$(w,"#d-sleep-0"));click(w,$(w,"#next"));

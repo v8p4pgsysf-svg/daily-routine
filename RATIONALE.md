@@ -109,3 +109,8 @@
 - **Deploy checks moved into CLAUDE.md's "Making a change"** so they survive handover rewrites.
 - **Trends note shortened to match Training's** (Jack: too wordy). "Weight and check-in trends appear here as you log them" / "Your weight trend appears after your second weigh-in", instead of reusing each chart's own longer empty-state text.
 - **Correction (Jack): the second-device `startedOn` risk wasn't "accepted"; it affects no one.** It needs someone with a start date (signed up after the starter-week release) who also opens a copy of the app saved before that release on another device and saves settings there. Jack has no start date, and new people's devices load the current version, so only a phone that opened the link before 1 Nov could hit it, in its first session. No change needed.
+
+## 1 Nov 2026 (weekly review off; settings from newer versions)
+
+- **With the weekly review off, Progress no longer mentions it** (Jack: no message in perpetuity). No weight wording in the Trends note, and no Photos section until there are photos. The case for the review is made where the choice is: Settings and setup show "Recommended" under Weekly review and, when it's off, "Your weight, photos and next week's focus come from the review. Off hides them." A "Recommended" pill on the right was tried first and rejected: it pushed the review day onto its own line.
+- **Settings keep keys this version doesn't know** (`SETTINGS_KNOWN` in `normaliseSettings`), so an older copy of the app on another device can't drop a setting a newer version added (the `startedOn` case). Keys this version reads are still validated; the storage record's own `kind`/`id` are ignored. It protects settings added from now on; copies older than this release still drop unknown keys.

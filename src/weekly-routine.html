@@ -405,6 +405,7 @@ button.trow{width:100%;background:none;border-left:0;border-right:0;border-botto
 .trow .cb{width:36px;height:36px}
 .trow .cb .box{width:26px;height:26px;border-radius:7px}
 .revpill{display:inline-flex;align-items:center;border:1px solid var(--line-strong);background:var(--surface);border-radius:99px;padding:2px 10px;font-size:.76rem;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap}
+.rectag{display:block;font-size:.74rem;font-weight:600;color:var(--green)} /* a sub-line under the row name, like habit rows' "5+ a day" */
 .revpill.done{background:var(--green);border-color:var(--green);color:var(--green-ink)}
 .trow .revpill{width:36px;justify-content:center;padding:2px 0;font-size:.68rem}
 .dgrid .slotwide{display:flex;align-items:center;padding-left:6px}
@@ -1090,6 +1091,8 @@ const LS_SET="weekly-routine.settings.v1";
 const clone=o=>JSON.parse(JSON.stringify(o));
 const intIn=(v,lo,hi,d)=>{const n=Math.round(+v);return isFinite(n)&&n>=lo&&n<=hi?n:d};
 const dayList=a=>[...new Set((Array.isArray(a)?a:[]).map(Number).filter(d=>Number.isInteger(d)&&d>=0&&d<7))];
+// settings this version reads (checked above) plus the storage record's own fields, which aren't settings
+const SETTINGS_KNOWN=new Set(["v","updatedAt","exNames","workouts","cardio","habits","prep","setupDone","startedOn","custom","unit","review","kind","id"]);
 function normaliseSettings(o){
   const D=DEFAULT_SETTINGS,S=clone(D);if(!o||typeof o!=="object")return S;
   S.updatedAt=+o.updatedAt||0;
@@ -1115,6 +1118,9 @@ function normaliseSettings(o){
     .map(c=>({k:c.k,name:c.name.trim().slice(0,24),sub:typeof c.sub==="string"?c.sub.trim().slice(0,24):"",target:intIn(c.target,1,7,7),on:c.on!==false}));
   S.unit=o.unit==="lb"?"lb":"kg";
   if(o.review&&typeof o.review==="object"){S.review.on=o.review.on!==false;S.review.day=intIn(o.review.day,0,6,6)}
+  // settings added by a later version are kept as they are, so an older copy of the app (another device, not yet
+  // updated) doesn't drop them when it saves. Keys this version reads are always the checked values above
+  for(const k in o)if(!SETTINGS_KNOWN.has(k)&&/^[a-zA-Z][a-zA-Z0-9]{0,30}$/.test(k)&&o[k]!==undefined)S[k]=o[k];
   return S;
 }
 let SETTINGS=DEFAULT_SETTINGS;
@@ -1676,7 +1682,7 @@ function foldProgress(){
     $(ids[0]).closest(".charts").hidden=e.length===ids.length; // nothing left in the grid: the note sits under the heading
     note.closest(".section").hidden=e.length===ids.length&&!txt};
   fold(["wchart","achart"],"trends-note",e=>{const W=e.includes("wchart"),A=e.includes("achart");
-    if(W&&!SETTINGS.review.on)return "Weight is logged in the weekly review, which is off in settings."+(A?" Your check-in trend appears here as you log.":"");
+    if(W&&!SETTINGS.review.on)return A?"Your check-in trend appears here as you log.":""; // weight comes from the review, which is off
     return W&&A?"Weight and check-in trends appear here as you log them.":W?"Your weight trend appears after your second weigh-in.":A?"Your check-in trend appears here as you log.":""});
   const hasW=SETTINGS.workouts.length>0,hasC=SETTINGS.cardio.target>0;
   const P={pschart:hasW&&["workouts per week","Workouts per week appear here after your first workout."],
@@ -1868,6 +1874,7 @@ function undoRemove(){if(!undoPh)return;const {k,i,p,t}=undoPh;clearTimeout(t);u
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")finishRemove()});
 function renderGallery(){
   const keys=Object.keys(weeks).filter(k=>weeks[k].photos.length).sort().reverse();
+  $("gallery").closest(".section").hidden=!keys.length&&!SETTINGS.review.on; // photos come from the review: nothing to say while it's off
   if(!keys.length){$("gallery").innerHTML=`<div class="gempty slim">${SETTINGS.review.on?"No photos yet. Add them in the weekly review.":"No photos yet. Photos are added in the weekly review, which is switched off in settings."}</div>`;return}
   $("gallery").innerHTML=keys.map(k=>{const w=weeks[k];
     const nW=workoutsByDay(k).reduce((a,l)=>a+l.length,0);
@@ -2197,14 +2204,14 @@ const dayChips=(grp,sel)=>`<div class="daychips" role="group">${DAYS.map((d,i)=>
 const swRow=(attr,on,label,extra)=>`<div class="shrow"><label class="sw"><input type="checkbox" ${attr} ${on?"checked":""} aria-label="${esc(label)}"><span></span></label><div class="grow"><b>${esc(label)}</b>${extra||""}</div></div>`;
 function secPrep(D){let h="";
   const daysShort=a=>a.length?[...a].sort((x,y)=>x-y).map(d=>DAYS[d]).join(" · "):"Pick days";
-  const pRow=(k,label,on,attr,days,chips,offNote)=>{const open=on&&SD.pexp===k;
-    return `<div class="shrow inl pinl"><label class="sw"><input type="checkbox" ${attr} ${on?"checked":""} aria-label="${esc(label)}"><span></span></label><b>${esc(label)}</b>
+  const pRow=(k,label,on,attr,days,chips,offNote,tag)=>{const open=on&&SD.pexp===k;
+    return `<div class="shrow inl pinl"><label class="sw"><input type="checkbox" ${attr} ${on?"checked":""} aria-label="${esc(label)}"><span></span></label><b>${esc(label)}${tag?`<span class="rectag">${tag}</span>`:""}</b>
       ${on?`<button type="button" class="pdays${days.length?"":" none"}" data-pexp="${k}" aria-expanded="${open}" aria-label="${esc(label)} days: ${esc(daysShort(days))}. Change">${esc(daysShort(days))}<span class="pchev" aria-hidden="true"></span></button>`:`<span class="pdays off">Off</span>`}</div>
       ${open?chips:""}${!on&&offNote?`<div class="ts" style="margin:-4px 0 0">${offNote}</div>`:""}`};
   h+=`<div class="panel shab">
     ${PREP_KEYS.map((k,i)=>`${i?'<div class="shsep"></div>':""}${pRow(k,PREP_INFO[k].name,D.prep[k].on,`data-sprep="${k}"`,D.prep[k].days,dayChips(k,D.prep[k].days),"")}`).join("")}
     <div class="shsep"></div>
-    ${pRow("review","Weekly review",D.review.on,"data-srev",[D.review.day],`<div class="daychips" role="group" aria-label="Review day">${DAYS.map((d,i)=>`<button type="button" class="dchip" aria-pressed="${D.review.day===i}" data-srevday="${i}" aria-label="Review on ${DAYS_LONG[i]}">${d}</button>`).join("")}</div>`,"Off hides the review, including weight and photos.")}
+    ${pRow("review","Weekly review",D.review.on,"data-srev",[D.review.day],`<div class="daychips" role="group" aria-label="Review day">${DAYS.map((d,i)=>`<button type="button" class="dchip" aria-pressed="${D.review.day===i}" data-srevday="${i}" aria-label="Review on ${DAYS_LONG[i]}">${d}</button>`).join("")}</div>`,"Your weight, photos and next week's focus come from the review. Off hides them.","Recommended")}
   </div>`;
   return h}
 function secCounts(D){const ct=D.cardio.target;

@@ -11,10 +11,11 @@ Polish the hosted Daily Routine app (GitHub Pages + Supabase) so Jack uses it da
 - Today: "Also today" lines share one pattern (name, To do/Done/Late, ›; whole line tappable); prep is ticked in the grid only; the grid's Review row is gone; the review panel is closed by default.
 - Starter week for new people (targets fitted to the days left; Starter review; frozen once past), and the late-review nudge on the day after review day.
 - Early days: empty charts fold into one note per section on Progress; Training shows one note until something is logged.
+- Weekly review shown as Recommended in Settings/setup; Progress says nothing about it when it's off. Settings keep keys from newer versions.
 - Tests: the app suite and all hosted suites run on fixed calendars; hosted setup is one command (`tests/hosted/setup.sh`); flaky sign-up and photo-encryption races fixed.
 
 ## Testing
-- App: `npm i jsdom` somewhere, then `NODE_PATH=<that>/node_modules node tests/app.test.js src/weekly-routine.html` (209 checks).
+- App: `npm i jsdom` somewhere, then `NODE_PATH=<that>/node_modules node tests/app.test.js src/weekly-routine.html` (213 checks).
 - Hosted: `tests/hosted/setup.sh <folder>` then run the suites there (`run.py` 57, `photo-encryption.py` 27, `feedback.py` 20, `forgot-password.py` 18, `home-screen.py` 17, `review-photos.py` 9, `settings-workouts.py` 7; sweeps `layout-review.py`, `screens-sweep.py`). `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`.
 - Opening `src/weekly-routine.html` directly shows the photo viewer overlay, because only the build adds `[hidden]{display:none!important}`. Add that style when screenshotting the source.
 - Claude can't reach the live site or Supabase from the session; Jack checks live behaviour on his phone.
