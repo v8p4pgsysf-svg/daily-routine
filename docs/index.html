@@ -1,5 +1,5 @@
 <!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<meta name="app-version" content="20261101103429">
+<meta name="app-version" content="20261101104254">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Daily Routine</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -1712,7 +1712,9 @@ function foldProgress(){
     ids.forEach(id=>$(id).closest(".panel").hidden=e.includes(id));note.innerHTML=txt;note.hidden=!txt;
     $(ids[0]).closest(".charts").hidden=e.length===ids.length; // nothing left in the grid: the note sits under the heading
     note.closest(".section").hidden=e.length===ids.length&&!txt};
-  fold(["wchart","achart"],"trends-note",e=>e.map(id=>$(id).firstElementChild.innerHTML).join(" "));
+  fold(["wchart","achart"],"trends-note",e=>{const W=e.includes("wchart"),A=e.includes("achart");
+    if(W&&!SETTINGS.review.on)return "Weight is logged in the weekly review, which is off in settings."+(A?" Your check-in trend appears here as you log.":"");
+    return W&&A?"Weight and check-in trends appear here as you log them.":W?"Your weight trend appears after your second weigh-in.":A?"Your check-in trend appears here as you log.":""});
   const hasW=SETTINGS.workouts.length>0,hasC=SETTINGS.cardio.target>0;
   const P={pschart:hasW&&["workouts per week","Workouts per week appear here after your first workout."],
     pccchart:hasC&&["cardio minutes per week","Cardio minutes per week appear here after your first cardio session."],

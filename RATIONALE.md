@@ -107,3 +107,4 @@
 - **Mid-week starters get the Starter week line instead of the first-day tip** (two intro lines stacked on day one). Monday starters have no starter week and keep the tip.
 - **All hosted suites share one fixed clock (`tests/hosted/clock.py`) and are set up with `tests/hosted/setup.sh`.** The photo-encryption stall was the same race as the sign-up one (typing within 30 ms of the forgot-password card moving focus); the tests now pause 100 ms after those steps. The exercise-menu check (only the programme's exercises) is back, with a logged workout.
 - **Deploy checks moved into CLAUDE.md's "Making a change"** so they survive handover rewrites.
+- **Trends note shortened to match Training's** (Jack: too wordy). "Weight and check-in trends appear here as you log them" / "Your weight trend appears after your second weigh-in", instead of reusing each chart's own longer empty-state text.
