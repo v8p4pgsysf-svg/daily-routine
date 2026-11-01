@@ -1739,7 +1739,7 @@ function renderMetrics(){
   if($("revsum")&&!$("revbody").hidden)setTimeout(renderRevSum,0);
   const w=getWeek(viewKey),s=stats(w),tw=stats(getWeek(currentKey()));
   $("targetshit").textContent=tw.hit;
-  $("pct").textContent=tw.pct+"%";$("pct").nextElementSibling.textContent=isStarter(currentKey())?" starter week":" of target";
+  $("pct").textContent=tw.pct+"%";$("pct").nextElementSibling.textContent=" of target"; // a starter week says so on the Starter week line below
   $("ticks").textContent=tw.done+"/"+tw.total;
   $("pctbar").style.width=tw.pct+"%";
   const HBm=habitsFor(w);document.querySelectorAll("[data-ct]").forEach(el=>{const h=HBm.find(x=>x.k===el.dataset.ct);if(!h)return;
@@ -2695,7 +2695,10 @@ function stAction(a){
   else if(act==="start-today"){const dr=currentDraft();showTab("strength");try{location.hash="strength"}catch(e){}
     if(dr)openSession(dr.id);else{stType=a.dataset.type;startSession(stType,keyOf(new Date()))}}
   else if(act==="goto-strength"){showTab("strength");try{location.hash="strength"}catch(e){}window.scrollTo({top:0})}
-  else if(act==="rev-complete"||act==="rev-undo"){ensureWeek(viewKey).review[0]=act==="rev-complete";touch(viewKey);renderAll()}
+  else if(act==="rev-complete"||act==="rev-undo"){const done=act==="rev-complete";ensureWeek(viewKey).review[0]=done;touch(viewKey);renderAll();
+    // completing the review folds it away (the header shows Done; tap to view or undo)
+    if(done&&revIsOpen()){$("revtoggle").setAttribute("aria-expanded","false");animClose($("revbody"),()=>{revOpen=false;renderRevHeader();
+      const h=$("revtoggle");if(h&&h.getBoundingClientRect().top<0&&h.scrollIntoView)h.scrollIntoView({block:"start",behavior:reducedMotion()?"auto":"smooth"})})}}
   else if(act==="new-rc"&&HOST&&HOST.newRecoveryCode)HOST.newRecoveryCode().catch(()=>{});
   else if(act==="feedback")openFeedback();
   else if(act==="fb-cancel")closeFeedback();

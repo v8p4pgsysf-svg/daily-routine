@@ -153,3 +153,9 @@
 
 - **"Weights" is the word for weight training everywhere** (Jack agreed Claude's proposal; Jack: it means weight training specifically, cardio is separate). Planned-day buttons Gym → Weights, the grid row and review summary Strength → Weights, Progress's chart "Strength workouts per week" → "Weights sessions per week", and messages ("Pick 3 weights days"). Kept: "Workout A/B/C" as the name of a weights session (cardio is always "Cardio"/"Log cardio"), "Training" as the tab (holds both), and "Strength index" (it measures how strong you're getting, not sessions). Exports keep their old headings. Planned-day buttons are slightly narrower at 320px so "Workout C" still fits beside "Weights".
 - **Meal prep step: the intro is just "Optional reminders."; each prep row says "Days you batch-prepare lunches/breakfasts"** (Jack). The old "Tap the days on the right to change them" is dropped: the row hint says what the days mean, and the day button looks tappable. The weekly review keeps its green "Recommended" and stays on by default. The hint uses a non-breaking hyphen so "batch-prepare" never splits at 320px.
+
+## 1 Nov 2026 (review folds away; starter week header)
+
+- **Completing the weekly review folds the panel closed** (Jack). The header shows Done and "Completed · tap to view"; reopening it is where Mark not done lives. If the panel's header has scrolled off the top, the page brings it back into view.
+- **Reversal: the starter week header says "x% of target" like every other week** (Jack; Claude agreed). "x% starter week" was chosen this morning so smaller numbers explained themselves, but it read unclearly, and the Starter week line directly underneath already says it.
+- **"Workout A/B/C" vs "Weights A/B/C" discussed**; Claude's view was to keep "Workout" (see the chat). Jack to decide.

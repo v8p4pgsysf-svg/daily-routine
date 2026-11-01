@@ -142,6 +142,8 @@ type(w,$(w,"#way"),"Late nights");type(w,$(w,"#improve"),"Bed by 11");
 const hits=()=>+$(w,"#revsum .sumdl dd").textContent.split("/")[0];
 ok(!$(w,'[data-ct="review"]')&&!/Review/.test($(w,"#daily").textContent),"S2b. The grid has no Review row (the review panel shows it)");
 const h0=hits();click(w,$(w,'[data-st="rev-complete"]'));
+ok($(w,"#revbody").hidden&&$(w,"#revtoggle").getAttribute("aria-expanded")==="false"&&/Completed · tap to view/.test($(w,"#revsub").textContent),"RC1. Completing the review folds it away; the header says Completed · tap to view");
+click(w,$(w,"#revtoggle"));
 ok(hits()===h0+1&&/Done/.test($(w,"#revpillh").textContent)&&/Done/.test($(w,'#today [data-goto="review-cur"] .revpill').textContent),"S3. Completing the review counts as a target hit and shows Done in the panel and Today");
 ok(!/Weight, photos/.test($(w,"#today").textContent)&&!$(w,"#today .btn:not(.primary)")&&$$(w,"#today .trow").every(r=>r.tagName==="BUTTON"&&r.lastElementChild.classList.contains("chev")&&r.querySelector(".tbody + .revpill")),"   Every Today line is the same: name, then To do/Done and an arrow on the right, no Open button");
 click(w,$(w,'[data-st="rev-undo"]'));
@@ -309,7 +311,7 @@ const SETK="weekly-routine.settings.v1";
 store={[SETK]:JSON.stringify({startedOn:"2026-10-29"})}; // a Thursday
 w=boot("2026-10-29T12:00:00");
 const ct=k=>{const e=$(w,`[data-ct="${k}"]`);return e&&e.textContent};
-ok($(w,"#pct").nextElementSibling.textContent===" starter week"&&/Starter week\s*4 days left$/m.test($(w,"#today .tfocus").textContent)&&!/full weeks/.test($(w,"#today").textContent),"SW1. Joining on Thursday: header says starter week; Today says 4 days left (no 'then full weeks')");
+ok($(w,"#pct").nextElementSibling.textContent===" of target"&&/Starter week\s*4 days left$/m.test($(w,"#today .tfocus").textContent)&&!/full weeks/.test($(w,"#today").textContent),"SW1. Joining on Thursday: header says % of target; the Starter week line says 4 days left (no 'then full weeks')");
 ok(!$(w,"#d-protein-0")&&!$(w,"#d-protein-2")&&$(w,"#d-protein-3")&&ct("protein")==="0/4","SW2. Days before they joined are dots; protein counts out of 4");
 ok(ct("strength")==="0/1"&&ct("cardio")==="0/1"&&ct("af")==="0/3"&&/3\+ days/.test($(w,"#daily").textContent)&&ct("breakfast")==="0/1"&&!$(w,"#d-breakfast-1"),"SW3. Targets fit the days left: strength 0/1 (Sat), cardio 0/1 (Sun), no alcohol 3+ days, breakfast prep 0/1 (Sun only)");
 $$(w,"#daily input[type=checkbox][data-k]").filter(e=>["protein","fv","sleep","af"].includes(e.dataset.k)).forEach(e=>click(w,e));
@@ -331,7 +333,7 @@ ok(ct("strength")==="—"&&/From Monday/.test($(w,"#daily").textContent)&&ct("pr
 w.close();
 const starts=["2026-10-26","2026-10-27","2026-10-28","2026-10-29","2026-10-30","2026-10-31","2026-11-01"];
 ok(starts.every((d,i)=>{store={[SETK]:JSON.stringify({startedOn:d})};const v=boot(d+"T12:00:00");
-  const r=v.document.querySelector('[data-ct="protein"]').textContent===`0/${7-i}`&&v.document.querySelector("#pct").nextElementSibling.textContent===(i?" starter week":" of target")&&/^\d+%$/.test(v.document.querySelector("#pct").textContent);v.close();return r}),
+  const r=v.document.querySelector('[data-ct="protein"]').textContent===`0/${7-i}`&&v.document.querySelector("#pct").nextElementSibling.textContent===" of target"&&/^\d+%$/.test(v.document.querySelector("#pct").textContent);v.close();return r}),
   "SW9. Every start day works: protein out of the days left; a Monday start is an ordinary week");
 store={[SETK]:JSON.stringify({startedOn:"2026-10-29"})};w=boot("2026-10-30T12:00:00");
 click(w,$(w,"#setcog"));click(w,$(w,'[data-st="set-save"]'));
