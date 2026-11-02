@@ -219,3 +219,7 @@
 - **What's on it:** workout letter, date, duration, set count, then each exercise with logged sets. Exercises not done are left off. "New best" means a heavier top set than any earlier workout of that lift (assisted lifts excluded, since less assistance isn't heavier). Assisted sets say "assist" so friends don't read assistance as weight lifted; one-sided lifts say "Reps per leg". Left off: notes, bodyweight, weekly %, photos, habits.
 - **Follows the person's light or dark look**, rather than one fixed design, so it matches what they see.
 - **Weights workouts only for now**; Jack didn't say on cardio, so a cardio card waits until asked.
+- **Footer says "Made with Weekly Routine" plus the tagline** (Jack: a bigger shout-out for people who like it). No printed address: the github.io one is too long to read or type; revisit with the own domain.
+- **The app's link goes along with the picture** in the share sheet (Messages and WhatsApp keep it; Instagram drops it). If a target only accepts files, the picture goes alone.
+- **No QR code** (Jack). Considered for Instagram, where the link is dropped, but it would point at the github.io address and lead strangers to an invite-only sign-in.
+- **Open: what a stranger who follows the link can do** (request an invite, or a line saying to ask whoever shared it). Sign-up is still invite-only; decide with the domain.
