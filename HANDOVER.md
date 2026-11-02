@@ -16,6 +16,8 @@ Get the hosted app (GitHub Pages + Supabase) ready for Jack to invite his girlfr
 - Share card: an image of a finished workout, every set, from the saved message, history and the saved-workout screen; footer "Made with Weekly Routine"; the link travels alongside where the app keeps it.
 
 ## To check on Jack's phone
+- Jack once saw two Training history entries open together; the code allows one, and a test with two workouts agreed. Ask what he tapped (View workout from Today? the scorecard? Share?) and reproduce.
+- `photo-encryption.py` timed out once clicking setup's Start (passed three reruns); if it recurs, wait for the button to be enabled before clicking.
 - Share a workout once: Save Image and Instagram should still appear in the share sheet now that a link goes with the picture. If either is missing, share the picture alone (drop `url`/`text` in `shareWorkout`).
 
 ## Testing
