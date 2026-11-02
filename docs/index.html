@@ -1,5 +1,5 @@
 <!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<meta name="app-version" content="20261102181029">
+<meta name="app-version" content="20261102184416">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Weekly Routine</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -1090,10 +1090,10 @@ const DAY_ITEMS={0:[["strength",0,"Strength A"]],1:[["cardio",0,"Cardio"]],2:[["
    and gets the right weight step and labels everywhere (workouts, progress dropdown, key lifts, lift status, exports).
    Never change an id once people have logged it (history is keyed on it); renaming the name is fine.
    id · name · short: compact label for the key-lifts table and setup's programme summary (every entry has one: same words, sentence case,
-     dropping words that only qualify, like Barbell, Seated, Machine, 45°; Dumbbell → DB; a test checks it) · step: kg to add when ready to progress (default 2.5) · perLeg: one-sided lift, reps shown "per leg"
+     dropping words that only qualify, like Seated, Machine, Standing, Overhead, 45°; Barbell → BB, Dumbbell → DB; a test checks it) · step: kg to add when ready to progress (default 2.5) · perLeg: one-sided lift, reps shown "per leg"
    assisted: the weight is help (assisted pull-ups), so progress means less of it */
 const EXERCISE_CATALOG=[
-  {id:"squat",name:"Barbell Squat",short:"Squat"},
+  {id:"squat",name:"Barbell Squat",short:"BB squat"},
   {id:"bench",name:"Bench Press",short:"Bench press"},
   {id:"cable_row",name:"Seated Cable Row",short:"Cable row"},
   {id:"leg_curl",name:"Seated Leg Curl",short:"Leg curl"},
@@ -1107,7 +1107,7 @@ const EXERCISE_CATALOG=[
   {id:"leg_press",name:"Leg Press",short:"Leg press"},
   {id:"db_shoulder_press",name:"Seated Dumbbell Shoulder Press",short:"DB shoulder press",step:1},
   {id:"cs_row",name:"Chest-Supported Row",short:"Chest-supported row"},
-  {id:"oh_triceps_ext",name:"Overhead Triceps Extension",short:"Overhead triceps extension",step:1},
+  {id:"oh_triceps_ext",name:"Overhead Triceps Extension",short:"Triceps extension",step:1},
   {id:"calf_raise",name:"Standing Calf Raise",short:"Calf raise"},
   {id:"leg_extension",name:"Leg Extension",short:"Leg extension"},
   {id:"cable_fly",name:"Cable Chest Fly",short:"Cable chest fly"},
