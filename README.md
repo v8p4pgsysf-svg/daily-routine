@@ -1,4 +1,6 @@
-# Daily Routine
+# Weekly Routine
+
+Plan your week. Train and tick off habits. Review how it went.
 
 A personal health and fitness tracker that runs as a home-screen web app.
 

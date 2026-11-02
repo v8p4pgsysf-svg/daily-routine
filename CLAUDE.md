@@ -1,6 +1,6 @@
-# Daily Routine — notes for Claude
+# Weekly Routine — notes for Claude
 
-A personal health and fitness tracker (daily check-ins, weekly review, strength and cardio logging, progress charts) used by Jack, and optionally his girlfriend and friends. It runs as a home-screen web app.
+Weekly Routine (renamed from Daily Routine on 2 Nov 2026; the repo and URL keep `daily-routine`, since renaming would break installs) is a personal health and fitness tracker (daily check-ins, weekly review, strength and cardio logging, progress charts) used by Jack, and optionally his girlfriend and friends. It runs as a home-screen web app.
 
 ## How it fits together
 - `src/weekly-routine.html` is the single source of the app. It began as a Claude artifact, so it still talks to storage through a `window.claude.use(...)` interface. That interface is now supplied by `docs/host.js`. The old Claude artifact version is retired (31 Oct 2026), so don't republish it.
@@ -29,7 +29,8 @@ Each of these lives in one list in `src/weekly-routine.html`; everything else is
 
 ## Habits, setup and settings
 - Weights are stored in kg. `settings.unit` (kg/lb) only changes display and input; use `liftU`/`fromU`/`fmtLift`/`fmtBody`. Exports stay in kg.
-- Setup asks for a weight first. It's saved as that week's weigh-in and sets the protein target (1.6 g per kg, rounded to 5 g).
+- Setup opens on a **Welcome page** (step 1 of `SETUP_STEPS`): the app's story as three points from `WELCOME_POINTS` ("Plan your week", "Train and tick off habits", "Review how it went"), all closed, each opening to say what it means in the app. The button at the bottom (pinned, `.swfoot`, so it doesn't move as points open) says Next and opens each point in turn (`welNext`); once all three have been opened (by Next or by hand) it becomes Get started (`welBtn`). No Next in the top bar and no dots on that page; the dots count the five steps after it. The sign-in card carries the same story as one line under "Weekly Routine".
+- Setup then asks for a weight first. It's saved as that week's weigh-in and sets the protein target (1.6 g per kg, rounded to 5 g).
 - The settings page and the first-time setup share pieces: `habitRows`, `secCounts`, `secGrid`, `secLists`, `secPrep` and `secPresets`.
 - Setup runs once, in the hosted app only. It starts after cloud data has loaded, and only when the person has no saved settings, no data and no `setupDone` marker. Finishing setup saves `setupDone: true` with their settings.
   - New people start from neutral defaults (`newcomerDraft`). Jack's routine stays the default only for the Claude version.

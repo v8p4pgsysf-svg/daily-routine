@@ -1,4 +1,4 @@
-# Daily Routine: setting up the hosted version
+# Weekly Routine: setting up the hosted version
 
 > **Already set up** (31 Oct 2026): the app is live at https://v8p4pgsysf-svg.github.io/daily-routine/ and published from the `docs/` folder of this repository. This guide is kept for reference: rebuilding from scratch, or helping someone set up their own copy.
 
@@ -67,7 +67,7 @@ You'll use two free accounts:
     - Branch: **main**, folder **/docs** (this repository keeps the live app in `docs/`; a fresh repository with just the app's files at the top level uses **/ (root)**)
     - **Save**
 
-12. **Wait a minute or two**, then open your address from step 2. You should see the Daily Routine sign-in screen. If you get a 404, give it another minute and refresh.
+12. **Wait a minute or two**, then open your address from step 2. You should see the Weekly Routine sign-in screen. If you get a 404, give it another minute and refresh.
 
 ## Part D: Move your data, then install on your iPhone (about 5 minutes)
 
