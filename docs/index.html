@@ -1,5 +1,5 @@
 <!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<meta name="app-version" content="20261102181029">
+<meta name="app-version" content="20261102183726">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Weekly Routine</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -165,7 +165,9 @@ button{font:inherit;color:inherit}
 .hexr{display:flex;justify-content:space-between;gap:4px 14px;flex-wrap:wrap;padding:7px 0;border-top:1px solid var(--line);font-size:.86rem}
 .hexr:first-child{border-top:0}
 .hexn{font-weight:600;min-width:0}.exnl{display:block;font-size:.78rem;font-weight:500;margin-top:1px}
-.hexr{display:block}.hexs{display:block;margin-top:2px;font-size:.84rem;color:var(--muted)} /* name, then the sets as one line of small text (wraps between sets, never inside one) */
+/* name and sets share a line when they fit (the short label is used only if the full name won't); otherwise the sets drop below, still on the right */
+.hexr{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;column-gap:14px}.hexn{flex:0 1 auto}
+.hexs{margin-left:auto;text-align:right;font-size:.84rem;color:var(--muted)}
 .hset{white-space:nowrap}.hskip{color:var(--muted);font-size:.84rem} /* skipped exercises share one line at the end */
 .hexs{color:var(--muted)}
 .hdl{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin:0}
@@ -1090,10 +1092,10 @@ const DAY_ITEMS={0:[["strength",0,"Strength A"]],1:[["cardio",0,"Cardio"]],2:[["
    and gets the right weight step and labels everywhere (workouts, progress dropdown, key lifts, lift status, exports).
    Never change an id once people have logged it (history is keyed on it); renaming the name is fine.
    id · name · short: compact label for the key-lifts table and setup's programme summary (every entry has one: same words, sentence case,
-     dropping words that only qualify, like Barbell, Seated, Machine, 45°; Dumbbell → DB; a test checks it) · step: kg to add when ready to progress (default 2.5) · perLeg: one-sided lift, reps shown "per leg"
+     dropping words that only qualify, like Seated, Machine, Standing, Overhead, 45°; Barbell → BB, Dumbbell → DB; a test checks it) · step: kg to add when ready to progress (default 2.5) · perLeg: one-sided lift, reps shown "per leg"
    assisted: the weight is help (assisted pull-ups), so progress means less of it */
 const EXERCISE_CATALOG=[
-  {id:"squat",name:"Barbell Squat",short:"Squat"},
+  {id:"squat",name:"Barbell Squat",short:"BB squat"},
   {id:"bench",name:"Bench Press",short:"Bench press"},
   {id:"cable_row",name:"Seated Cable Row",short:"Cable row"},
   {id:"leg_curl",name:"Seated Leg Curl",short:"Leg curl"},
@@ -1107,7 +1109,7 @@ const EXERCISE_CATALOG=[
   {id:"leg_press",name:"Leg Press",short:"Leg press"},
   {id:"db_shoulder_press",name:"Seated Dumbbell Shoulder Press",short:"DB shoulder press",step:1},
   {id:"cs_row",name:"Chest-Supported Row",short:"Chest-supported row"},
-  {id:"oh_triceps_ext",name:"Overhead Triceps Extension",short:"Overhead triceps extension",step:1},
+  {id:"oh_triceps_ext",name:"Overhead Triceps Extension",short:"Triceps extension",step:1},
   {id:"calf_raise",name:"Standing Calf Raise",short:"Calf raise"},
   {id:"leg_extension",name:"Leg Extension",short:"Leg extension"},
   {id:"cable_fly",name:"Cable Chest Fly",short:"Cable chest fly"},
@@ -2956,7 +2958,7 @@ function histDetail(s){
   }
   const doneIt=s.items.filter(it=>it.log.some(l=>l.done)),skipped=s.items.filter(it=>!it.log.some(l=>l.done));
   return `<div class="hdetail"><div class="hex">${doneIt.map(it=>{const d=it.log.filter(l=>l.done);
-      return `<div class="hexr"><span class="hexn">${esc(exName(it))}</span><span class="hexs">${d.map(l=>`<span class="hset">${esc(setTxt(l))}</span>`).join(" · ")}</span></div>`}).join("")}${skipped.length?`<div class="hexr hskip">Not done: ${skipped.map(it=>esc(exName(it))).join(", ")}</div>`:""}</div>
+      return `<div class="hexr"><span class="hexn" data-full="${esc(exName(it))}" data-short="${esc((EX_BY_ID[it.ex]&&EX_BY_ID[it.ex].short)||exName(it))}">${esc(exName(it))}</span><span class="hexs">${d.map(l=>`<span class="hset">${esc(setTxt(l))}</span>`).join(" · ")}</span></div>`}).join("")}${skipped.length?`<div class="hexr hskip">Not done: ${skipped.map(it=>esc(exName(it))).join(", ")}</div>`:""}</div>
     ${s.notes?`<div class="hnotes">${esc(s.notes)}</div>`:""}
     <div class="row"><button class="btn" data-edit="${s.id}">Edit</button><button class="btn" data-share="${s.id}">Share</button><button class="btn ghost" data-st="hdel" data-id="${s.id}">Delete</button></div></div>`;
 }
@@ -2974,7 +2976,16 @@ function renderStHistory(){
       line=`<span class="htype">${s.type}</span><span class="hdate">${dateLabel(s.date)}</span><span class="hsum">Workout ${s.type}${s.notes?" · notes":""}</span><span class="hsets num">${p.d}/${p.t}${s.accMs?" · "+durTxt(s):""}</span>`;}
     return `<div class="hitem${open?" open":""}" id="h-${s.id}"><button class="hrow" data-hist="${s.id}" aria-expanded="${open}" aria-label="${isCardio(s)?esc(s.ctype):"Workout "+s.type}, ${dateLabel(s.date)}. ${open?"Hide":"Show"} detail.">${line}</button>${open?histDetail(s):""}</div>`}).join("")}</div>
     ${pages>1?`<div class="hpager"><button class="btn" data-st="newer" ${histPage===0?"disabled":""}>‹ Newer</button><span class="muted num">${from+1}–${Math.min(from+HIST_N,list.length)} of ${list.length}</span><button class="btn" data-st="older" ${histPage>=pages-1?"disabled":""}>Older ›</button></div>`:""}`;
+  fitHistNames();
 }
+// an open history entry: a name and its sets share a line if they fit; if not, the short label is tried; if that still
+// doesn't fit, the full name stays and the sets drop to the line below (right-aligned)
+function fitHistNames(){
+  document.querySelectorAll("#st-history .hexr").forEach(r=>{const n=r.querySelector(".hexn[data-full]"),s=r.querySelector(".hexs");if(!n||!s)return;
+    n.textContent=n.dataset.full;const wraps=()=>s.offsetTop>n.offsetTop+4;
+    if(!wraps()||n.dataset.short===n.dataset.full)return;
+    n.textContent=n.dataset.short;if(wraps())n.textContent=n.dataset.full})}
+window.addEventListener("resize",()=>{if(histOpen)fitHistNames()});
 function exHistory(ex){
   return doneSessions().map(s=>{const sets=[];s.items.filter(it=>it.ex===ex).forEach(it=>it.log.forEach(l=>{if(l.done&&l.r!=null&&l.r>0)sets.push(l)}));return {s,sets}}).filter(x=>x.sets.length);
 }
@@ -3108,6 +3119,7 @@ function showTab(name){
   if(!TABS.includes(name)||(name==="strength"&&!trainingTab()))name="week";
   if($("st-msg"))stMsg("");
   if(name!=="strength"&&histOpen){histOpen=null;renderStHistory()} // leaving Training folds an open history entry
+  if(name==="strength")setTimeout(fitHistNames,0); // names can only be measured once the tab is showing
   TABS.forEach(t=>{$("tab-"+t).setAttribute("aria-selected",String(t===name));$("pane-"+t).hidden=t!==name});
   
   if(name==="progress"){renderCharts();renderStrengthTrends()}
