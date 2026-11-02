@@ -193,3 +193,11 @@
 
 - **Exercise progress's "View an exercise" menu lists only lifts with logged sets** (Jack). It listed the whole programme with "· no data yet" on most of them, which read as clutter once some lifts had data; an empty lift has nothing to show anyway. "Building data: …" above it is unchanged (those lifts have data, just not enough for a status).
 - **"Flat Dumbbell Bench Press" → "Flat Dumbbell Chest Press" and "Incline Dumbbell Press" → "Incline Dumbbell Chest Press"** (Jack: the first isn't what it's called, and the two should match). Short names "DB chest press" / "Incline DB chest press". Ids unchanged (`flat_db_bench`, `incline_db_press`), so programmes and history keep working and show the new names. At 320px the longer short name wraps to two lines in the key-lifts table, like other long names.
+
+## 2 Nov 2026 (training tidy-ups)
+
+- **Exercise progress says "Building data on N lifts"** (Jack: the list of names was clutter; Claude suggested keeping a count).
+- **Last time's extra sets are shown, not carried forward** (Jack). If last time had more sets than today's rows, the workout screen says "Last time you also did Set 4: 40×8" above + Set; + Set adds the row with last time's numbers. Carrying extras forward automatically was rejected: a one-off extra would quietly become the plan. "Weight goes up" still looks only at planned sets.
+- **Swap and added notes sit on their own line** ("Instead of Bench Press", "Added") under the name, in history and on the workout screen. Inline, a long note pushed that row's sets onto a second, left-aligned line. "Swapped for" was also ambiguous about which way round the swap went. Below 360px every history row puts its sets under the name (right-aligned), since four sets squeezed names into three lines.
+- **Today's done lines drop "counted in this week's weights/cardio target"** (Jack): the rows below already show the count.
+- **Planned next: a share card** (an image of the full workout, every set; Jack). A public link was ruled out: it would make a workout readable without signing in.
