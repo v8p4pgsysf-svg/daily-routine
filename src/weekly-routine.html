@@ -2348,9 +2348,17 @@ const unitSeg=D=>`<div class="seg sseg" role="group" aria-label="Weight unit">${
 function setBar(l,la,title,r,ra){$("setbar").innerHTML=`${l?`<button class="sbtn" data-st="${la}">${l}</button>`:"<span></span>"}<h2 id="set-title">${title}</h2>${r?`<button class="btn primary sbsave" data-st="${ra}">${r}</button>`:"<span></span>"}`}
 /* ---------- first-time setup: a few short steps built from the same pieces as settings ---------- */
 const SETUP_STEPS=6; // 1 is the Welcome page (no dots, Get started instead of Next)
+// Welcome page button: Next opens the next point (closing the one open); once all three have been opened it's Get started
+const welBtn=()=>SD.welSeen.size>=WELCOME_POINTS.length?`<button type="button" class="btn primary swgo" data-st="set-next">Get started</button>`:`<button type="button" class="btn primary swgo" data-st="wel-next">Next</button>`;
+function welNext(){const ds=[...document.querySelectorAll(".swl details")];const at=ds.findIndex(d=>d.open);
+  let nx=-1;for(let k=1;k<=ds.length;k++){const j=(Math.max(at,0)+k)%ds.length;if(!SD.welSeen.has(j)){nx=j;break}}
+  if(nx<0)return;ds.forEach((d,j)=>d.open=j===nx);SD.welAt=nx;SD.welSeen.add(nx);welSync()}
+function welSync(){const b=document.querySelector("#setbody .swgo");if(b)b.outerHTML=welBtn()}
+document.addEventListener("toggle",e=>{const d=e.target;if(!(SD&&SD.setup===1&&d.matches&&d.matches(".swl details")))return;
+  if(d.open){SD.welAt=+d.dataset.wp;if(!SD.welSeen.has(SD.welAt)){SD.welSeen.add(SD.welAt);welSync()}}else if(SD.welAt===+d.dataset.wp)SD.welAt=-1},true);
 // the Welcome page: the app's story, each beat opening to say what it means in the app
 const WELCOME_POINTS=[
-  ["Plan your week","Choose the days you'll train and the daily habits you want to keep, like protein, sleep or steps. Today shows what's planned for each day."],
+  ["Plan your week","Choose the days you'll train and the daily habits you want to keep, like protein intake, sleep or steps. The Today tab shows what's planned for each day."],
   ["Train and tick off habits","Log each workout set by set. The app remembers what you lifted last time and tells you when to add weight. Log cardio too, and tick off your habits each day."],
   ["Review how it went","Each week gets a score: the share of your check-ins you completed. Once a week, a short review records your weight and photos and sets a focus for next week. Progress charts show how you're doing over time."]];
 function newcomerDraft(){ // a neutral starting point (not Jack's routine)
@@ -2359,7 +2367,7 @@ function newcomerDraft(){ // a neutral starting point (not Jack's routine)
     prep:Object.fromEntries(PREP_KEYS.map(k=>[k,{on:k==="lunch",days:[6]}])) /* lunch prep on (Sunday), breakfast off */,review:{on:true,day:6},unit:"kg",weight:"",protAuto:true,custom:[]};
 }
 function openSetup(){
-  SD=newcomerDraft();SD.setup=1;SD.prog=null;SD.open=new Set();SD.editing=null;SD.pexp=null;SD.gym=[0,2,4];SD.gymMsg="";assignGym();
+  SD=newcomerDraft();SD.setup=1;SD.welAt=0;SD.welSeen=new Set([0]);SD.prog=null;SD.open=new Set();SD.editing=null;SD.pexp=null;SD.gym=[0,2,4];SD.gymMsg="";assignGym();
   setArmed=false;flashSetErr("");renderSettings();
   $("setsheet").hidden=false;document.body.style.overflow="hidden";$("setsheet").scrollTop=0;
 }
@@ -2369,8 +2377,9 @@ function setupDots(n){if(n===1)return "";const skip=SD&&SD.nw===0&&SD.cardio.tar
 function renderSetup(){
   const D=SD,n=D.setup,last=n===SETUP_STEPS;let h=setupDots(n);
   setBar(n>1?"Back":"","set-back","Set up",n===1?"":last?"Start":"Next",last?"set-start":"set-next");
-  if(n===1)h+=`<section class="sset swel"><h3>Welcome</h3><div class="panel swl">${WELCOME_POINTS.map(([head,body],i)=>`${i?'<div class="shsep"></div>':""}<details><summary><span>${head}</span><span class="pchev" aria-hidden="true"></span></summary><p>${body}</p></details>`).join("")}</div>
-      <button type="button" class="btn primary swgo" data-st="set-next">Get started</button><p class="ts swnote">You can change any of your choices later from the settings cog.</p></section>`;
+  if(n===1){if(!SD.welSeen){SD.welSeen=new Set([0]);SD.welAt=0} // the first point starts open; Next walks through the rest
+    h+=`<section class="sset swel"><h3>Welcome</h3><div class="panel swl">${WELCOME_POINTS.map(([head,body],i)=>`${i?'<div class="shsep"></div>':""}<details data-wp="${i}"${i===SD.welAt?" open":""}><summary><span>${head}</span><span class="pchev" aria-hidden="true"></span></summary><p>${body}</p></details>`).join("")}</div>
+      ${welBtn()}<p class="ts swnote">You can change any of your choices later from the settings cog.</p></section>`}
   else if(n===2)h+=`<section class="sset"><h3>Your weight</h3><div class="panel shab"><div class="shrow suw"><input type="text" inputmode="decimal" id="su-weight" value="${esc(D.weight)}" placeholder="${D.unit==="lb"?"e.g. 175":"e.g. 80"}" aria-label="Your weight in ${D.unit}" autocomplete="off">${unitSeg(D)}</div></div>
       <h3>What do you want to track each day?</h3><div class="panel shab">${habitRows(D)}</div></section>`;
   else if(n===3){
@@ -2752,6 +2761,7 @@ function stAction(a){
   else if(act==="set-cancel"){if(SD&&setDirty()&&!a.classList.contains("armed")){a.classList.add("armed");a.textContent="Discard?";setTimeout(()=>{a.classList.remove("armed");a.textContent="Cancel"},3000);return}
     a.classList.remove("armed");a.textContent="Cancel";closeSettings()}
   else if(act==="set-save")saveFromDraft();
+  else if(act==="wel-next"&&SD&&SD.setup===1)welNext();
   else if(act==="set-next"&&SD&&SD.setup)setupGo(1);
   else if(act==="set-back"&&SD&&SD.setup)setupGo(-1);
   else if(act==="set-start"&&SD&&SD.setup)saveFromDraft();

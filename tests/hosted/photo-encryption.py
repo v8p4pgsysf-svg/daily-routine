@@ -23,7 +23,7 @@ def shot(pg, name):
 def sign_in(pg, pw, email="jack@example.com"):
     pg.wait_for_selector("#lg-email", state="visible"); pg.fill("#lg-email", email); pg.fill("#lg-pass", pw); pg.click("#lg-btn")
 def finish_setup(pg):
-    pg.wait_for_selector("#setsheet", state="visible"); pg.click('[data-st="set-next"]'); pg.fill("#su-weight", "80"); pg.click('[data-st="set-next"]'); pg.click('[data-sprog="fullbody"]')
+    pg.wait_for_selector("#setsheet", state="visible"); pg.click('[data-st="wel-next"]'); pg.click('[data-st="wel-next"]'); pg.click('[data-st="set-next"]'); pg.fill("#su-weight", "80"); pg.click('[data-st="set-next"]'); pg.click('[data-sprog="fullbody"]')
     for _ in range(3): pg.click('[data-st="set-next"]')
     pg.click('[data-st="set-start"]'); pg.wait_for_selector("#setsheet", state="hidden")
 def sign_out(pg):

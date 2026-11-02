@@ -48,7 +48,7 @@ try:
             pg.click("#lg-have"); pg.click("#lg-forgot");pg.wait_for_timeout(100); pg.wait_for_timeout(100); snap(pg, "forgot-1", "#login")
             pg.click("#lg-fsend"); pg.wait_for_selector("#lg-fcode", state="visible"); pg.wait_for_timeout(100); snap(pg, "forgot-2", "#login")
             pg.fill("#lg-fcode", "123456"); pg.fill("#lg-fp1", "Start-1234"); pg.fill("#lg-fp2", "Start-1234"); pg.click("#lg-fset")
-            pg.wait_for_selector("#setsheet", state="visible"); pg.click('[data-st="set-next"]'); pg.fill("#su-weight", "80"); pg.click('[data-st="set-next"]'); pg.click('[data-sprog="fullbody"]')
+            pg.wait_for_selector("#setsheet", state="visible"); pg.click('[data-st="wel-next"]'); pg.click('[data-st="wel-next"]'); pg.click('[data-st="set-next"]'); pg.fill("#su-weight", "80"); pg.click('[data-st="set-next"]'); pg.click('[data-sprog="fullbody"]')
             for _ in range(3): pg.click('[data-st="set-next"]')
             pg.click('[data-st="set-start"]'); pg.wait_for_selector("#setsheet", state="hidden"); pg.wait_for_timeout(500)
             # feedback sheet
