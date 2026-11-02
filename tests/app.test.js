@@ -435,7 +435,9 @@ ok($(w,"#setsheet").hidden&&$(w,'[data-ct="strength"]').textContent==="0/3"&&$(w
 w.close();
 // --- glute programme
 store={};w=boot("2026-10-28T09:00:00");
-click(w,$(w,'#setcog'));ok($(w,".prline .prname").textContent==="3-day full body","PR1. Programme row names the programme you're on");
+click(w,$(w,'#setcog'));ok($(w,".prline .prname").textContent==="Custom","PR1. Jack's original routine no longer matches the updated full body, so it reads Custom");
+click(w,$(w,'[data-st="set-presets"]'));click(w,$(w,'[data-preset="fullbody"]'));click(w,$(w,'[data-preset="fullbody"]'));
+ok($(w,".prline .prname").textContent==="3-day full body"&&$(w,'[data-sname="1-3"]').textContent==="Leg Extension"&&$(w,'[data-sname="2-3"]').textContent==="Cable Chest Fly"&&$(w,'[data-sexf="0-2-lo"]').value==="10","   Switching to the updated full body loads it (Leg Extension, Cable Chest Fly, rows 10–12) and names it");
 click(w,$(w,'[data-st="set-presets"]'));ok(/Current/.test($$(w,"#setbody .pritem")[0].textContent)&&!$(w,'.pritem [data-preset="fullbody"]'),"   The current one is marked Current, with no Switch button");
 click(w,$(w,'[data-preset="glute"]'));click(w,$(w,'[data-preset="glute"]'));ok($(w,".prline .prname").textContent==="3-day glute focus","   After switching it names the new programme");
 w.close();
@@ -449,7 +451,7 @@ ok(gymOn()==="1,3,5"&&$(w,".prline .prname").textContent==="3-day glute focus","
 ok($(w,'[data-sname="0-0"]').textContent==="Hip Thrust Machine"&&$(w,'[data-sname="1-0"]').textContent==="Reverse Dumbbell Lunge"&&$(w,'[data-sname="2-5"]').textContent==="Reverse Pec Deck"&&$(w,'[data-sexf="1-1-sets"]').value==="3","GL1. Glute focus loads A/B/C with its exercises");
 {const f=$(w,'[data-sexf="1-1-sets"]');type(w,f,"4");ok($(w,".prline .prname").textContent==="Custom","PR2. Editing a workout makes the programme Custom");type(w,$(w,'[data-sexf="1-1-sets"]'),"3");}
 click(w,$(w,'[data-st="set-save"]'));click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="type"][data-type="A"]'));click(w,$(w,'[data-st="start"]'));
-ok($$(w,"#st-main .ex .nm").map(e=>e.textContent).join("|")==="Hip Thrust Machine|Bulgarian Split Squat|Flat Dumbbell Chest Press|Seated Cable Row|Assisted Pull-Up|Leg Curl","   Workout A starts with the glute programme's exercises");
+ok($$(w,"#st-main .ex .nm").map(e=>e.textContent).join("|")==="Hip Thrust Machine|Bulgarian Split Squat|Assisted Pull-Up|Flat Dumbbell Chest Press|Seated Cable Row|Leg Curl","   Workout A starts with the glute programme's exercises");
 w.close();
 // --- exercise picker and programme-only progress list
 store={};w=boot("2026-10-28T09:00:00");

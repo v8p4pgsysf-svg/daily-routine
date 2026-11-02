@@ -201,3 +201,9 @@
 - **Swap and added notes sit on their own line** ("Instead of Bench Press", "Added") under the name, in history and on the workout screen. Inline, a long note pushed that row's sets onto a second, left-aligned line. "Swapped for" was also ambiguous about which way round the swap went. Below 360px every history row puts its sets under the name (right-aligned), since four sets squeezed names into three lines.
 - **Today's done lines drop "counted in this week's weights/cardio target"** (Jack): the rows below already show the count.
 - **Planned next: a share card** (an image of the full workout, every set; Jack). A public link was ruled out: it would make a workout readable without signing in.
+
+## 2 Nov 2026 (suggested programmes updated)
+
+- **Both suggested programmes rewritten to Jack's spec**: every exercise 3 sets; main lifts 6–8, accessories 10–12. Full body gains Leg Extension (B) and Cable Chest Fly (C), new catalog entries; glute focus reorders A (pull-ups before pressing). The full-body preset now has its own list instead of mirroring Jack's original routine, so Jack's own programme reads "Custom" until he switches.
+- **Existing users aren't moved onto the new versions automatically**: it would overwrite their edits and change rep ranges mid-progression. They can Switch in Settings (history stays). An "updated version available" note was judged not worth it until other people use the app.
+- **Suggested days: Mon, Wed, Fri for both, and where setup starts** (Jack; Wed/Fri/Sun and Mon/Wed/Sat were tried and dropped the same afternoon). Mon/Wed/Fri also leaves the default cardio days (Tue, Sat) free.

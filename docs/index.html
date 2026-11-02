@@ -1,5 +1,5 @@
 <!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<meta name="app-version" content="20261102153352">
+<meta name="app-version" content="20261102155106">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Weekly Routine</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -1106,6 +1106,8 @@ const EXERCISE_CATALOG=[
   {id:"cs_row",name:"Chest-Supported Row",short:"Chest-supported row"},
   {id:"oh_triceps_ext",name:"Overhead Triceps Extension",step:1},
   {id:"calf_raise",name:"Standing Calf Raise"},
+  {id:"leg_extension",name:"Leg Extension"},
+  {id:"cable_fly",name:"Cable Chest Fly",short:"Cable fly"},
   {id:"hip_thrust_machine",name:"Hip Thrust Machine",short:"Hip thrust"},
   {id:"bulgarian_split_squat",name:"Bulgarian Split Squat",short:"Bulgarian split squat",step:1},
   {id:"flat_db_bench",name:"Flat Dumbbell Chest Press",short:"DB chest press",step:1},
@@ -1134,11 +1136,14 @@ const DEFAULT_SETTINGS={v:1,updatedAt:0,
 };
 // suggested programmes: each sets the workouts and gym days only
 const PRESETS=[
-  {id:"fullbody",name:"3-day full body",tag:"Barbell basics: squat, bench, RDL",desc:"Squat, bench, RDL and rows across three full-body sessions.",days:[0,2,5],workouts:null},
-  {id:"glute",name:"3-day glute focus",tag:"Extra glute work: hip thrusts, lunges",desc:"A: hip thrust and pull-up progression · B: lunges and upper body · C: glute strength and shoulders.",days:[0,2,5],workouts:[
-    [["hip_thrust_machine",3,6,10],["bulgarian_split_squat",3,8,12],["flat_db_bench",3,6,10],["cable_row",3,8,12],["assisted_pullup",2,5,8],["leg_curl",3,8,12]],
-    [["reverse_db_lunge",3,8,12],["assisted_pullup",3,5,8],["incline_db_press",3,6,10],["back_extension_45",2,10,15],["lateral_raise",2,12,15],["oh_triceps_ext",3,10,15]],
-    [["hip_thrust_machine",3,6,10],["leg_press",3,8,12],["cs_row",3,8,12],["leg_curl",3,8,12],["db_shoulder_press",3,8,12],["reverse_pec_deck",2,12,15]]]}
+  {id:"fullbody",name:"3-day full body",tag:"Barbell basics: squat, bench, RDL",desc:"Squat, bench, RDL and rows across three full-body sessions.",days:[0,2,4],workouts:[ // Mon, Wed, Fri
+    [["squat",3,6,8],["bench",3,6,8],["cable_row",3,10,12],["leg_curl",3,10,12],["lateral_raise",3,10,12],["cable_crunch",3,10,12]],
+    [["rdl",3,6,8],["lat_pulldown",3,6,8],["incline_db_press",3,10,12],["leg_extension",3,10,12],["biceps_curl",3,10,12],["triceps_pushdown",3,10,12]],
+    [["leg_press",3,6,8],["db_shoulder_press",3,6,8],["cs_row",3,10,12],["cable_fly",3,10,12],["oh_triceps_ext",3,10,12],["calf_raise",3,10,12]]]},
+  {id:"glute",name:"3-day glute focus",tag:"Extra glute work: hip thrusts, lunges",desc:"A: hip thrust and pull-up progression · B: lunges and upper body · C: glute strength and shoulders.",days:[0,2,4],workouts:[ // Mon, Wed, Fri
+    [["hip_thrust_machine",3,6,8],["bulgarian_split_squat",3,10,12],["assisted_pullup",3,6,8],["flat_db_bench",3,6,8],["cable_row",3,10,12],["leg_curl",3,10,12]],
+    [["reverse_db_lunge",3,10,12],["assisted_pullup",3,6,8],["incline_db_press",3,6,8],["back_extension_45",3,10,12],["lateral_raise",3,10,12],["oh_triceps_ext",3,10,12]],
+    [["hip_thrust_machine",3,6,8],["leg_press",3,6,8],["db_shoulder_press",3,6,8],["cs_row",3,10,12],["leg_curl",3,10,12],["reverse_pec_deck",3,10,12]]]}
 ];
 /* Daily habits. To add one, add an entry here: it then appears in setup, settings, the check-ins grid,
    the weekly counts, the review summary and exports. Never change a key once people have used it.
@@ -1229,7 +1234,7 @@ function applySettings(S){
     PLAN.push({t:parts.join(" + ")||"Rest",s:sub.join(" · ")});
   }
 }
-PRESETS[0].workouts=DEFAULT_SETTINGS.workouts.map(w=>w.items);
+// the full-body preset has its own list (2 Nov 2026); DEFAULT_SETTINGS.workouts is Jack's original routine, kept for the retired Claude version and the tests
 applySettings(SETTINGS);
 /* each past week keeps the targets it was planned with; settings changes apply from the current week on */
 const planSnapshot=()=>({v:1,habits:clone(HABITS),grid:clone(GRID_TARGET)});
