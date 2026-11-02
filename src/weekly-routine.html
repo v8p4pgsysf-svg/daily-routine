@@ -2105,7 +2105,7 @@ function drawShareCard(s){
     let cx=0,cy=y+12;const ch=64,gap=14;
     x.sets.forEach(t=>{const w=g.measureText(t).width+44;if(cx&&cx+w>iw){cx=0;cy+=ch+gap}row.chips.push({t,x:cx,y:cy-row.y,w});cx+=w+gap}); // chip y is relative to its row
     y=cy+ch;row.end=y;lay.push(row);y+=36;});
-  const headH=300,listH=y+IP*2-36,footH=150,H=Math.max(1350,P+headH+listH+footH);
+  const headH=300,listH=y+IP*2-36,footH=210,H=Math.max(1350,P+headH+listH+footH);
   cv.width=W;cv.height=H;
   const rr=(x,y,w,h,r)=>{g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()};
   g.fillStyle=C.bg;g.fillRect(0,0,W,H);g.textBaseline="alphabetic";
@@ -2124,7 +2124,9 @@ function drawShareCard(s){
     if(row.x.sub){g.fillStyle=C.muted;g.font=font(30,500);g.fillText(row.x.sub,ox,sy+32);sy+=40}
     row.chips.forEach(c=>{const cx=ox+c.x,cy=oy+c.y;g.fillStyle=C.bg;rr(cx,cy,c.w,64,18);g.fill();g.fillStyle=C.ink;g.font=font(36,600);g.fillText(c.t,cx+22,cy+44)});
   });
-  g.fillStyle=C.muted;g.font=font(30,500);g.fillText("Logged with Weekly Routine",P,H-P);
+  // footer: the app's name and story, so people who like it know what to look for
+  g.fillStyle=C.green;g.font=font(40,700);g.fillText("Made with Weekly Routine",P,H-P-48);
+  g.fillStyle=C.muted;g.font=font(30,500);g.fillText("Plan your week. Train and tick off habits. Review how it went.",P,H-P);
   return cv;
 }
 async function shareWorkout(id){
@@ -2133,7 +2135,10 @@ async function shareWorkout(id){
   const cv=drawShareCard(s),name=`workout-${s.type}-${s.date}.png`;
   const blob=await new Promise(r=>cv.toBlob(r,"image/png"));if(!blob)return;
   const file=new File([blob],name,{type:"image/png"});
-  if(navigator.canShare&&navigator.share){try{if(navigator.canShare({files:[file]})){await navigator.share({files:[file],title:`Workout ${s.type}`});return}}catch(e){if(e&&e.name==="AbortError")return}}
+  // the app's link goes along with the picture; apps that only take the image (Instagram) drop it, so a share with the image alone is the fallback
+  const url=location.origin+location.pathname,withLink={files:[file],title:`Workout ${s.type}`,text:"Made with Weekly Routine",url};
+  if(navigator.canShare&&navigator.share){try{const d=navigator.canShare(withLink)?withLink:navigator.canShare({files:[file]})?{files:[file],title:`Workout ${s.type}`}:null;
+    if(d){await navigator.share(d);return}}catch(e){if(e&&e.name==="AbortError")return}}
   let dl=null;try{dl=window.claude&&window.claude.use?await window.claude.use("downloads"):null}catch(e){}
   if(dl){try{await dl.save({filename:name,data:blob});return}catch(e){if(e&&e.code==="declined")return}}
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
