@@ -47,6 +47,8 @@ try:
         ok(pg.locator("#st-history [data-share]").count() >= 1, "SH3. A Training history entry has Share")
         with pg.expect_download() as dl: pg.locator("#st-history [data-share]").first.click()
         dl.value.save_as(f"{OUT}/card-dark.png")
+        pg.wait_for_timeout(300)
+        ok(pg.locator("#st-history .hdetail").count() == 0, "   After sharing, the history entry folds away")
         ok(open(f"{OUT}/card-dark.png", "rb").read() != open(f"{OUT}/card-light.png", "rb").read(), "   In dark mode the card is drawn in the dark look")
         pg.emulate_media(color_scheme="light"); pg.click("#tab-week"); pg.wait_for_timeout(200)
         ok(pg.locator("#today [data-share]").count() == 0 and pg.locator("#today [data-open]").count() == 1, "SH4. Today keeps its single View workout button")

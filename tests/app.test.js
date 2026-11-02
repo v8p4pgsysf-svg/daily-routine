@@ -575,6 +575,11 @@ click(w,$(w,"#tab-week"));ok(!$(w,'#st-msg .stshare'),"   and goes at the next t
 ok(!$(w,"#today [data-share]")&&$(w,"#today [data-open]"),"   Today keeps one button (View workout), no Share");
 click(w,$(w,"#tab-strength"));const hr=$$(w,"#st-history [data-hist]")[0];if(hr)click(w,hr);
 ok($$(w,"#st-history [data-share]").length>=1,"SC2. A Training history entry has Share");
+click(w,$(w,"#tab-progress"));click(w,$(w,"#tab-strength"));
+ok(!$(w,"#st-history .hdetail"),"   Leaving the Training tab folds the open history entry");
+{const hr3=$$(w,"#st-history [data-hist]")[0];if(hr3)click(w,hr3);const tx=$$(w,"#st-history .hexs").map(e=>e.textContent);
+ ok(tx.includes("62.5 × 8 · 60 × 8, 8")&&tx.includes("50 × 8"),"   History writes each weight once, then the reps (62.5 × 8 · 60 × 8, 8)");click(w,$$(w,"#st-history [data-hist]")[0]);}
+{const hr2=$$(w,"#st-history [data-hist]")[0];if(hr2)click(w,hr2);}
 {const ss=Object.values(JSON.parse(w.localStorage.getItem("weekly-routine.workouts.v1"))).filter(x=>x.status==="done").sort((a,b)=>a.date<b.date?1:-1);
  const f=w.__routineShareFacts(ss[0].id);
  ok(f.length===2&&f[0].name==="Barbell Squat"&&f[0].sets.length===3&&f[0].sets[0]==="62.5 kg × 8"&&f[0].pb===true&&f[1].pb===false,"SC3. The card lists only exercises with logged sets, every set, and marks a heavier top set than before as New best (squat yes; bench, first time, no)");

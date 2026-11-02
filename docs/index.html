@@ -1,5 +1,5 @@
 <!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<meta name="app-version" content="20261102165910">
+<meta name="app-version" content="20261102171612">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Weekly Routine</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -2063,6 +2063,9 @@ function prevFor(ex,cur){
 const exNote=it=>it.swappedFrom?`Instead of ${esc(EXERCISES[it.swappedFrom]||it.swappedFrom)}`:it.added?"Added":"";
 // "3 × 10–12", plus "per leg" for one-sided lifts (perLeg in the catalog)
 const repsTxt=(ex,sets,lo,hi)=>`${sets} × ${lo}–${hi}${EX_BY_ID[ex]&&EX_BY_ID[ex].perLeg?' <span class="perleg">per leg</span>':""}`;
+// history: the weight once, then each set's reps ("42.5 × 8, 8, 7"); a new weight starts a new group ("45 × 8 · 42.5 × 7, 7")
+const setsShort=d=>{const g=[];d.forEach(l=>{const w=fmtLift(l.w),r=l.r==null?"–":l.r,last=g[g.length-1];if(last&&last.w===w)last.r.push(r);else g.push({w,r:[r]})});
+  return g.map(x=>`${x.w} × ${x.r.join(", ")}`).join(" · ")};
 const prevTxt=p=>p.it.log.filter(l=>l.done).map(setTxt).join(" · ");
 // double progression: every prescribed set completed, all at one weight, all at the top of the range
 function ready(it){
@@ -2162,7 +2165,7 @@ function drawShareCard(s){
     row.chips.forEach(c=>{const cx=ox+c.x,cy=oy+c.y;g.fillStyle=C.bg;rr(cx,cy,c.w,64,18);g.fill();g.fillStyle=C.ink;g.font=font(36,600);g.fillText(c.t,cx+22,cy+44)});
   });
   // footer: the app's name and story, so people who like it know what to look for
-  g.fillStyle=C.green;g.font=font(40,700);g.fillText("Made with Weekly Routine",P,H-P-48);
+  g.fillStyle=C.green;g.font=font(40,700);g.fillText("Log your workouts with Weekly Routine",P,H-P-48);
   g.fillStyle=C.muted;g.font=font(30,500);g.fillText("Plan your week. Train and tick off habits. Review how it went.",P,H-P);
   return cv;
 }
@@ -2173,14 +2176,16 @@ async function shareWorkout(id){
   const blob=await new Promise(r=>cv.toBlob(r,"image/png"));if(!blob)return;
   const file=new File([blob],name,{type:"image/png"});
   // the app's link goes along with the picture; apps that only take the image (Instagram) drop it, so a share with the image alone is the fallback
-  const url=location.origin+location.pathname,withLink={files:[file],title:`Workout ${s.type}`,text:"Made with Weekly Routine",url};
+  const url=location.origin+location.pathname,withLink={files:[file],title:`Workout ${s.type}`,text:"Log your workouts with Weekly Routine",url};
   if(navigator.canShare&&navigator.share){try{const d=navigator.canShare(withLink)?withLink:navigator.canShare({files:[file]})?{files:[file],title:`Workout ${s.type}`}:null;
     if(d){await navigator.share(d);return}}catch(e){if(e&&e.name==="AbortError")return}}
   let dl=null;try{dl=window.claude&&window.claude.use?await window.claude.use("downloads"):null}catch(e){}
   if(dl){try{await dl.save({filename:name,data:blob});return}catch(e){if(e&&e.code==="declined")return}}
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
 }
-document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-share]");if(!b)return;e.preventDefault();shareWorkout(b.dataset.share)});
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-share]");if(!b)return;e.preventDefault();
+  const inHist=!!b.closest("#st-history"); // shared from an open history entry: it folds away once the share sheet closes
+  shareWorkout(b.dataset.share).finally(()=>{if(inHist&&histOpen){histOpen=null;renderStHistory()}})});
 window.__routineShareFacts=id=>sessions[id]?shareFacts(sessions[id]):null; // what goes on a workout's card (read-only; used by the tests)
 
 const IDLE_MS=30*60000;
@@ -2951,7 +2956,7 @@ function histDetail(s){
       <div class="row"><button class="btn" data-cardio-edit="${s.id}">Edit</button><button class="btn ghost" data-st="hdel" data-id="${s.id}">Delete</button></div></div>`;
   }
   return `<div class="hdetail"><div class="hex">${s.items.map(it=>{const d=it.log.filter(l=>l.done);
-      return `<div class="hexr"><span class="hexn">${esc(exName(it))}${exNote(it)?`<span class="swnote exnl">${exNote(it)}</span>`:""}</span><span class="num hexs">${d.length?d.map(setTxt).join(" · "):"<span class=\"muted\">not done</span>"}</span></div>`}).join("")}</div>
+      return `<div class="hexr"><span class="hexn">${esc(exName(it))}${exNote(it)?`<span class="swnote exnl">${exNote(it)}</span>`:""}</span><span class="num hexs">${d.length?setsShort(d):"<span class=\"muted\">not done</span>"}</span></div>`}).join("")}</div>
     ${s.notes?`<div class="hnotes">${esc(s.notes)}</div>`:""}
     <div class="row"><button class="btn" data-edit="${s.id}">Edit</button><button class="btn" data-share="${s.id}">Share</button><button class="btn ghost" data-st="hdel" data-id="${s.id}">Delete</button></div></div>`;
 }
@@ -3102,6 +3107,7 @@ function renderTabs(){
 function showTab(name){
   if(!TABS.includes(name)||(name==="strength"&&!trainingTab()))name="week";
   if($("st-msg"))stMsg("");
+  if(name!=="strength"&&histOpen){histOpen=null;renderStHistory()} // leaving Training folds an open history entry
   TABS.forEach(t=>{$("tab-"+t).setAttribute("aria-selected",String(t===name));$("pane-"+t).hidden=t!==name});
   
   if(name==="progress"){renderCharts();renderStrengthTrends()}
