@@ -223,3 +223,9 @@
 - **The app's link goes along with the picture** in the share sheet (Messages and WhatsApp keep it; Instagram drops it). If a target only accepts files, the picture goes alone.
 - **No QR code** (Jack). Considered for Instagram, where the link is dropped, but it would point at the github.io address and lead strangers to an invite-only sign-in.
 - **Open: what a stranger who follows the link can do** (request an invite, or a line saying to ask whoever shared it). Sign-up is still invite-only; decide with the domain.
+
+## 2 Nov 2026 (history sets; card footer)
+
+- **Training history shows every set as a tile under the exercise name** ("31.25 kg × 8"), the same words and look as the share card (`setLong`). Inline "42.5×8 · 42.5×8 · …" lists squeezed names into three or four lines once weights had decimals. Rejected: rounding in history (Jack's first idea; it would show weights not lifted, disagree with the workout screen's "Last …", and progression steps are 1–2.5 kg); writing each weight once then the reps ("42.5 × 8, 8, 8"), which Jack found less clear and inconsistent with the card.
+- **An open history entry folds after Share and when leaving the Training tab** (Jack).
+- **Card footer: "Log your workouts with Weekly Routine"** (Jack), also the text sent with the link.

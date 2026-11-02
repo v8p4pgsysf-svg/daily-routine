@@ -1,5 +1,5 @@
 <!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<meta name="app-version" content="20261102171612">
+<meta name="app-version" content="20261102172141">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Weekly Routine</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -165,8 +165,8 @@ button{font:inherit;color:inherit}
 .hexr{display:flex;justify-content:space-between;gap:4px 14px;flex-wrap:wrap;padding:7px 0;border-top:1px solid var(--line);font-size:.86rem}
 .hexr:first-child{border-top:0}
 .hexn{font-weight:600;min-width:0}.exnl{display:block;font-size:.78rem;font-weight:500;margin-top:1px}
-.hexr{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start}.hexs{text-align:right;max-width:min(62vw,260px)}
-@media (max-width:359px){.hexr{grid-template-columns:minmax(0,1fr)}.hexs{max-width:none}} /* 320px: every row stacks the same way, sets under the name on the right */
+.hexr{display:block}.hexs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px} /* name on its line, sets as tiles under it, like the share card */
+.hchip{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:3px 9px;font-family:var(--sans);font-weight:600;font-size:.84rem;color:var(--ink);white-space:nowrap}
 .hexs{color:var(--muted)}
 .hdl{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin:0}
 .hdl dt{font-size:.7rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
@@ -2063,9 +2063,8 @@ function prevFor(ex,cur){
 const exNote=it=>it.swappedFrom?`Instead of ${esc(EXERCISES[it.swappedFrom]||it.swappedFrom)}`:it.added?"Added":"";
 // "3 × 10–12", plus "per leg" for one-sided lifts (perLeg in the catalog)
 const repsTxt=(ex,sets,lo,hi)=>`${sets} × ${lo}–${hi}${EX_BY_ID[ex]&&EX_BY_ID[ex].perLeg?' <span class="perleg">per leg</span>':""}`;
-// history: the weight once, then each set's reps ("42.5 × 8, 8, 7"); a new weight starts a new group ("45 × 8 · 42.5 × 7, 7")
-const setsShort=d=>{const g=[];d.forEach(l=>{const w=fmtLift(l.w),r=l.r==null?"–":l.r,last=g[g.length-1];if(last&&last.w===w)last.r.push(r);else g.push({w,r:[r]})});
-  return g.map(x=>`${x.w} × ${x.r.join(", ")}`).join(" · ")};
+// a set written out in full ("42.5 kg × 8", "20 kg assist × 8"): history tiles and the share card use the same words
+const setLong=(it,l)=>`${fmtLift(l.w)} ${unitW()}${ASSISTED.has(it.ex)?" assist":""} × ${l.r==null?"–":l.r}`;
 const prevTxt=p=>p.it.log.filter(l=>l.done).map(setTxt).join(" · ");
 // double progression: every prescribed set completed, all at one weight, all at the top of the range
 function ready(it){
@@ -2128,7 +2127,7 @@ function shareFacts(s){
     const best=prev.length?prev.reduce((a,b)=>heavier(a,b)?b:a):null;
     const as=ASSISTED.has(it.ex),pl=EX_BY_ID[it.ex]&&EX_BY_ID[it.ex].perLeg; // friends shouldn't read assistance as weight lifted
     return {name:exName(it),note:exNote(it).replace(/&amp;/g,"&"),sub:pl?"Reps per leg":"",
-      sets:d.map(l=>`${fmtLift(l.w)} ${unitW()}${as?" assist":""} × ${l.r}`),pb:!!(best&&heavier(best,top))}});
+      sets:d.map(l=>setLong(it,l)),pb:!!(best&&heavier(best,top))}});
 }
 function drawShareCard(s){
   const cs=getComputedStyle(document.documentElement),v=(n,f)=>(cs.getPropertyValue(n)||"").trim()||f;
@@ -2956,7 +2955,7 @@ function histDetail(s){
       <div class="row"><button class="btn" data-cardio-edit="${s.id}">Edit</button><button class="btn ghost" data-st="hdel" data-id="${s.id}">Delete</button></div></div>`;
   }
   return `<div class="hdetail"><div class="hex">${s.items.map(it=>{const d=it.log.filter(l=>l.done);
-      return `<div class="hexr"><span class="hexn">${esc(exName(it))}${exNote(it)?`<span class="swnote exnl">${exNote(it)}</span>`:""}</span><span class="num hexs">${d.length?setsShort(d):"<span class=\"muted\">not done</span>"}</span></div>`}).join("")}</div>
+      return `<div class="hexr"><span class="hexn">${esc(exName(it))}${exNote(it)?`<span class="swnote exnl">${exNote(it)}</span>`:""}</span><span class="hexs">${d.length?d.map(l=>`<span class="hchip num">${setLong(it,l)}</span>`).join(""):"<span class=\"muted\">Not done</span>"}</span></div>`}).join("")}</div>
     ${s.notes?`<div class="hnotes">${esc(s.notes)}</div>`:""}
     <div class="row"><button class="btn" data-edit="${s.id}">Edit</button><button class="btn" data-share="${s.id}">Share</button><button class="btn ghost" data-st="hdel" data-id="${s.id}">Delete</button></div></div>`;
 }
