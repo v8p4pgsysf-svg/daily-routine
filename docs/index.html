@@ -1,5 +1,5 @@
 <!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<meta name="app-version" content="20261102123331">
+<meta name="app-version" content="20261102144044">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Weekly Routine</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -1096,7 +1096,7 @@ const EXERCISE_CATALOG=[
   {id:"cable_crunch",name:"Cable Crunch"},
   {id:"rdl",name:"Romanian Deadlift",short:"Romanian deadlift"},
   {id:"lat_pulldown",name:"Lat Pulldown",short:"Lat pulldown"},
-  {id:"incline_db_press",name:"Incline Dumbbell Press",short:"Incline DB press",step:1},
+  {id:"incline_db_press",name:"Incline Dumbbell Chest Press",short:"Incline DB chest press",step:1},
   {id:"biceps_curl",name:"Biceps Curl",step:1},
   {id:"triceps_pushdown",name:"Triceps Pushdown"},
   {id:"leg_press",name:"Hack Squat / Leg Press",short:"Leg press"},
@@ -1106,7 +1106,7 @@ const EXERCISE_CATALOG=[
   {id:"calf_raise",name:"Standing Calf Raise"},
   {id:"hip_thrust_machine",name:"Hip Thrust Machine",short:"Hip thrust"},
   {id:"bulgarian_split_squat",name:"Bulgarian Split Squat",short:"Bulgarian split squat",step:1},
-  {id:"flat_db_bench",name:"Flat Dumbbell Bench Press",short:"DB bench press",step:1},
+  {id:"flat_db_bench",name:"Flat Dumbbell Chest Press",short:"DB chest press",step:1},
   {id:"assisted_pullup",name:"Assisted Pull-Up",assisted:true},
   {id:"reverse_db_lunge",name:"Reverse Dumbbell Lunge",short:"Reverse lunge",step:1},
   {id:"back_extension_45",name:"45° Back Extension",short:"Back extension"},
@@ -2910,14 +2910,14 @@ function activeExIds(){const ids=programmeIds(),since=keyOf(addDays(new Date(),-
   doneSessions().filter(x=>x.date>=since).forEach(x=>x.items.forEach(it=>{if(it.log.some(l=>l.done)&&!ids.includes(it.ex))ids.push(it.ex)}));return ids}
 function renderStProg(){
   const ids=activeExIds();
-  const withData=ids.filter(id=>exHistory(id).length);
+  const withData=ids.filter(id=>exHistory(id).length); // the menu lists only these: a lift with nothing logged has nothing to show
   // nothing logged yet: the history note covers this section too. Cardio logged but no lifts: one line, no exercise menu
   const sec=$("st-prog").closest(".section"),any=liveSessions().some(x=>x.status==="done");
   sec.hidden=!withData.length&&(!any||!SETTINGS.workouts.length);
   if(!withData.length){$("st-prog").innerHTML=`<div class="gempty slim">Each lift's progress appears here once you've logged it a couple of times.</div>`;return}
-  if(!progEx||!ids.includes(progEx))progEx=withData[0]||ids[0];
+  if(!progEx||!withData.includes(progEx))progEx=withData[0];
   const nameOf=exLabel;
-  const sel=`<div class="field"><label for="prog-ex">${progChosen?"Exercise":"View an exercise"}</label><select id="prog-ex">${progChosen?"":`<option value="" selected>Choose an exercise…</option>`}${ids.map(id=>`<option value="${esc(id)}"${progChosen&&id===progEx?" selected":""}>${esc(nameOf(id))}${withData.includes(id)?"":" · no data yet"}</option>`).join("")}</select></div>`;
+  const sel=`<div class="field"><label for="prog-ex">${progChosen?"Exercise":"View an exercise"}</label><select id="prog-ex">${progChosen?"":`<option value="" selected>Choose an exercise…</option>`}${withData.map(id=>`<option value="${esc(id)}"${progChosen&&id===progEx?" selected":""}>${esc(nameOf(id))}</option>`).join("")}</select></div>`;
   if(!progChosen){$("st-prog").innerHTML=liftOverview()+`<div class="stprog" id="prog-detail">${sel}</div>`;return}
   const hist=exHistory(progEx);let body;
   if(!hist.length)body=`<div class="gempty">No completed sets for this exercise yet. Finish a workout that includes it and its progress shows here.</div>`;

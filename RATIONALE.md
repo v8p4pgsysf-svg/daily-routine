@@ -188,3 +188,8 @@
 - **Progress check-ins tooltip says "x/y check-ins"**, matching the review summary; it still said "targets".
 - **Hosted test fix:** run.py signed back in while the page was still reloading after sign-out, and the reload could wipe what it typed (also seen on the unchanged app, about 1 run in 6). It now waits for the reload to settle.
 - **Welcome points open one at a time** (Jack): tapping a point closes whichever is open, matching what Next does.
+
+## 2 Nov 2026 (exercise menu; chest press names)
+
+- **Exercise progress's "View an exercise" menu lists only lifts with logged sets** (Jack). It listed the whole programme with "· no data yet" on most of them, which read as clutter once some lifts had data; an empty lift has nothing to show anyway. "Building data: …" above it is unchanged (those lifts have data, just not enough for a status).
+- **"Flat Dumbbell Bench Press" → "Flat Dumbbell Chest Press" and "Incline Dumbbell Press" → "Incline Dumbbell Chest Press"** (Jack: the first isn't what it's called, and the two should match). Short names "DB chest press" / "Incline DB chest press". Ids unchanged (`flat_db_bench`, `incline_db_press`), so programmes and history keep working and show the new names. At 320px the longer short name wraps to two lines in the key-lifts table, like other long names.

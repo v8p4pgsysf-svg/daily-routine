@@ -94,8 +94,7 @@ click(w,$(w,"#tab-strength"));
 const sel=$(w,"#prog-ex");sel.value="squat";sel.dispatchEvent(new w.Event("change",{bubbles:true}));
 ok($$(w,"#st-prog svg").length===1&&/82.5 kg × 8/.test($(w,"#st-prog .pbs").textContent),"8. Squat progress: 1 chart, heaviest set 82.5 kg × 8");
 ok($$(w,"#st-history .hrow").length===2,"   History lists both workouts");
-// lateral raise shared across workouts? (no data) just check option exists once
-ok($$(w,'#prog-ex option[value="lateral_raise"]').length===1,"   Lateral raise is a single exercise across A, B and C");
+{const o=$$(w,"#prog-ex option").map(x=>x.value).filter(Boolean);ok(o.includes("squat")&&!o.includes("lateral_raise")&&new Set(o).size===o.length&&!/no data yet/.test($(w,"#prog-ex").textContent),"   The exercise menu lists only lifts with data, each once (lateral raise, not logged yet, isn't there)");}
 // delete updates scorecard
 // 9 refresh
 save(w);w.close();w=boot();
@@ -450,7 +449,7 @@ ok(gymOn()==="1,3,5"&&$(w,".prline .prname").textContent==="3-day glute focus","
 ok($(w,'[data-sname="0-0"]').textContent==="Hip Thrust Machine"&&$(w,'[data-sname="1-0"]').textContent==="Reverse Dumbbell Lunge"&&$(w,'[data-sname="2-5"]').textContent==="Reverse Pec Deck"&&$(w,'[data-sexf="1-1-sets"]').value==="3","GL1. Glute focus loads A/B/C with its exercises");
 {const f=$(w,'[data-sexf="1-1-sets"]');type(w,f,"4");ok($(w,".prline .prname").textContent==="Custom","PR2. Editing a workout makes the programme Custom");type(w,$(w,'[data-sexf="1-1-sets"]'),"3");}
 click(w,$(w,'[data-st="set-save"]'));click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="type"][data-type="A"]'));click(w,$(w,'[data-st="start"]'));
-ok($$(w,"#st-main .ex .nm").map(e=>e.textContent).join("|")==="Hip Thrust Machine|Bulgarian Split Squat|Flat Dumbbell Bench Press|Seated Cable Row|Assisted Pull-Up|Leg Curl","   Workout A starts with the glute programme's exercises");
+ok($$(w,"#st-main .ex .nm").map(e=>e.textContent).join("|")==="Hip Thrust Machine|Bulgarian Split Squat|Flat Dumbbell Chest Press|Seated Cable Row|Assisted Pull-Up|Leg Curl","   Workout A starts with the glute programme's exercises");
 w.close();
 // --- exercise picker and programme-only progress list
 store={};w=boot("2026-10-28T09:00:00");
@@ -467,7 +466,7 @@ click(w,$(w,'[data-st="type"][data-type="A"]'));click(w,$(w,'[data-st="start"]')
 const sin=$(w,"#swin-1");focus(w,sin);ok($$(w,".swapbox .exsug [data-exsug]").length>10,"EP3. Swap shows the full exercise list before typing");
 type(w,sin,"lat p");click(w,$(w,'.swapbox .exsug [data-exsug="Lat Pulldown"]'));ok(sin.value==="Lat Pulldown","   and picking from it fills the swap box");
 type(w,$(w,"#w-0-0"),40);type(w,$(w,"#r-0-0"),10);click(w,$(w,'[data-tick="0-0"]'));click(w,$(w,'[data-st="finish"]'));click(w,$(w,"#tab-strength"));
-{const o=$$(w,"#prog-ex option").map(x=>x.value).filter(Boolean);ok(o.includes("hip_thrust_machine")&&!o.includes("squat")&&o.length===16,"EP4. Once a lift is logged, the exercise menu lists only the programme's 16 exercises (squat swapped out is gone)");}
+{const o=$$(w,"#prog-ex option").map(x=>x.value).filter(Boolean);ok(o.length===1&&!o.includes("squat"),"EP4. Once a lift is logged, the exercise menu lists only that lift, not the rest of the programme ("+o.join(",")+")");}
 w.close();
 // --- cancel with unsaved changes
 store={};w=boot("2026-10-28T09:00:00");
