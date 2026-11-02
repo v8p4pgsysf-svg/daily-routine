@@ -26,6 +26,8 @@ Also: `python3 layout-review.py` signs in, imports the sample backup and screens
 
 Also: `python3 settings-workouts.py` checks the Settings Workouts box (Programme + Workouts A–C in one box) at 390px in light and dark, saving shots to `shots/`.
 
+Also: `python3 share-card.py` shares a finished workout from the saved message and from Training history (the test browser downloads instead of sharing) and checks the PNG, the dark look and where Share appears.
+
 Also: `python3 home-screen.py` (same `site/` folder) checks the Add to Home Screen card on iPhone Safari, Instagram's browser, the Home Screen app, desktop and Android, at 390px.
 
 1. Run `tests/hosted/setup.sh <folder>` (default `./hosted-run`). It copies the app into `<folder>/site/` with the mock in place of supabase-js, puts the suites and the sample backup next to it and installs jszip. Rerun it after `python3 tools/build.py`.

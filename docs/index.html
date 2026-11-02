@@ -1,5 +1,5 @@
 <!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<meta name="app-version" content="20261102161851">
+<meta name="app-version" content="20261102164016">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Weekly Routine</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -354,7 +354,7 @@ img.broken{visibility:hidden}
 /* strength */
 .stmain{display:flex;flex-direction:column;gap:12px}
 .stmsg{font-size:.88rem;color:var(--green);background:var(--green-soft);border:1px solid var(--green-mid);border-radius:10px;padding:10px 14px}
-.stmsg:empty{display:none}
+.stmsg:empty{display:none}.stmsg .stshare{margin-left:6px;vertical-align:baseline}
 .hpager{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;font-size:.86rem}
 .hpager .btn:disabled{opacity:.4}
 .stmsg{transition:opacity .35s ease}.stmsg.fade{opacity:0}
@@ -2077,7 +2077,10 @@ function suggestedType(){
   const d=doneSessions();if(!d.length)return L[0];const i=L.indexOf(d[d.length-1].type);return L[(i+1)%L.length];
 }
 let stMsgT=0;
-function stMsg(t){const m=$("st-msg");clearTimeout(stMsgT);m.classList.remove("fade");m.textContent=t||"";
+// shareId: the message offers Share for that workout and stays until the next tap anywhere (a fading button would be hard to hit)
+function stMsg(t,shareId){const m=$("st-msg");clearTimeout(stMsgT);m.classList.remove("fade");m.textContent=t||"";
+  if(t&&shareId){m.insertAdjacentHTML("beforeend",` <button type="button" class="btn sm stshare" data-share="${shareId}">Share</button>`);
+    setTimeout(()=>document.addEventListener("click",function clr(){document.removeEventListener("click",clr);if(m.querySelector(".stshare"))m.textContent=""}),0);return}
   if(t)stMsgT=setTimeout(()=>{m.classList.add("fade");stMsgT=setTimeout(()=>{m.textContent="";m.classList.remove("fade")},350)},4000)}
 function startSession(type,date){
   if(currentDraft())return;
@@ -2112,6 +2115,69 @@ let timerInt=null;
 const elapsed=s=>(s.accMs||0)+(s.activeFrom?Math.max(0,Date.now()-s.activeFrom):0);
 const clock=ms=>{const t=Math.floor(ms/1000),h=Math.floor(t/3600),m=Math.floor(t/60)%60,x=t%60;return (h?h+":"+pad(m):m)+":"+pad(x)};
 const durTxt=s=>{if(!s.accMs)return "–";const m=Math.round(s.accMs/60000);return m>=60?Math.floor(m/60)+" h"+(m%60?" "+(m%60)+" min":""):m+" min"};
+/* ---------- share card: a picture of one finished workout, every set, drawn on the device (nothing leaves it until the person shares) ----------
+   Follows the light/dark look the person sees. Leaves out notes, bodyweight, scores and photos: the workout only.
+   New best = a heavier top set than any earlier workout of that lift (assisted lifts excluded: less assistance isn't "heavier"). */
+function shareFacts(s){
+  const items=s.items.map(it=>({it,d:it.log.filter(l=>l.done&&l.w!=null&&l.r!=null)})).filter(x=>x.d.length);
+  return items.map(({it,d})=>{const top=d.reduce((a,b)=>heavier(a,b)?b:a);
+    const prev=ASSISTED.has(it.ex)?[]:doneSessions().filter(x=>x.id!==s.id&&isBefore(x,s)).flatMap(x=>x.items.filter(y=>y.ex===it.ex).flatMap(y=>y.log.filter(l=>l.done&&l.w!=null&&l.r!=null)));
+    const best=prev.length?prev.reduce((a,b)=>heavier(a,b)?b:a):null;
+    const as=ASSISTED.has(it.ex),pl=EX_BY_ID[it.ex]&&EX_BY_ID[it.ex].perLeg; // friends shouldn't read assistance as weight lifted
+    return {name:exName(it),note:exNote(it).replace(/&amp;/g,"&"),sub:pl?"Reps per leg":"",
+      sets:d.map(l=>`${fmtLift(l.w)} ${unitW()}${as?" assist":""} × ${l.r}`),pb:!!(best&&heavier(best,top))}});
+}
+function drawShareCard(s){
+  const cs=getComputedStyle(document.documentElement),v=(n,f)=>(cs.getPropertyValue(n)||"").trim()||f;
+  const C={bg:v("--bg","#F4F5F3"),card:v("--surface","#FFFFFF"),ink:v("--ink","#1A1E1B"),muted:v("--muted","#6A726C"),line:v("--line","#E3E6E2"),green:v("--green","#2E7A50"),gsoft:v("--green-soft","#E3F0E7"),warn:v("--warn","#9A6A1F")};
+  const SANS=v("--sans","system-ui, sans-serif");
+  const W=1080,P=72,IP=48,iw=W-2*P-2*IP,facts=shareFacts(s),done=setsDone(s);
+  const cv=document.createElement("canvas"),g=cv.getContext("2d");
+  const font=(px,w)=>`${w||400} ${px}px ${SANS}`;
+  // lay out once to measure, then draw
+  const lay=[];let y=0;
+  g.font=font(36,600);
+  facts.forEach((x,i)=>{const row={x,y,chips:[]};y+=i?36:0;row.y=y;y+=50; // name line
+    if(x.note)y+=40;if(x.sub)y+=40;
+    let cx=0,cy=y+12;const ch=64,gap=14;
+    x.sets.forEach(t=>{const w=g.measureText(t).width+44;if(cx&&cx+w>iw){cx=0;cy+=ch+gap}row.chips.push({t,x:cx,y:cy-row.y,w});cx+=w+gap}); // chip y is relative to its row
+    y=cy+ch;row.end=y;lay.push(row);y+=36;});
+  const headH=300,listH=y+IP*2-36,footH=150,H=Math.max(1350,P+headH+listH+footH);
+  cv.width=W;cv.height=H;
+  const rr=(x,y,w,h,r)=>{g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()};
+  g.fillStyle=C.bg;g.fillRect(0,0,W,H);g.textBaseline="alphabetic";
+  g.fillStyle=C.green;g.font=font(30,700);g.fillText("WEEKLY ROUTINE",P,P+30);
+  g.fillStyle=C.ink;g.font=font(84,700);g.fillText(`Workout ${s.type}`,P,P+140);
+  g.fillStyle=C.muted;g.font=font(38,500);
+  g.fillText([DAYS_LONG[(parseKey(s.date).getDay()+6)%7]+" "+fmt(parseKey(s.date)),s.accMs?durTxt(s):"",`${done.d} set${done.d===1?"":"s"}`].filter(Boolean).join("  ·  "),P,P+205);
+  const top=P+headH-40;
+  g.fillStyle=C.card;rr(P,top,W-2*P,listH,36);g.fill();g.strokeStyle=C.line;g.lineWidth=2;g.stroke();
+  lay.forEach((row,i)=>{const ox=P+IP,oy=top+IP+row.y;
+    if(i){g.strokeStyle=C.line;g.lineWidth=2;g.beginPath();g.moveTo(ox,oy-18);g.lineTo(ox+iw,oy-18);g.stroke()}
+    g.fillStyle=C.ink;g.font=font(42,700);let nm=row.x.name;while(g.measureText(nm).width>iw-(row.x.pb?230:0)&&nm.length>4)nm=nm.slice(0,-2)+"…";
+    g.fillText(nm,ox,oy+40);
+    if(row.x.pb){const bw=200,bx=ox+iw-bw;g.fillStyle=C.gsoft;rr(bx,oy+2,bw,50,25);g.fill();g.fillStyle=C.green;g.font=font(28,700);g.textAlign="center";g.fillText("New best",bx+bw/2,oy+37);g.textAlign="left"}
+    let sy=oy+50;if(row.x.note){g.fillStyle=C.warn;g.font=font(30,500);g.fillText(row.x.note,ox,sy+32);sy+=40}
+    if(row.x.sub){g.fillStyle=C.muted;g.font=font(30,500);g.fillText(row.x.sub,ox,sy+32);sy+=40}
+    row.chips.forEach(c=>{const cx=ox+c.x,cy=oy+c.y;g.fillStyle=C.bg;rr(cx,cy,c.w,64,18);g.fill();g.fillStyle=C.ink;g.font=font(36,600);g.fillText(c.t,cx+22,cy+44)});
+  });
+  g.fillStyle=C.muted;g.font=font(30,500);g.fillText("Logged with Weekly Routine",P,H-P);
+  return cv;
+}
+async function shareWorkout(id){
+  const s=sessions[id];if(!s||s.status!=="done"||isCardio(s))return;
+  try{if(document.fonts&&document.fonts.ready)await document.fonts.ready}catch(e){}
+  const cv=drawShareCard(s),name=`workout-${s.type}-${s.date}.png`;
+  const blob=await new Promise(r=>cv.toBlob(r,"image/png"));if(!blob)return;
+  const file=new File([blob],name,{type:"image/png"});
+  if(navigator.canShare&&navigator.share){try{if(navigator.canShare({files:[file]})){await navigator.share({files:[file],title:`Workout ${s.type}`});return}}catch(e){if(e&&e.name==="AbortError")return}}
+  let dl=null;try{dl=window.claude&&window.claude.use?await window.claude.use("downloads"):null}catch(e){}
+  if(dl){try{await dl.save({filename:name,data:blob});return}catch(e){if(e&&e.code==="declined")return}}
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
+}
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-share]");if(!b)return;e.preventDefault();shareWorkout(b.dataset.share)});
+window.__routineShareFacts=id=>sessions[id]?shareFacts(sessions[id]):null; // what goes on a workout's card (read-only; used by the tests)
+
 const IDLE_MS=30*60000;
 const lastTick=s=>Math.max(0,...s.items.flatMap(it=>it.log.map(l=>l.done&&l.t?l.t:0)));
 // nothing ticked for 30 minutes: stop the clock at the last set so a forgotten workout doesn't run on
@@ -2711,7 +2777,7 @@ function renderEditor(){
   h+=`<div class="panel stcard"><div class="field"><label for="ed-notes">Session notes <span class="muted" style="font-weight:400">(optional)</span></label><textarea id="ed-notes" rows="2" placeholder="How it felt, technique cues, anything to change">${esc(s.notes)}</textarea></div>
     <div class="field edate"><label for="ed-date">Date</label><input type="date" id="ed-date" value="${s.date}" max="${today}"></div>
     <div class="edactions">${isDone
-      ?`<button class="btn primary lg" data-st="close">Done</button><button class="btn" data-st="reopen">Mark as in progress</button><button class="btn ghost" data-st="delete">Delete workout</button>`
+      ?`<button class="btn primary lg" data-st="close">Done</button><button class="btn" data-share="${s.id}">Share workout</button><button class="btn" data-st="reopen">Mark as in progress</button><button class="btn ghost" data-st="delete">Delete workout</button>`
       :`<button class="btn primary lg" data-st="finish">Finish &amp; save workout</button><button class="btn ghost" data-st="discard" data-id="${s.id}">Discard</button>`}</div>
     <div class="muted" style="font-size:.8rem">${isDone?"Corrections save as you type and update the scorecard straight away.":"Saves as you go. Ticking an empty set uses last time's numbers."}</div></div>`;
   $("st-main").innerHTML=h;updateEditorStatus();
@@ -2764,7 +2830,7 @@ function stAction(a){
   else if(act==="discard"){const id=a.dataset.id;if(!sessions[id]||!arm(a,"discard-"+id,"Discard workout?"))return;
     sessions[id].status="deleted";touchS(id);if(editingId===id)editingId=null;stMsg("Workout discarded.");renderAll();renderStMain()}
   else if(act==="finish"&&s){capIdle(s);s.accMs=elapsed(s);s.activeFrom=null;s.status="done";touchS(s.id);editingId=null;const p=setsDone(s);
-    stMsg(`Workout ${s.type} saved: ${p.d}/${p.t} sets in ${durTxt(s)}. It counts as a weights session on ${dateLabel(s.date)} in your scorecard.`);renderAll();renderStMain();window.scrollTo({top:0})}
+    const sid=s.id;stMsg(`Workout ${s.type} saved: ${p.d}/${p.t} sets in ${durTxt(s)}. It counts as a weights session on ${dateLabel(s.date)} in your scorecard.`,sid);renderAll();renderStMain();window.scrollTo({top:0})}
   else if(act==="close"){editingId=null;renderAll();renderStMain()}
   else if(act==="reopen"&&s){const dr=currentDraft();
     if(dr&&dr.id!==s.id){stMsg(`Finish or discard Workout ${dr.type} in progress first.`);return}
@@ -2882,7 +2948,7 @@ function histDetail(s){
   return `<div class="hdetail"><div class="hex">${s.items.map(it=>{const d=it.log.filter(l=>l.done);
       return `<div class="hexr"><span class="hexn">${esc(exName(it))}${exNote(it)?`<span class="swnote exnl">${exNote(it)}</span>`:""}</span><span class="num hexs">${d.length?d.map(setTxt).join(" · "):"<span class=\"muted\">not done</span>"}</span></div>`}).join("")}</div>
     ${s.notes?`<div class="hnotes">${esc(s.notes)}</div>`:""}
-    <div class="row"><button class="btn" data-edit="${s.id}">Edit</button><button class="btn ghost" data-st="hdel" data-id="${s.id}">Delete</button></div></div>`;
+    <div class="row"><button class="btn" data-edit="${s.id}">Edit</button><button class="btn" data-share="${s.id}">Share</button><button class="btn ghost" data-st="hdel" data-id="${s.id}">Delete</button></div></div>`;
 }
 const HIST_N=5;
 function renderStHistory(){

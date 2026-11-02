@@ -564,6 +564,22 @@ ok($$(w,"#prog-ex option").some(o=>o.value==="biceps_curl"),"   and its sets cou
 click(w,$(w,'[data-st="start"]'));
 ok($$(w,"#st-main .panel.ex").length===6&&!/Biceps Curl/.test($(w,"#st-main").textContent)&&!$(w,"#st-main .exnl"),"WX4. The programme is untouched: the next workout has its usual 6 exercises");
 w.close();
+// --- share card: Share buttons and what goes on the card
+store={};w=boot("2026-10-26T12:00:00");click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="start"]'));
+[0,1,2].forEach(si=>{type(w,$(w,`#w-0-${si}`),60);type(w,$(w,`#r-0-${si}`),8);click(w,$(w,`[data-tick="0-${si}"]`))});click(w,$(w,'[data-st="finish"]'));save(w);w.close();
+w=boot("2026-10-28T12:00:00");click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="type"][data-type="A"]'));click(w,$(w,'[data-st="start"]'));
+[0,1,2].forEach(si=>{type(w,$(w,`#w-0-${si}`),si?60:62.5);type(w,$(w,`#r-0-${si}`),8);click(w,$(w,`[data-tick="0-${si}"]`))});
+type(w,$(w,"#w-1-0"),50);type(w,$(w,"#r-1-0"),8);click(w,$(w,'[data-tick="1-0"]'));click(w,$(w,'[data-st="finish"]'));
+ok($(w,'#st-msg [data-share]')&&/saved/.test($(w,"#st-msg").textContent),"SC1. After Finish the saved message offers Share");
+click(w,$(w,"#tab-week"));ok(!$(w,'#st-msg .stshare'),"   and goes at the next tap");
+ok(!$(w,"#today [data-share]")&&$(w,"#today [data-open]"),"   Today keeps one button (View workout), no Share");
+click(w,$(w,"#tab-strength"));const hr=$$(w,"#st-history [data-hist]")[0];if(hr)click(w,hr);
+ok($$(w,"#st-history [data-share]").length>=1,"SC2. A Training history entry has Share");
+{const ss=Object.values(JSON.parse(w.localStorage.getItem("weekly-routine.workouts.v1"))).filter(x=>x.status==="done").sort((a,b)=>a.date<b.date?1:-1);
+ const f=w.__routineShareFacts(ss[0].id);
+ ok(f.length===2&&f[0].name==="Barbell Squat"&&f[0].sets.length===3&&f[0].sets[0]==="62.5 kg × 8"&&f[0].pb===true&&f[1].pb===false,"SC3. The card lists only exercises with logged sets, every set, and marks a heavier top set than before as New best (squat yes; bench, first time, no)");
+ ok(w.__routineShareFacts(ss[1].id).every(x=>!x.pb),"   The first workout of a lift is never a New best");}
+w.close();
 // --- last time's extra set is shown, not carried forward
 store={};w=boot("2026-10-26T12:00:00");click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="start"]'));
 click(w,$(w,'[data-setadd="0"]'));[0,1,2,3].forEach(si=>{type(w,$(w,`#w-0-${si}`),60);type(w,$(w,`#r-0-${si}`),si===3?6:8);click(w,$(w,`[data-tick="0-${si}"]`))});

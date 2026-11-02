@@ -211,3 +211,11 @@
 - **Short labels are maintained for every exercise** (Jack: if they exist for a reason, keep them complete and current). One pattern: same words in sentence case, dropping qualifiers (Barbell, Seated, Machine, Standing, 45°, Flat), Dumbbell → DB. "Cable fly" became "Cable chest fly" and "Reverse lunge" became "Reverse DB lunge" to fit it. A test (EC1) fails if an exercise has no short label.
 - **One-sided lifts say "per leg"** (`perLeg` in the catalogue: Bulgarian split squat, reverse DB lunge): "3 × 10–12 per leg" on the workout screen and the programme list.
 - **Set boxes have no number spinners**: desktop browsers reserved room for them and cut the "10–12" placeholder to "10–1"; phones never show them.
+
+## 2 Nov 2026 (share card)
+
+- **A finished workout can be shared as an image card** (Jack: every set, not just the best; Claude had leaned to best set only). Drawn on the device, so nothing is uploaded or made public; a shareable link was ruled out because it would make the workout readable without signing in.
+- **Where Share lives:** the saved message after Finish (it stays until the next tap, since a fading button is hard to hit), each Training history entry, and the saved-workout screen. Tried on Today's "Workout done" card too and dropped: two buttons pushed its text onto extra lines even at 390px.
+- **What's on it:** workout letter, date, duration, set count, then each exercise with logged sets. Exercises not done are left off. "New best" means a heavier top set than any earlier workout of that lift (assisted lifts excluded, since less assistance isn't heavier). Assisted sets say "assist" so friends don't read assistance as weight lifted; one-sided lifts say "Reps per leg". Left off: notes, bodyweight, weekly %, photos, habits.
+- **Follows the person's light or dark look**, rather than one fixed design, so it matches what they see.
+- **Weights workouts only for now**; Jack didn't say on cardio, so a cardio card waits until asked.
