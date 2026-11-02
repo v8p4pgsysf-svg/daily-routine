@@ -187,3 +187,4 @@
 - **The settings-cog line moved to the Welcome page**, under Get started, so the weight question leads the next page (Jack asked; Claude agreed).
 - **Progress check-ins tooltip says "x/y check-ins"**, matching the review summary; it still said "targets".
 - **Hosted test fix:** run.py signed back in while the page was still reloading after sign-out, and the reload could wipe what it typed (also seen on the unchanged app, about 1 run in 6). It now waits for the reload to settle.
+- **Welcome points open one at a time** (Jack): tapping a point closes whichever is open, matching what Next does.

@@ -2357,7 +2357,8 @@ function welNext(){const ds=[...document.querySelectorAll(".swl details")];const
   if(nx<0)return;ds.forEach((d,j)=>d.open=j===nx);SD.welAt=nx;SD.welSeen.add(nx);welSync()}
 function welSync(){const b=document.querySelector("#setbody .swgo");if(b)b.outerHTML=welBtn()}
 document.addEventListener("toggle",e=>{const d=e.target;if(!(SD&&SD.setup===1&&d.matches&&d.matches(".swl details")))return;
-  if(d.open){SD.welAt=+d.dataset.wp;if(!SD.welSeen.has(SD.welAt)){SD.welSeen.add(SD.welAt);welSync()}}else if(SD.welAt===+d.dataset.wp)SD.welAt=-1},true);
+  if(d.open){SD.welAt=+d.dataset.wp;document.querySelectorAll(".swl details[open]").forEach(o=>{if(o!==d)o.open=false}); // one point open at a time
+    if(!SD.welSeen.has(SD.welAt)){SD.welSeen.add(SD.welAt);welSync()}}else if(SD.welAt===+d.dataset.wp)SD.welAt=-1},true);
 // the Welcome page: the app's story, each beat opening to say what it means in the app
 const WELCOME_POINTS=[
   ["Plan your week","Choose the days you'll train and the daily habits you want to keep, like protein intake, sleep or steps. The Today tab shows what's planned for each day."],

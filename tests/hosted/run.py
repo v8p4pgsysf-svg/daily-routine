@@ -53,7 +53,7 @@ try:
   pg.click('[data-st="wel-next"]');pg.wait_for_timeout(100)
   ok(opn()==["2"] and pg.locator("#setbody .swgo").inner_text()=="Get started" and pg.locator('[data-st="set-next"]').count()==1 and btny()==y0,"   Next opens the third; with all three seen it becomes Get started, still in the same place")
   pg.click('.swl summary:has-text("Plan your week")');pg.wait_for_timeout(100)
-  ok("0" in opn() and pg.locator("#setbody .swgo").inner_text()=="Get started","   Tapping a point still opens it; the button stays Get started")
+  ok(opn()==["0"] and pg.locator("#setbody .swgo").inner_text()=="Get started","   Tapping back to an earlier point opens it and closes the one that was open; the button stays Get started")
   pg.screenshot(path="setup-0.png")
   pg.click('[data-st="set-next"]');pg.wait_for_timeout(100);s2=pg.inner_text("#setbody")
   ok(pg.inner_text("#setbody h3").startswith("Your weight") and pg.locator("#setbody [data-shab]").count()==6 and pg.locator('[data-st="set-back"]').count()==1 and pg.locator(".sdots span").count()==5 and pg.locator(".sdots span.on").count()==1,"H4b. Get started: weight first, then daily habits (catalog listed); Back; dots count the five steps after Welcome")
