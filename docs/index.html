@@ -1,5 +1,5 @@
 <!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<meta name="app-version" content="20261102155106">
+<meta name="app-version" content="20261102161851">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Weekly Routine</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -374,7 +374,7 @@ input[type=date],select{font:inherit;color:var(--ink);background:var(--bg);borde
 .plist{display:flex;flex-direction:column}
 .prow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
 .prow .pn{font-weight:600;font-size:.92rem}
-.rx{font-size:.78rem;color:var(--muted)}
+.rx{font-size:.78rem;color:var(--muted)}.perleg{font-family:var(--sans)}
 .prow .pv{display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-size:.8rem;color:var(--muted);text-align:right;min-width:0}
 .flag{display:inline-flex;align-items:center;font-size:.72rem;font-weight:600;color:var(--green);background:var(--green-soft);border:1px solid var(--green-mid);border-radius:99px;padding:1px 8px;white-space:nowrap}
 .flag.up{color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent);border-color:color-mix(in srgb,var(--warn) 40%,transparent)}
@@ -512,6 +512,8 @@ button.trow{width:100%;background:none;border-left:0;border-right:0;border-botto
 .wtargets .bar{margin-top:0}
 .dgrid .lbl .x.keep{display:block}
 .setrow input::placeholder{color:var(--faint);opacity:1}
+/* no up/down arrows in set boxes (phones never show them; desktop browsers reserved space for them and cut "10–12" to "10–1") */
+.setrow input[type=number]{-moz-appearance:textfield;appearance:textfield}.setrow input[type=number]::-webkit-inner-spin-button,.setrow input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .edate input{max-width:12rem}
 .prow{padding:8px 0}
 .hrow{grid-template-columns:28px minmax(0,1fr) auto;grid-template-areas:"t d s" "t m m";row-gap:2px;align-items:start}
@@ -1087,34 +1089,35 @@ const DAY_ITEMS={0:[["strength",0,"Strength A"]],1:[["cardio",0,"Cardio"]],2:[["
 /* Exercises. To add one, add an entry here: it then appears in the exercise picker, can be used in any programme,
    and gets the right weight step and labels everywhere (workouts, progress dropdown, key lifts, lift status, exports).
    Never change an id once people have logged it (history is keyed on it); renaming the name is fine.
-   id · name · short: label in the key-lifts table (optional) · step: kg to add when ready to progress (default 2.5)
+   id · name · short: compact label for the key-lifts table and setup's programme summary (every entry has one: same words, sentence case,
+     dropping words that only qualify, like Barbell, Seated, Machine, 45°; Dumbbell → DB; a test checks it) · step: kg to add when ready to progress (default 2.5) · perLeg: one-sided lift, reps shown "per leg"
    assisted: the weight is help (assisted pull-ups), so progress means less of it */
 const EXERCISE_CATALOG=[
   {id:"squat",name:"Barbell Squat",short:"Squat"},
   {id:"bench",name:"Bench Press",short:"Bench press"},
   {id:"cable_row",name:"Seated Cable Row",short:"Cable row"},
-  {id:"leg_curl",name:"Leg Curl"},
-  {id:"lateral_raise",name:"Lateral Raise",step:1},
-  {id:"cable_crunch",name:"Cable Crunch"},
+  {id:"leg_curl",name:"Seated Leg Curl",short:"Leg curl"},
+  {id:"lateral_raise",name:"Lateral Raise",short:"Lateral raise",step:1},
+  {id:"cable_crunch",name:"Cable Crunch",short:"Cable crunch"},
   {id:"rdl",name:"Romanian Deadlift",short:"Romanian deadlift"},
   {id:"lat_pulldown",name:"Lat Pulldown",short:"Lat pulldown"},
   {id:"incline_db_press",name:"Incline Dumbbell Chest Press",short:"Incline DB chest press",step:1},
-  {id:"biceps_curl",name:"Biceps Curl",step:1},
-  {id:"triceps_pushdown",name:"Triceps Pushdown"},
-  {id:"leg_press",name:"Hack Squat / Leg Press",short:"Leg press"},
+  {id:"biceps_curl",name:"Biceps Curl",short:"Biceps curl",step:1},
+  {id:"triceps_pushdown",name:"Triceps Pushdown",short:"Triceps pushdown"},
+  {id:"leg_press",name:"Leg Press",short:"Leg press"},
   {id:"db_shoulder_press",name:"Seated Dumbbell Shoulder Press",short:"DB shoulder press",step:1},
   {id:"cs_row",name:"Chest-Supported Row",short:"Chest-supported row"},
-  {id:"oh_triceps_ext",name:"Overhead Triceps Extension",step:1},
-  {id:"calf_raise",name:"Standing Calf Raise"},
-  {id:"leg_extension",name:"Leg Extension"},
-  {id:"cable_fly",name:"Cable Chest Fly",short:"Cable fly"},
+  {id:"oh_triceps_ext",name:"Overhead Triceps Extension",short:"Overhead triceps extension",step:1},
+  {id:"calf_raise",name:"Standing Calf Raise",short:"Calf raise"},
+  {id:"leg_extension",name:"Leg Extension",short:"Leg extension"},
+  {id:"cable_fly",name:"Cable Chest Fly",short:"Cable chest fly"},
   {id:"hip_thrust_machine",name:"Hip Thrust Machine",short:"Hip thrust"},
-  {id:"bulgarian_split_squat",name:"Bulgarian Split Squat",short:"Bulgarian split squat",step:1},
+  {id:"bulgarian_split_squat",name:"Bulgarian Split Squat",short:"Bulgarian split squat",step:1,perLeg:true},
   {id:"flat_db_bench",name:"Flat Dumbbell Chest Press",short:"DB chest press",step:1},
-  {id:"assisted_pullup",name:"Assisted Pull-Up",assisted:true},
-  {id:"reverse_db_lunge",name:"Reverse Dumbbell Lunge",short:"Reverse lunge",step:1},
+  {id:"assisted_pullup",name:"Assisted Pull-Up",short:"Assisted pull-up",assisted:true},
+  {id:"reverse_db_lunge",name:"Reverse Dumbbell Lunge",short:"Reverse DB lunge",step:1,perLeg:true},
   {id:"back_extension_45",name:"45° Back Extension",short:"Back extension"},
-  {id:"reverse_pec_deck",name:"Reverse Pec Deck"}
+  {id:"reverse_pec_deck",name:"Reverse Pec Deck",short:"Reverse pec deck"}
 ];
 const EX_BY_ID=Object.fromEntries(EXERCISE_CATALOG.map(e=>[e.id,e]));
 const BASE_EXERCISES=Object.fromEntries(EXERCISE_CATALOG.map(e=>[e.id,e.name]));
@@ -2058,6 +2061,8 @@ function prevFor(ex,cur){
 }
 // a swapped or added exercise says so on a line of its own, so it never pushes the sets out of line
 const exNote=it=>it.swappedFrom?`Instead of ${esc(EXERCISES[it.swappedFrom]||it.swappedFrom)}`:it.added?"Added":"";
+// "3 × 10–12", plus "per leg" for one-sided lifts (perLeg in the catalog)
+const repsTxt=(ex,sets,lo,hi)=>`${sets} × ${lo}–${hi}${EX_BY_ID[ex]&&EX_BY_ID[ex].perLeg?' <span class="perleg">per leg</span>':""}`;
 const prevTxt=p=>p.it.log.filter(l=>l.done).map(setTxt).join(" · ");
 // double progression: every prescribed set completed, all at one weight, all at the top of the range
 function ready(it){
@@ -2666,7 +2671,7 @@ function renderStLanding(){
     ${dr&&!isC?`<div class="muted" style="font-size:.84rem">Finish or discard the workout in progress before starting another.</div>`:""}
     ${isC?"":`<details class="plistd"${plistOpen?" open":""}><summary>${PROGRAMME[stType].items.length} exercise${PROGRAMME[stType].items.length===1?"":"s"}${(()=>{const n=PROGRAMME[stType].items.filter(([ex])=>{const p=prevFor(ex,null);return p&&ready(p.it)}).length;return n?` · <span class="flag up">${n} lift${n===1?" goes":"s go"} up in weight</span>`:""})()}</summary>
     <div class="plist">${PROGRAMME[stType].items.map(([ex,sets,lo,hi])=>{const p=prevFor(ex,null);
-      return `<div class="prow"><div style="min-width:0"><div class="pn">${esc(EXERCISES[ex])}</div><div class="rx num">${sets} × ${lo}–${hi}</div></div>${p&&ready(p.it)?`<span class="flag up">Weight goes up</span>`:""}</div>`}).join("")}</div></details>`}</div>`;
+      return `<div class="prow"><div style="min-width:0"><div class="pn">${esc(EXERCISES[ex])}</div><div class="rx num">${repsTxt(ex,sets,lo,hi)}</div></div>${p&&ready(p.it)?`<span class="flag up">Weight goes up</span>`:""}</div>`}).join("")}</div></details>`}</div>`;
   $("st-main").innerHTML=h;
 }
 function renderEditor(){
@@ -2682,7 +2687,7 @@ function renderEditor(){
     <div class="timer"><label class="eyebrow" for="ed-dur">Minutes</label><input type="number" id="ed-dur" class="durin" inputmode="numeric" min="0" step="1" value="${s.accMs?Math.round(s.accMs/60000):""}" placeholder="–"></div></div></div>`;
   s.items.forEach((it,xi)=>{
     const p=prevFor(it.ex,s),nm=esc(exName(it));
-    h+=`<div class="panel ex" id="ex-${xi}"><div class="exh"><div style="min-width:0"><div class="nm">${nm}</div><div class="rx num">${it.sets} × ${it.lo}–${it.hi}</div>${exNote(it)?`<div class="swnote exnl">${exNote(it)}</div>`:""}</div><div class="exside"><div class="exflags" id="exf-${xi}"></div>${it.added?`<button class="swapbtn" data-exrm="${xi}" aria-label="Remove ${nm}"${it.log.some(l=>l.done)?" hidden":""}>Remove</button>`:`<button class="swapbtn" data-swap="${xi}" aria-label="Swap ${nm} for another exercise">Swap</button>`}</div></div>
+    h+=`<div class="panel ex" id="ex-${xi}"><div class="exh"><div style="min-width:0"><div class="nm">${nm}</div><div class="rx num">${repsTxt(it.ex,it.sets,it.lo,it.hi)}</div>${exNote(it)?`<div class="swnote exnl">${exNote(it)}</div>`:""}</div><div class="exside"><div class="exflags" id="exf-${xi}"></div>${it.added?`<button class="swapbtn" data-exrm="${xi}" aria-label="Remove ${nm}"${it.log.some(l=>l.done)?" hidden":""}>Remove</button>`:`<button class="swapbtn" data-swap="${xi}" aria-label="Swap ${nm} for another exercise">Swap</button>`}</div></div>
       <div class="swapbox" id="sw-${xi}" hidden><input type="text" id="swin-${xi}" data-swapin="${xi}" placeholder="Alternative exercise" aria-label="Alternative exercise" autocomplete="off"><button class="btn primary" data-swapgo="${xi}">Use this</button><button class="btn ghost" data-swapcancel="${xi}">Cancel</button>${it.swappedFrom?`<button class="btn ghost" data-swapback="${xi}">Back to ${esc(EXERCISES[it.swappedFrom]||it.swappedFrom)}</button>`:""}</div>
       ${p&&ready(p.it)?`<div class="exprev"><span class="flag up">${isDone?"Weight goes up next time":`${ASSISTED.has(it.ex)?"−"+incU(it.ex,exName(it))+" "+unitW()+" assistance":"+"+incU(it.ex,exName(it))+" "+unitW()+" from last time"}`}</span></div>`:""}
 `;

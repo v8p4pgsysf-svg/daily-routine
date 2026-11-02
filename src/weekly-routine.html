@@ -337,7 +337,7 @@ input[type=date],select{font:inherit;color:var(--ink);background:var(--bg);borde
 .plist{display:flex;flex-direction:column}
 .prow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
 .prow .pn{font-weight:600;font-size:.92rem}
-.rx{font-size:.78rem;color:var(--muted)}
+.rx{font-size:.78rem;color:var(--muted)}.perleg{font-family:var(--sans)}
 .prow .pv{display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-size:.8rem;color:var(--muted);text-align:right;min-width:0}
 .flag{display:inline-flex;align-items:center;font-size:.72rem;font-weight:600;color:var(--green);background:var(--green-soft);border:1px solid var(--green-mid);border-radius:99px;padding:1px 8px;white-space:nowrap}
 .flag.up{color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent);border-color:color-mix(in srgb,var(--warn) 40%,transparent)}
@@ -475,6 +475,8 @@ button.trow{width:100%;background:none;border-left:0;border-right:0;border-botto
 .wtargets .bar{margin-top:0}
 .dgrid .lbl .x.keep{display:block}
 .setrow input::placeholder{color:var(--faint);opacity:1}
+/* no up/down arrows in set boxes (phones never show them; desktop browsers reserved space for them and cut "10–12" to "10–1") */
+.setrow input[type=number]{-moz-appearance:textfield;appearance:textfield}.setrow input[type=number]::-webkit-inner-spin-button,.setrow input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .edate input{max-width:12rem}
 .prow{padding:8px 0}
 .hrow{grid-template-columns:28px minmax(0,1fr) auto;grid-template-areas:"t d s" "t m m";row-gap:2px;align-items:start}
@@ -1050,34 +1052,35 @@ const DAY_ITEMS={0:[["strength",0,"Strength A"]],1:[["cardio",0,"Cardio"]],2:[["
 /* Exercises. To add one, add an entry here: it then appears in the exercise picker, can be used in any programme,
    and gets the right weight step and labels everywhere (workouts, progress dropdown, key lifts, lift status, exports).
    Never change an id once people have logged it (history is keyed on it); renaming the name is fine.
-   id · name · short: label in the key-lifts table (optional) · step: kg to add when ready to progress (default 2.5) · perLeg: one-sided lift, reps shown "per leg"
+   id · name · short: compact label for the key-lifts table and setup's programme summary (every entry has one: same words, sentence case,
+     dropping words that only qualify, like Barbell, Seated, Machine, 45°; Dumbbell → DB; a test checks it) · step: kg to add when ready to progress (default 2.5) · perLeg: one-sided lift, reps shown "per leg"
    assisted: the weight is help (assisted pull-ups), so progress means less of it */
 const EXERCISE_CATALOG=[
   {id:"squat",name:"Barbell Squat",short:"Squat"},
   {id:"bench",name:"Bench Press",short:"Bench press"},
   {id:"cable_row",name:"Seated Cable Row",short:"Cable row"},
-  {id:"leg_curl",name:"Seated Leg Curl"},
-  {id:"lateral_raise",name:"Lateral Raise",step:1},
-  {id:"cable_crunch",name:"Cable Crunch"},
+  {id:"leg_curl",name:"Seated Leg Curl",short:"Leg curl"},
+  {id:"lateral_raise",name:"Lateral Raise",short:"Lateral raise",step:1},
+  {id:"cable_crunch",name:"Cable Crunch",short:"Cable crunch"},
   {id:"rdl",name:"Romanian Deadlift",short:"Romanian deadlift"},
   {id:"lat_pulldown",name:"Lat Pulldown",short:"Lat pulldown"},
   {id:"incline_db_press",name:"Incline Dumbbell Chest Press",short:"Incline DB chest press",step:1},
-  {id:"biceps_curl",name:"Biceps Curl",step:1},
-  {id:"triceps_pushdown",name:"Triceps Pushdown"},
-  {id:"leg_press",name:"Hack Squat / Leg Press",short:"Leg press"},
+  {id:"biceps_curl",name:"Biceps Curl",short:"Biceps curl",step:1},
+  {id:"triceps_pushdown",name:"Triceps Pushdown",short:"Triceps pushdown"},
+  {id:"leg_press",name:"Leg Press",short:"Leg press"},
   {id:"db_shoulder_press",name:"Seated Dumbbell Shoulder Press",short:"DB shoulder press",step:1},
   {id:"cs_row",name:"Chest-Supported Row",short:"Chest-supported row"},
-  {id:"oh_triceps_ext",name:"Overhead Triceps Extension",step:1},
-  {id:"calf_raise",name:"Standing Calf Raise"},
-  {id:"leg_extension",name:"Leg Extension"},
-  {id:"cable_fly",name:"Cable Chest Fly",short:"Cable fly"},
+  {id:"oh_triceps_ext",name:"Overhead Triceps Extension",short:"Overhead triceps extension",step:1},
+  {id:"calf_raise",name:"Standing Calf Raise",short:"Calf raise"},
+  {id:"leg_extension",name:"Leg Extension",short:"Leg extension"},
+  {id:"cable_fly",name:"Cable Chest Fly",short:"Cable chest fly"},
   {id:"hip_thrust_machine",name:"Hip Thrust Machine",short:"Hip thrust"},
   {id:"bulgarian_split_squat",name:"Bulgarian Split Squat",short:"Bulgarian split squat",step:1,perLeg:true},
   {id:"flat_db_bench",name:"Flat Dumbbell Chest Press",short:"DB chest press",step:1},
-  {id:"assisted_pullup",name:"Assisted Pull-Up",assisted:true},
-  {id:"reverse_db_lunge",name:"Reverse Dumbbell Lunge",short:"Reverse lunge",step:1,perLeg:true},
+  {id:"assisted_pullup",name:"Assisted Pull-Up",short:"Assisted pull-up",assisted:true},
+  {id:"reverse_db_lunge",name:"Reverse Dumbbell Lunge",short:"Reverse DB lunge",step:1,perLeg:true},
   {id:"back_extension_45",name:"45° Back Extension",short:"Back extension"},
-  {id:"reverse_pec_deck",name:"Reverse Pec Deck"}
+  {id:"reverse_pec_deck",name:"Reverse Pec Deck",short:"Reverse pec deck"}
 ];
 const EX_BY_ID=Object.fromEntries(EXERCISE_CATALOG.map(e=>[e.id,e]));
 const BASE_EXERCISES=Object.fromEntries(EXERCISE_CATALOG.map(e=>[e.id,e.name]));
@@ -2022,7 +2025,7 @@ function prevFor(ex,cur){
 // a swapped or added exercise says so on a line of its own, so it never pushes the sets out of line
 const exNote=it=>it.swappedFrom?`Instead of ${esc(EXERCISES[it.swappedFrom]||it.swappedFrom)}`:it.added?"Added":"";
 // "3 × 10–12", plus "per leg" for one-sided lifts (perLeg in the catalog)
-const repsTxt=(ex,sets,lo,hi)=>`${sets} × ${lo}–${hi}${EX_BY_ID[ex]&&EX_BY_ID[ex].perLeg?" per leg":""}`;
+const repsTxt=(ex,sets,lo,hi)=>`${sets} × ${lo}–${hi}${EX_BY_ID[ex]&&EX_BY_ID[ex].perLeg?' <span class="perleg">per leg</span>':""}`;
 const prevTxt=p=>p.it.log.filter(l=>l.done).map(setTxt).join(" · ");
 // double progression: every prescribed set completed, all at one weight, all at the top of the range
 function ready(it){

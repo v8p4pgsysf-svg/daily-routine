@@ -28,7 +28,7 @@ def finish_setup(pg):
     pg.click('[data-st="set-start"]'); pg.wait_for_selector("#setsheet", state="hidden")
 def sign_out(pg):
     pg.wait_for_timeout(1500)
-    pg.click("#setcog"); pg.click('[data-st="acct"]'); pg.click('[data-st="sign-out"]'); pg.wait_for_timeout(400)
+    pg.click("#setcog"); pg.wait_for_selector("#setsheet", state="visible"); pg.wait_for_timeout(150); pg.click('[data-st="acct"]'); pg.wait_for_selector('[data-st="sign-out"]', state="visible"); pg.click('[data-st="sign-out"]'); pg.wait_for_timeout(400)
     if pg.locator("#login").is_hidden() or pg.locator("#lg-email").count() == 0: pg.click('[data-st="sign-out"]')
     pg.wait_for_selector("#lg-email", state="visible")
 def open_review(pg):

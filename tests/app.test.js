@@ -433,6 +433,10 @@ click(w,$(w,'[data-pgym="5"]'));
 click(w,$(w,'[data-st="set-save"]'));click(w,$(w,"#tab-week"));
 ok($(w,"#setsheet").hidden&&$(w,'[data-ct="strength"]').textContent==="0/3"&&$(w,'[data-ct="af"]').textContent==="0/5"&&$(w,'[data-ct="cardio"]').textContent==="0/1","   Saved: 3 workouts again, while habits and cardio keep your own settings");
 w.close();
+// --- exercise catalogue: every entry has a short label (key-lifts table, setup's programme summary)
+{const blk=html.slice(html.indexOf("const EXERCISE_CATALOG"),html.indexOf("];",html.indexOf("const EXERCISE_CATALOG")));
+const rows=blk.match(/\{id:"[^"]+"[^}]*\}/g)||[],miss=rows.filter(r=>!/short:"[^"]+"/.test(r)).map(r=>r.match(/id:"([^"]+)"/)[1]);
+ok(rows.length>20&&!miss.length,"EC1. Every exercise in the catalogue has a short label ("+rows.length+" exercises"+(miss.length?"; missing: "+miss.join(", "):"")+")");}
 // --- glute programme
 store={};w=boot("2026-10-28T09:00:00");
 click(w,$(w,'#setcog'));ok($(w,".prline .prname").textContent==="Custom","PR1. Jack's original routine no longer matches the updated full body, so it reads Custom");
