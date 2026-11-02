@@ -1,5 +1,5 @@
 <!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<meta name="app-version" content="20261102172141">
+<meta name="app-version" content="20261102174301">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Weekly Routine</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -165,8 +165,8 @@ button{font:inherit;color:inherit}
 .hexr{display:flex;justify-content:space-between;gap:4px 14px;flex-wrap:wrap;padding:7px 0;border-top:1px solid var(--line);font-size:.86rem}
 .hexr:first-child{border-top:0}
 .hexn{font-weight:600;min-width:0}.exnl{display:block;font-size:.78rem;font-weight:500;margin-top:1px}
-.hexr{display:block}.hexs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px} /* name on its line, sets as tiles under it, like the share card */
-.hchip{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:3px 9px;font-family:var(--sans);font-weight:600;font-size:.84rem;color:var(--ink);white-space:nowrap}
+.hexr{display:block}.hexs{display:block;margin-top:2px;font-size:.84rem;color:var(--muted)} /* name, then the sets as one line of small text (wraps between sets, never inside one) */
+.hset{white-space:nowrap}.hskip{color:var(--muted);font-size:.84rem} /* skipped exercises share one line at the end */
 .hexs{color:var(--muted)}
 .hdl{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin:0}
 .hdl dt{font-size:.7rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
@@ -2954,8 +2954,9 @@ function histDetail(s){
       ${s.notes?`<div class="hnotes">${esc(s.notes)}</div>`:""}
       <div class="row"><button class="btn" data-cardio-edit="${s.id}">Edit</button><button class="btn ghost" data-st="hdel" data-id="${s.id}">Delete</button></div></div>`;
   }
-  return `<div class="hdetail"><div class="hex">${s.items.map(it=>{const d=it.log.filter(l=>l.done);
-      return `<div class="hexr"><span class="hexn">${esc(exName(it))}${exNote(it)?`<span class="swnote exnl">${exNote(it)}</span>`:""}</span><span class="hexs">${d.length?d.map(l=>`<span class="hchip num">${setLong(it,l)}</span>`).join(""):"<span class=\"muted\">Not done</span>"}</span></div>`}).join("")}</div>
+  const doneIt=s.items.filter(it=>it.log.some(l=>l.done)),skipped=s.items.filter(it=>!it.log.some(l=>l.done));
+  return `<div class="hdetail"><div class="hex">${doneIt.map(it=>{const d=it.log.filter(l=>l.done);
+      return `<div class="hexr"><span class="hexn">${esc(exName(it))}${exNote(it)?`<span class="swnote exnl">${exNote(it)}</span>`:""}</span><span class="hexs">${d.map(l=>`<span class="hset">${esc(setTxt(l))}</span>`).join(" · ")}</span></div>`}).join("")}${skipped.length?`<div class="hexr hskip">Not done: ${skipped.map(it=>esc(exName(it))).join(", ")}</div>`:""}</div>
     ${s.notes?`<div class="hnotes">${esc(s.notes)}</div>`:""}
     <div class="row"><button class="btn" data-edit="${s.id}">Edit</button><button class="btn" data-share="${s.id}">Share</button><button class="btn ghost" data-st="hdel" data-id="${s.id}">Delete</button></div></div>`;
 }
