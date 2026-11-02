@@ -57,8 +57,8 @@ ok($$(w,"#daily .lbl").filter(l=>/^(Weights|Cardio)/.test(l.textContent)).every(
 // resave / edit shouldn't double count
 const id=Object.keys(s)[0];
 click(w,$(w,"button.wk"));
-{const rowsTxt=$(w,".hitem.open")?[...$(w,".hitem.open").querySelectorAll(".hexr")].map(r=>[...r.querySelectorAll(".hchip")].map(e=>e.textContent).join("|")):[];
-ok($(w,".hitem.open .hdetail")&&rowsTxt.includes("60 kg × 8|60 kg × 7|60 kg × 6"),"6a. Tapping the scorecard box drops down the workout in Training history");}
+{const rowsTxt=$(w,".hitem.open")?[...$(w,".hitem.open").querySelectorAll(".hexs")].map(r=>r.textContent):[];
+ok($(w,".hitem.open .hdetail")&&rowsTxt.includes("60×8 · 60×7 · 60×6"),"6a. Tapping the scorecard box drops down the workout in Training history");}
 click(w,$(w,".hitem.open .hrow"));ok(!$(w,".hitem.open"),"    Tapping the line again closes it");
 click(w,$(w,"button.wk"));click(w,$(w,".hitem.open [data-edit]"));
 ok($(w,"#w-1-1").value==="60"&&$(w,"#r-1-1").value==="7","6. Reopened workout shows recorded results (bench set 2: 60 x 7)");
@@ -560,7 +560,8 @@ ok($(w,'[data-exrm="6"]').hidden,"   Once a set is ticked, Remove goes (so logge
 click(w,$(w,'[data-tick="6-0"]'));ok(!$(w,'[data-exrm="6"]').hidden,"   and comes back if the set is unticked");click(w,$(w,'[data-tick="6-0"]'));
 type(w,$(w,"#w-0-0"),60);type(w,$(w,"#r-0-0"),8);click(w,$(w,'[data-tick="0-0"]'));click(w,$(w,'[data-st="finish"]'));
 click(w,$(w,"#tab-strength"));
-ok(/Biceps CurlAdded/.test($(w,"#st-history").textContent)||($$(w,"#st-history [data-hist]")[0]&&(click(w,$$(w,"#st-history [data-hist]")[0]),/Biceps CurlAdded/.test($(w,"#st-history").textContent))),"WX3. The saved workout notes Biceps Curl as added");
+{if(!$(w,"#st-history .hdetail")&&$$(w,"#st-history [data-hist]")[0])click(w,$$(w,"#st-history [data-hist]")[0]);
+ok([...$$(w,"#st-history .hexn")].some(e=>e.textContent==="Biceps Curl")&&!/Added|Instead of/.test($(w,"#st-history .hdetail").textContent),"WX3. The saved workout lists Biceps Curl by name only (no Added note in history)");}
 ok($$(w,"#prog-ex option").some(o=>o.value==="biceps_curl"),"   and its sets count toward Biceps Curl's history");
 click(w,$(w,'[data-st="start"]'));
 ok($$(w,"#st-main .panel.ex").length===6&&!/Biceps Curl/.test($(w,"#st-main").textContent)&&!$(w,"#st-main .exnl"),"WX4. The programme is untouched: the next workout has its usual 6 exercises");
@@ -579,8 +580,8 @@ ok($$(w,"#st-history [data-share]").length>=1,"SC2. A Training history entry has
 click(w,$(w,"#tab-progress"));click(w,$(w,"#tab-strength"));
 ok(!$(w,"#st-history .hdetail"),"   Leaving the Training tab folds the open history entry");
 {const hr3=$$(w,"#st-history [data-hist]")[0];if(hr3)click(w,hr3);const tx=$$(w,"#st-history .hexs").map(e=>e.textContent);
- const ch=$$(w,"#st-history .hexr")[0]?[...$$(w,"#st-history .hexr")[0].querySelectorAll(".hchip")].map(e=>e.textContent):[];
- ok(ch.join("|")==="62.5 kg × 8|60 kg × 8|60 kg × 8"&&tx.some(x=>x==="50 kg × 8"),"   History shows every set as its own tile, exact weights, like the share card ("+ch.join(", ")+")");click(w,$$(w,"#st-history [data-hist]")[0]);}
+ const sk=$(w,"#st-history .hskip");
+ ok(tx[0]==="62.5×8 · 60×8 · 60×8"&&tx.includes("50×8")&&sk&&/^Not done: /.test(sk.textContent)&&$$(w,"#st-history .hexr:not(.hskip)").length===2,"   History: each exercise's sets as one line of exact weights, skipped exercises on one Not done line");click(w,$$(w,"#st-history [data-hist]")[0]);}
 {const hr2=$$(w,"#st-history [data-hist]")[0];if(hr2)click(w,hr2);}
 {const ss=Object.values(JSON.parse(w.localStorage.getItem("weekly-routine.workouts.v1"))).filter(x=>x.status==="done").sort((a,b)=>a.date<b.date?1:-1);
  const f=w.__routineShareFacts(ss[0].id);

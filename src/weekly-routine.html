@@ -2022,7 +2022,7 @@ function prevFor(ex,cur){
   for(let i=list.length-1;i>=0;i--){const it=list[i].items.find(x=>x.ex===ex);if(it&&it.log.some(l=>l.done))return {s:list[i],it}}
   return null;
 }
-// a swapped or added exercise says so on a line of its own, so it never pushes the sets out of line
+// the workout screen says on a line of its own when today's exercise was swapped or added (history and the share card just show the name)
 const exNote=it=>it.swappedFrom?`Instead of ${esc(EXERCISES[it.swappedFrom]||it.swappedFrom)}`:it.added?"Added":"";
 // "3 × 10–12", plus "per leg" for one-sided lifts (perLeg in the catalog)
 const repsTxt=(ex,sets,lo,hi)=>`${sets} × ${lo}–${hi}${EX_BY_ID[ex]&&EX_BY_ID[ex].perLeg?' <span class="perleg">per leg</span>':""}`;
@@ -2089,7 +2089,7 @@ function shareFacts(s){
     const prev=ASSISTED.has(it.ex)?[]:doneSessions().filter(x=>x.id!==s.id&&isBefore(x,s)).flatMap(x=>x.items.filter(y=>y.ex===it.ex).flatMap(y=>y.log.filter(l=>l.done&&l.w!=null&&l.r!=null)));
     const best=prev.length?prev.reduce((a,b)=>heavier(a,b)?b:a):null;
     const as=ASSISTED.has(it.ex),pl=EX_BY_ID[it.ex]&&EX_BY_ID[it.ex].perLeg; // friends shouldn't read assistance as weight lifted
-    return {name:exName(it),note:exNote(it).replace(/&amp;/g,"&"),sub:pl?"Reps per leg":"",
+    return {name:exName(it),sub:pl?"Reps per leg":"",
       sets:d.map(l=>setLong(it,l)),pb:!!(best&&heavier(best,top))}});
 }
 function drawShareCard(s){
@@ -2103,7 +2103,7 @@ function drawShareCard(s){
   const lay=[];let y=0;
   g.font=font(36,600);
   facts.forEach((x,i)=>{const row={x,y,chips:[]};y+=i?36:0;row.y=y;y+=50; // name line
-    if(x.note)y+=40;if(x.sub)y+=40;
+    if(x.sub)y+=40;
     let cx=0,cy=y+12;const ch=64,gap=14;
     x.sets.forEach(t=>{const w=g.measureText(t).width+44;if(cx&&cx+w>iw){cx=0;cy+=ch+gap}row.chips.push({t,x:cx,y:cy-row.y,w});cx+=w+gap}); // chip y is relative to its row
     y=cy+ch;row.end=y;lay.push(row);y+=36;});
@@ -2122,7 +2122,7 @@ function drawShareCard(s){
     g.fillStyle=C.ink;g.font=font(42,700);let nm=row.x.name;while(g.measureText(nm).width>iw-(row.x.pb?230:0)&&nm.length>4)nm=nm.slice(0,-2)+"…";
     g.fillText(nm,ox,oy+40);
     if(row.x.pb){const bw=200,bx=ox+iw-bw;g.fillStyle=C.gsoft;rr(bx,oy+2,bw,50,25);g.fill();g.fillStyle=C.green;g.font=font(28,700);g.textAlign="center";g.fillText("New best",bx+bw/2,oy+37);g.textAlign="left"}
-    let sy=oy+50;if(row.x.note){g.fillStyle=C.warn;g.font=font(30,500);g.fillText(row.x.note,ox,sy+32);sy+=40}
+    let sy=oy+50;
     if(row.x.sub){g.fillStyle=C.muted;g.font=font(30,500);g.fillText(row.x.sub,ox,sy+32);sy+=40}
     row.chips.forEach(c=>{const cx=ox+c.x,cy=oy+c.y;g.fillStyle=C.bg;rr(cx,cy,c.w,64,18);g.fill();g.fillStyle=C.ink;g.font=font(36,600);g.fillText(c.t,cx+22,cy+44)});
   });
@@ -2919,7 +2919,7 @@ function histDetail(s){
   }
   const doneIt=s.items.filter(it=>it.log.some(l=>l.done)),skipped=s.items.filter(it=>!it.log.some(l=>l.done));
   return `<div class="hdetail"><div class="hex">${doneIt.map(it=>{const d=it.log.filter(l=>l.done);
-      return `<div class="hexr"><span class="hexn">${esc(exName(it))}${exNote(it)?`<span class="swnote exnl">${exNote(it)}</span>`:""}</span><span class="hexs">${d.map(l=>`<span class="hset">${esc(setTxt(l))}</span>`).join(" · ")}</span></div>`}).join("")}${skipped.length?`<div class="hexr hskip">Not done: ${skipped.map(it=>esc(exName(it))).join(", ")}</div>`:""}</div>
+      return `<div class="hexr"><span class="hexn">${esc(exName(it))}</span><span class="hexs">${d.map(l=>`<span class="hset">${esc(setTxt(l))}</span>`).join(" · ")}</span></div>`}).join("")}${skipped.length?`<div class="hexr hskip">Not done: ${skipped.map(it=>esc(exName(it))).join(", ")}</div>`:""}</div>
     ${s.notes?`<div class="hnotes">${esc(s.notes)}</div>`:""}
     <div class="row"><button class="btn" data-edit="${s.id}">Edit</button><button class="btn" data-share="${s.id}">Share</button><button class="btn ghost" data-st="hdel" data-id="${s.id}">Delete</button></div></div>`;
 }
