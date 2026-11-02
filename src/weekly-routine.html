@@ -127,7 +127,9 @@ button{font:inherit;color:inherit}
 .hex{display:flex;flex-direction:column}
 .hexr{display:flex;justify-content:space-between;gap:4px 14px;flex-wrap:wrap;padding:7px 0;border-top:1px solid var(--line);font-size:.86rem}
 .hexr:first-child{border-top:0}
-.hexn{font-weight:600}
+.hexn{font-weight:600;min-width:0}.exnl{display:block;font-size:.78rem;font-weight:500;margin-top:1px}
+.hexr{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start}.hexs{text-align:right;max-width:min(62vw,260px)}
+@media (max-width:359px){.hexr{grid-template-columns:minmax(0,1fr)}.hexs{max-width:none}} /* 320px: every row stacks the same way, sets under the name on the right */
 .hexs{color:var(--muted)}
 .hdl{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin:0}
 .hdl dt{font-size:.7rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
@@ -789,7 +791,7 @@ details,.hitem,.panel,section{scroll-margin:16px 0 20px}
 .swl details[open]>summary .pchev{transform:rotate(-135deg);margin-top:3px}
 .swl details p{margin:0 0 14px;font-size:.92rem;line-height:1.5;color:var(--muted)}
 .swgo{width:100%;padding:13px 16px;font-size:1rem;border-radius:12px}
-.swnote{text-align:center;margin:0!important}
+.swcog{text-align:center;margin:0!important}
 .preset.pick{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;cursor:pointer;font:inherit;color:var(--ink);border:1.5px solid var(--line)}
 .preset.pick.on{border-color:var(--green);background:var(--green-soft)}
 .ttip.wtip{background:var(--surface);border:1px solid var(--line);padding:10px 12px;margin:10px 0 12px;line-height:1.45}
@@ -1556,13 +1558,13 @@ function renderToday(){
   const cH=habitsFor(w).find(h=>h.k==="cardio"),cN=cH?cH.target:SETTINGS.cardio.target; // fitted in a starter week
   let act;
   if(doneToday.length){const last=doneToday[doneToday.length-1],p=setsDone(last);
-    act=`<div class="tact"><div><div class="tl">Workout ${doneToday.map(s=>s.type).join(" + ")} done</div><div class="ts"><span class="num">${p.d}/${p.t}</span> sets logged${last.accMs?" in "+durTxt(last):""} · counted in this week's weights target</div></div><button class="btn" data-open="${last.id}">View workout</button></div>`;}
+    act=`<div class="tact"><div><div class="tl">Workout ${doneToday.map(s=>s.type).join(" + ")} done</div><div class="ts"><span class="num">${p.d}/${p.t}</span> sets logged${last.accMs?" in "+durTxt(last):""}</div></div><button class="btn" data-open="${last.id}">View workout</button></div>`;}
   else if(dr){const p=setsDone(dr);
     act=`<div class="tact"><div><div class="tl">Workout ${dr.type} in progress</div><div class="ts"><span class="num">${p.d}/${p.t}</span> sets done · started ${dateLabel(dr.date)}</div></div><button class="btn primary lg" data-st="resume">Resume workout</button></div>`;}
   else if(sDay)act=`<div class="tact"><div><div class="tl">${esc(plan.t)}</div><div class="ts">${PROGRAMME[sDay].items.length} exercise${PROGRAMME[sDay].items.length===1?"":"s"}</div></div><button class="btn primary lg" data-st="start-today" data-type="${sDay}">Start Workout ${sDay}</button></div>`;
   else if(cDay||cToday.length){
     if(cToday.length){const c=cToday[cToday.length-1];
-      act=`<div class="tact"><div><div class="tl">${esc(c.ctype)} done</div><div class="ts">${cardioLine(c)}${cardioCounts(c)?" · counted in this week's cardio target":" · walks don't count toward the target"}</div></div><button class="btn" data-cardio="${c.id}">View</button></div>`;}
+      act=`<div class="tact"><div><div class="tl">${esc(c.ctype)} done</div><div class="ts">${cardioLine(c)}${cardioCounts(c)?"":" · walks don't count toward the target"}</div></div><button class="btn" data-cardio="${c.id}">View</button></div>`;}
     else act=`<div class="tact"><div><div class="tl">${esc(plan.t)}</div><div class="ts">${cN===1?"This week's session":"One of "+cN+" this week"}</div></div><button class="btn primary lg" data-st="log-cardio">Log cardio</button></div>`;}
   else if(habitsOnly())act="";
   else act=`<div class="tact quiet"><div><div class="tl">${esc(plan.t)}</div></div><button class="btn" data-st="goto-strength">Training anyway? ›</button></div>`;
@@ -2012,6 +2014,8 @@ function prevFor(ex,cur){
   for(let i=list.length-1;i>=0;i--){const it=list[i].items.find(x=>x.ex===ex);if(it&&it.log.some(l=>l.done))return {s:list[i],it}}
   return null;
 }
+// a swapped or added exercise says so on a line of its own, so it never pushes the sets out of line
+const exNote=it=>it.swappedFrom?`Instead of ${esc(EXERCISES[it.swappedFrom]||it.swappedFrom)}`:it.added?"Added":"";
 const prevTxt=p=>p.it.log.filter(l=>l.done).map(setTxt).join(" · ");
 // double progression: every prescribed set completed, all at one weight, all at the top of the range
 function ready(it){
@@ -2382,7 +2386,7 @@ function renderSetup(){
   setBar(n>1?"Back":"","set-back","Set up",n===1?"":last?"Start":"Next",last?"set-start":"set-next");
   if(n===1){if(!SD.welSeen){SD.welSeen=new Set();SD.welAt=-1} // the points start closed; Next opens each in turn
     h+=`<section class="sset swel"><h3>Welcome</h3><div class="panel swl">${WELCOME_POINTS.map(([head,body],i)=>`${i?'<div class="shsep"></div>':""}<details data-wp="${i}"${i===SD.welAt?" open":""}><summary><span>${head}</span><span class="pchev" aria-hidden="true"></span></summary><p>${body}</p></details>`).join("")}</div>
-      <div class="swfoot">${welBtn()}<p class="ts swnote">You can change any of your choices later from the settings cog.</p></div></section>`}
+      <div class="swfoot">${welBtn()}<p class="ts swcog">You can change any of your choices later from the settings cog.</p></div></section>`}
   else if(n===2)h+=`<section class="sset"><h3>Your weight</h3><div class="panel shab"><div class="shrow suw"><input type="text" inputmode="decimal" id="su-weight" value="${esc(D.weight)}" placeholder="${D.unit==="lb"?"e.g. 175":"e.g. 80"}" aria-label="Your weight in ${D.unit}" autocomplete="off">${unitSeg(D)}</div></div>
       <h3>What do you want to track each day?</h3><div class="panel shab">${habitRows(D)}</div></section>`;
   else if(n===3){
@@ -2636,7 +2640,7 @@ function renderEditor(){
     <div class="timer"><label class="eyebrow" for="ed-dur">Minutes</label><input type="number" id="ed-dur" class="durin" inputmode="numeric" min="0" step="1" value="${s.accMs?Math.round(s.accMs/60000):""}" placeholder="–"></div></div></div>`;
   s.items.forEach((it,xi)=>{
     const p=prevFor(it.ex,s),nm=esc(exName(it));
-    h+=`<div class="panel ex" id="ex-${xi}"><div class="exh"><div style="min-width:0"><div class="nm">${nm}</div><div class="rx num">${it.sets} × ${it.lo}–${it.hi}${it.swappedFrom?` <span class="swnote">· swapped for ${esc(EXERCISES[it.swappedFrom]||it.swappedFrom)}</span>`:""}${it.added?` <span class="swnote">· added</span>`:""}</div></div><div class="exside"><div class="exflags" id="exf-${xi}"></div>${it.added?`<button class="swapbtn" data-exrm="${xi}" aria-label="Remove ${nm}"${it.log.some(l=>l.done)?" hidden":""}>Remove</button>`:`<button class="swapbtn" data-swap="${xi}" aria-label="Swap ${nm} for another exercise">Swap</button>`}</div></div>
+    h+=`<div class="panel ex" id="ex-${xi}"><div class="exh"><div style="min-width:0"><div class="nm">${nm}</div><div class="rx num">${it.sets} × ${it.lo}–${it.hi}</div>${exNote(it)?`<div class="swnote exnl">${exNote(it)}</div>`:""}</div><div class="exside"><div class="exflags" id="exf-${xi}"></div>${it.added?`<button class="swapbtn" data-exrm="${xi}" aria-label="Remove ${nm}"${it.log.some(l=>l.done)?" hidden":""}>Remove</button>`:`<button class="swapbtn" data-swap="${xi}" aria-label="Swap ${nm} for another exercise">Swap</button>`}</div></div>
       <div class="swapbox" id="sw-${xi}" hidden><input type="text" id="swin-${xi}" data-swapin="${xi}" placeholder="Alternative exercise" aria-label="Alternative exercise" autocomplete="off"><button class="btn primary" data-swapgo="${xi}">Use this</button><button class="btn ghost" data-swapcancel="${xi}">Cancel</button>${it.swappedFrom?`<button class="btn ghost" data-swapback="${xi}">Back to ${esc(EXERCISES[it.swappedFrom]||it.swappedFrom)}</button>`:""}</div>
       ${p&&ready(p.it)?`<div class="exprev"><span class="flag up">${isDone?"Weight goes up next time":`${ASSISTED.has(it.ex)?"−"+incU(it.ex,exName(it))+" "+unitW()+" assistance":"+"+incU(it.ex,exName(it))+" "+unitW()+" from last time"}`}</span></div>`:""}
 `;
@@ -2649,6 +2653,9 @@ function renderEditor(){
     });
     // today only: one more set, or take back a set added today while it's unticked (planned sets are skipped by leaving them unticked)
     const extraSet=it.log.length>it.sets;
+    // last time had more sets than this workout's rows: say so (+ Set adds one, pre-filled from last time); never added automatically
+    const more=!isDone&&p?p.it.log.map((l,i)=>({l,i})).filter(({l,i})=>i>=it.log.length&&l.done):[];
+    if(more.length)h+=`<div class="exprev exlast">Last time you also did ${more.map(({l,i})=>`Set ${i+1}: <span class="num">${setTxt(l)}</span>`).join(" · ")}</div>`;
     h+=`<div class="exmore">${it.log.length<10?`<button type="button" class="linkbtn" data-setadd="${xi}" aria-label="Add a set to ${nm}">+ Set</button>`:""}${extraSet?`<button type="button" class="linkbtn" data-setrm="${xi}" aria-label="Remove the added set from ${nm}"${it.log[it.log.length-1].done?" hidden":""}>Remove set</button>`:""}</div>`;
     h+=`</div>`;
   });
@@ -2826,7 +2833,7 @@ function histDetail(s){
       <div class="row"><button class="btn" data-cardio-edit="${s.id}">Edit</button><button class="btn ghost" data-st="hdel" data-id="${s.id}">Delete</button></div></div>`;
   }
   return `<div class="hdetail"><div class="hex">${s.items.map(it=>{const d=it.log.filter(l=>l.done);
-      return `<div class="hexr"><span class="hexn">${esc(exName(it))}${it.swappedFrom?` <span class="swnote">· swapped for ${esc(EXERCISES[it.swappedFrom]||it.swappedFrom)}</span>`:""}${it.added?` <span class="swnote">· added</span>`:""}</span><span class="num hexs">${d.length?d.map(setTxt).join(" · "):"<span class=\"muted\">not done</span>"}</span></div>`}).join("")}</div>
+      return `<div class="hexr"><span class="hexn">${esc(exName(it))}${exNote(it)?`<span class="swnote exnl">${exNote(it)}</span>`:""}</span><span class="num hexs">${d.length?d.map(setTxt).join(" · "):"<span class=\"muted\">not done</span>"}</span></div>`}).join("")}</div>
     ${s.notes?`<div class="hnotes">${esc(s.notes)}</div>`:""}
     <div class="row"><button class="btn" data-edit="${s.id}">Edit</button><button class="btn ghost" data-st="hdel" data-id="${s.id}">Delete</button></div></div>`;
 }
@@ -2951,7 +2958,7 @@ function liftOverview(){
     ${groups.stalled.length?`<div class="bchips"><span class="muted sline">Stalled:</span>${chips(groups.stalled)}</div>`:""}
     ${groups.hold.length?`<div class="bchips"><span class="muted sline">Holding:</span>${chips(groups.hold)}</div>`:""}
     ${groups.up.length?(showProgressing?`<div class="bchips"><span class="muted sline">Progressing:</span>${chips(groups.up)}</div><button class="linkbtn" data-st="prog-toggle">Hide</button>`:`<button class="linkbtn" data-st="prog-toggle">Show progressing lifts</button>`):""}
-    ${groups.new.length?`<div class="muted" style="font-size:.8rem">Building data: ${groups.new.map(id=>esc(exLabel(id))).join(", ")}</div>`:""}</div>`;
+    ${groups.new.length?`<div class="muted" style="font-size:.8rem">Building data on ${groups.new.length} lift${groups.new.length===1?"":"s"}</div>`:""}</div>`;
 }
 document.addEventListener("click",e=>{const b=e.target.closest("[data-prog-ex]");if(!b)return;progEx=b.dataset.progEx;progChosen=true;renderStProg();const d=$("prog-detail");if(d)d.scrollIntoView({behavior:"smooth",block:"start"})});
 function workoutsCSV(){

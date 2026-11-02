@@ -167,14 +167,14 @@ ok(!$(w,"#revpillh").classList.contains("due")&&$(w,"#revpillh").classList.conta
 save(w);w.close();w=boot("2026-11-03T08:00:00");
 ok(!$(w,"#revpillh").classList.contains("due")&&!$(w,'#today [data-goto="review-last"]'),"NU4. Tuesday: no Late line, and this week's review isn't amber");
 {const c0=$(w,'[data-ct="cardio"]').textContent;click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="log-cardio"]'));click(w,$(w,'[data-ctype="__other"]'));type(w,$(w,"#cf-type"),"Walk");type(w,$(w,"#cf-min"),40);click(w,$(w,'[data-st="cf-save"]'));click(w,$(w,"#tab-week"));
-ok(c0.startsWith("0/")&&$(w,'[data-ct="cardio"]').textContent.startsWith("1/")&&/counted in this week's cardio target/.test($(w,"#today").textContent),"CW1. A walk logged from 2 Nov (typed under Other) counts toward cardio");}
+ok(c0.startsWith("0/")&&$(w,'[data-ct="cardio"]').textContent.startsWith("1/")&&!/counted in this week/.test($(w,"#today").textContent),"CW1. A walk logged from 2 Nov (typed under Other) counts toward cardio");}
 // --- timer and swap
 store={};w=boot();
 click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="type"][data-type="A"]'));click(w,$(w,'[data-st="start"]'));
 ok(/^0:0\d$/.test($(w,"#ed-timer").textContent),"W1. Timer starts at 0:0x when the workout begins");
 click(w,$(w,'[data-swap="0"]'));ok(!$(w,"#sw-0").hidden,"W2. Swap opens an inline box");
 $(w,"#swin-0").value="Goblet Squat";click(w,$(w,'[data-swapgo="0"]'));
-ok($(w,"#ex-0 .nm").textContent==="Goblet Squat"&&/swapped for Barbell Squat/.test($(w,"#ex-0").textContent),"W3. Exercise swapped for this workout, original noted");
+ok($(w,"#ex-0 .nm").textContent==="Goblet Squat"&&/Instead of Barbell Squat/.test($(w,"#ex-0 .exnl").textContent),"W3. Exercise swapped for this workout, original noted on its own line (Instead of …)");
 type(w,$(w,"#w-0-0"),24);type(w,$(w,"#r-0-0"),10);click(w,$(w,'[data-tick="0-0"]'));
 const t0=Date.now();while(Date.now()-t0<1100){}
 w.document.dispatchEvent(new w.Event("visibilitychange"));
@@ -263,7 +263,7 @@ click(w,$(w,"#tab-progress"));ok($(w,"#psindex svg")&&/4 lifts/.test($(w,"#psind
 click(w,$(w,"#tab-strength"));
 ok(/Bench Press/.test($(w,".ovw").textContent)&&/Romanian Deadlift/.test($(w,".ovw").textContent)&&!/Barbell Squat/.test($(w,".ovw").textContent)&&/Progressing\s*1/.test($(w,".sst.up").textContent),"X2. Bench stalled and RDL holding are named; progressing shown as a count");
 click(w,$(w,'.ovw [data-st="prog-toggle"]'));ok(/Barbell Squat/.test($(w,".ovw").textContent),"   'Show lifts' reveals squat as progressing");
-ok(/Building data.*Lateral Raise/.test(ov.textContent),"   Lateral raise (2 sessions) listed as building data");
+ok(/Building data on \d+ lifts?/.test(ov.textContent)&&!/Lateral Raise/.test(ov.textContent),"   Lifts still building data are counted, not listed");
 click(w,$(w,'.ovw [data-prog-ex="bench"]'));
 ok($(w,"#prog-ex").value==="bench"&&/Heaviest set/.test($(w,"#prog-detail").textContent),"X3. Tapping a lift opens its own chart below");
 // --- reopening mid-workout
@@ -543,7 +543,7 @@ ok($(w,'[data-setrm="0"]').hidden,"   Once the added set is ticked, its Remove s
 ok(!$(w,'[data-setrm="1"]'),"   Planned sets have no Remove (skip them by leaving them unticked)");
 click(w,$(w,"[data-addopen]"));type(w,$(w,"#addin"),"Biceps Curl");click(w,$(w,"[data-addgo]"));
 const nx=$$(w,"#st-main .panel.ex").length-1;
-ok(nx===6&&/Biceps Curl/.test($(w,`#ex-${nx} .nm`).textContent)&&/· added/.test($(w,`#ex-${nx} .rx`).textContent)&&!/today/.test($(w,`#ex-${nx}`).textContent)&&$(w,`[data-exrm="${nx}"]`)&&!$(w,`[data-swap="${nx}"]`)&&rows(nx)===3,"WX2. + Add exercise adds Biceps Curl (3 sets, '· added', Remove instead of Swap)");
+ok(nx===6&&/Biceps Curl/.test($(w,`#ex-${nx} .nm`).textContent)&&/^Added$/.test($(w,`#ex-${nx} .exnl`).textContent)&&!/today/.test($(w,`#ex-${nx}`).textContent)&&$(w,`[data-exrm="${nx}"]`)&&!$(w,`[data-swap="${nx}"]`)&&rows(nx)===3,"WX2. + Add exercise adds Biceps Curl (3 sets, '· added', Remove instead of Swap)");
 click(w,$(w,`[data-exrm="${nx}"]`));
 ok($$(w,"#st-main .panel.ex").length===6,"   Remove takes it out again");
 click(w,$(w,"[data-addopen]"));type(w,$(w,"#addin"),"Biceps Curl");click(w,$(w,"[data-addgo]"));
@@ -552,10 +552,20 @@ ok($(w,'[data-exrm="6"]').hidden,"   Once a set is ticked, Remove goes (so logge
 click(w,$(w,'[data-tick="6-0"]'));ok(!$(w,'[data-exrm="6"]').hidden,"   and comes back if the set is unticked");click(w,$(w,'[data-tick="6-0"]'));
 type(w,$(w,"#w-0-0"),60);type(w,$(w,"#r-0-0"),8);click(w,$(w,'[data-tick="0-0"]'));click(w,$(w,'[data-st="finish"]'));
 click(w,$(w,"#tab-strength"));
-ok(/Biceps Curl\s*· added/.test($(w,"#st-history").textContent)||($$(w,"#st-history [data-hist]")[0]&&(click(w,$$(w,"#st-history [data-hist]")[0]),/Biceps Curl\s*· added/.test($(w,"#st-history").textContent))),"WX3. The saved workout notes Biceps Curl as added");
+ok(/Biceps CurlAdded/.test($(w,"#st-history").textContent)||($$(w,"#st-history [data-hist]")[0]&&(click(w,$$(w,"#st-history [data-hist]")[0]),/Biceps CurlAdded/.test($(w,"#st-history").textContent))),"WX3. The saved workout notes Biceps Curl as added");
 ok($$(w,"#prog-ex option").some(o=>o.value==="biceps_curl"),"   and its sets count toward Biceps Curl's history");
 click(w,$(w,'[data-st="start"]'));
-ok($$(w,"#st-main .panel.ex").length===6&&!/Biceps Curl|· added/.test($(w,"#st-main").textContent),"WX4. The programme is untouched: the next workout has its usual 6 exercises");
+ok($$(w,"#st-main .panel.ex").length===6&&!/Biceps Curl/.test($(w,"#st-main").textContent)&&!$(w,"#st-main .exnl"),"WX4. The programme is untouched: the next workout has its usual 6 exercises");
+w.close();
+// --- last time's extra set is shown, not carried forward
+store={};w=boot("2026-10-26T12:00:00");click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="start"]'));
+click(w,$(w,'[data-setadd="0"]'));[0,1,2,3].forEach(si=>{type(w,$(w,`#w-0-${si}`),60);type(w,$(w,`#r-0-${si}`),si===3?6:8);click(w,$(w,`[data-tick="0-${si}"]`))});
+ok(!$(w,"#ex-0 .exlast"),"LX1. No 'last time' line during the workout that has the extra set");
+click(w,$(w,'[data-st="finish"]'));save(w);w.close();
+w=boot("2026-10-28T12:00:00");click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="type"][data-type="A"]'));click(w,$(w,'[data-st="start"]'));
+ok(rows(0)===3&&/Last time you also did Set 4: 60 kg × 6|Last time you also did Set 4: 60×6/.test($(w,"#ex-0 .exlast").textContent)&&!$(w,"#ex-1 .exlast"),"LX2. Next time: still 3 sets, with a line saying last time also had Set 4 ("+($(w,"#ex-0 .exlast")||{}).textContent+")");
+click(w,$(w,'[data-setadd="0"]'));
+ok(rows(0)===4&&!$(w,"#ex-0 .exlast")&&/Last 60/.test($(w,"#sr-0-3").textContent),"   + Set adds it, showing last time's numbers, and the line goes");
 w.close();
 // --- habits only: no weights and no cardio
 store={"weekly-routine.settings.v1":JSON.stringify({workouts:[],cardio:{target:0,days:[]}})};w=boot("2026-10-28T12:00:00"); // a Wednesday (breakfast prep)
