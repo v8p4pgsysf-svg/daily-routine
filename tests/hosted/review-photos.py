@@ -20,7 +20,7 @@ try:
         pg = ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)))
         pg.goto("http://localhost:8798/"); pg.wait_for_selector("#lg-email")
         pg.fill("#lg-email", "jack@example.com"); pg.fill("#lg-pass", "Start-1234"); pg.click("#lg-btn")
-        pg.wait_for_selector("#setsheet", state="visible"); pg.fill("#su-weight", "80")
+        pg.wait_for_selector("#setsheet", state="visible"); pg.click('[data-st="set-next"]'); pg.fill("#su-weight", "80")
         pg.click('[data-st="set-next"]'); pg.click('[data-sprog="fullbody"]')
         for _ in range(3): pg.click('[data-st="set-next"]')
         pg.click('[data-st="set-start"]'); pg.wait_for_selector("#setsheet", state="hidden"); pg.wait_for_timeout(600)

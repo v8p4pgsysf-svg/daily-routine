@@ -1,4 +1,4 @@
-/* Daily Routine — hosted version.
+/* Weekly Routine — hosted version.
    Signs you in with a one-time email code (Supabase), then runs the same app as the Claude version,
    with Supabase standing in for Claude's storage, photos and downloads. Each person's data is private
    to them: the database only ever returns rows that belong to the signed-in user. */
@@ -12,7 +12,7 @@ const clearLocal=()=>LOCAL_KEYS.forEach(k=>{try{localStorage.removeItem(k)}catch
 
 if(!C.supabaseUrl||!C.supabaseAnonKey||/YOUR-/.test(C.supabaseUrl)){
   $("login").hidden=false;
-  $("login").innerHTML=`<div class="lg-card"><h1>Daily Routine</h1><p class="lg-err">This copy isn't connected to its database yet. Add the Supabase project URL and anon key to <b>config.js</b> (see SETUP).</p></div>`;
+  $("login").innerHTML=`<div class="lg-card"><h1>Weekly Routine</h1><p class="lg-err">This copy isn't connected to its database yet. Add the Supabase project URL and anon key to <b>config.js</b> (see SETUP).</p></div>`;
   return;
 }
 const sb=window.supabase.createClient(C.supabaseUrl,C.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:"routine-auth"}});
@@ -65,10 +65,10 @@ function addInstallHint(box){
   const done=()=>{try{localStorage.setItem(SKIP,"1")}catch(e){}const c=$("lg-a2hs");c&&c.remove();box.classList.remove("a2hs")};
   const browser=IOS?"Safari":"Chrome";
   const intro=`<h1>Add to your Home Screen</h1>
-      <p class="lg-sub">Daily Routine works best as an app on your Home Screen.</p>`;
+      <p class="lg-sub">Weekly Routine works best as an app on your Home Screen.</p>`;
   let html,kind;
   if(IN_APP){kind="in-app";html=`<h1>Open in ${browser} first</h1>
-      <p class="lg-sub">This link opened inside another app, which can't add Daily Routine to your Home Screen.</p>
+      <p class="lg-sub">This link opened inside another app, which can't add Weekly Routine to your Home Screen.</p>
       <ol class="lg-steps"><li><span>Tap <b>${IOS?"⋯":"⋮"}</b> (or the compass icon), then <b>Open in ${browser}</b> or <b>Open in browser</b>.</span></li>
       <li><span>Then follow the steps there to add it to your Home Screen.</span></li></ol>
       <button class="lg-link" type="button" id="lg-skip">Continue here instead</button>`}
@@ -105,7 +105,7 @@ function showLogin(note){
   const box=$("login");box.hidden=false;
   if(C.authMode==="code")return codeLogin(note);
   box.innerHTML=`<form class="lg-card" id="lg-fp" method="post" action="#" novalidate>
-      <h1>Daily Routine</h1><p class="lg-sub">Sign in to continue.</p>
+      <h1>Weekly Routine</h1><p class="lg-sub">Plan your week. Train and tick off habits. Review how it&nbsp;went.</p>
       <p class="lg-err" id="lg-err" role="alert" hidden></p>
       <label for="lg-email">Email</label><input id="lg-email" name="email" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" required>
       <label for="lg-pass">Password</label><input id="lg-pass" name="password" type="password" autocomplete="current-password" required>
@@ -205,7 +205,7 @@ function showLogin(note){
 function codeLogin(note){
   const box=$("login");box.hidden=false;let email="";
   const step1=n=>{box.innerHTML=`<form class="lg-card" id="lg-f1" novalidate>
-      <h1>Daily Routine</h1><p class="lg-sub">Sign in with your email. We'll send you a code — no password needed.</p>
+      <h1>Weekly Routine</h1><p class="lg-sub">Sign in with your email. We'll send you a code — no password needed.</p>
       ${n?`<p class="lg-err" role="alert">${esc(n)}</p>`:""}
       <label for="lg-email">Email</label><input id="lg-email" type="email" autocomplete="email" inputmode="email" required value="${esc(email)}">
       <button class="lg-btn" type="submit">Send code</button></form>`;

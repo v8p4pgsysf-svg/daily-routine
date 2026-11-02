@@ -67,7 +67,7 @@ try:
         check("Right code + new password: straight into the app", pg.locator("#login").is_hidden())
         # (jack's first sign-in here: finish setup so we can sign out)
         if pg.locator("#setsheet").is_visible():
-            pg.fill("#su-weight", "80"); pg.click('[data-st="set-next"]'); pg.click('[data-sprog="fullbody"]')
+            pg.click('[data-st="set-next"]'); pg.fill("#su-weight", "80"); pg.click('[data-st="set-next"]'); pg.click('[data-sprog="fullbody"]')
             for _ in range(3): pg.click('[data-st="set-next"]')
             pg.click('[data-st="set-start"]'); pg.wait_for_selector("#setsheet", state="hidden")
         sign_out(pg)
