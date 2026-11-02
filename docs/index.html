@@ -1,5 +1,5 @@
 <!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<meta name="app-version" content="20261102175127">
+<meta name="app-version" content="20261102180237">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Weekly Routine</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -2970,8 +2970,8 @@ function renderStHistory(){
     const open=histOpen===s.id;let line;
     if(isCardio(s))line=`<span class="htype cw" title="Cardio">${PULSE}</span><span class="hdate">${dateLabel(s.date)}</span><span class="hsum">${esc(s.ctype)}${s.km!=null?" · "+fmtW(s.km)+" km":""} · ${s.effort}${cardioCounts(s)?"":" · not counted"}${s.notes?" · notes":""}</span><span class="hsets num">${s.minutes} min</span>`;
     else{const p=setsDone(s);
-      const sum=s.items.filter(it=>it.log.some(l=>l.done)).slice(0,3).map(it=>`${esc(exName(it))} ${fmtLift(Math.max(...it.log.filter(l=>l.done).map(l=>l.w||0)))} ${unitW()}`).join(" · ");
-      line=`<span class="htype">${s.type}</span><span class="hdate">${dateLabel(s.date)}</span><span class="hsum">${sum||"No sets completed"}${s.notes?" · notes":""}</span><span class="hsets num">${p.d}/${p.t}${s.accMs?" · "+durTxt(s):""}</span>`;}
+      // second line names the workout, like a cardio row names its type (a list of exercises never fitted on one line; tap for the detail)
+      line=`<span class="htype">${s.type}</span><span class="hdate">${dateLabel(s.date)}</span><span class="hsum">Workout ${s.type}${s.notes?" · notes":""}</span><span class="hsets num">${p.d}/${p.t}${s.accMs?" · "+durTxt(s):""}</span>`;}
     return `<div class="hitem${open?" open":""}" id="h-${s.id}"><button class="hrow" data-hist="${s.id}" aria-expanded="${open}" aria-label="${isCardio(s)?esc(s.ctype):"Workout "+s.type}, ${dateLabel(s.date)}. ${open?"Hide":"Show"} detail.">${line}</button>${open?histDetail(s):""}</div>`}).join("")}</div>
     ${pages>1?`<div class="hpager"><button class="btn" data-st="newer" ${histPage===0?"disabled":""}>‹ Newer</button><span class="muted num">${from+1}–${Math.min(from+HIST_N,list.length)} of ${list.length}</span><button class="btn" data-st="older" ${histPage>=pages-1?"disabled":""}>Older ›</button></div>`:""}`;
 }
