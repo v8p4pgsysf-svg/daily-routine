@@ -69,7 +69,7 @@ try:
   pg.click('[data-st="set-next"]');pg.wait_for_selector("#seterr",state="visible")
   ok("Choose a programme" in pg.inner_text("#seterr"),"S1. The programme step needs a programme choice")
   pg.click('[data-sprog="glute"]');ov=pg.inner_text('[data-sprog="glute"] .pkover') if pg.locator('[data-sprog="glute"] .pkover').count() else ""
-  ok(ov.startswith("A Hip thrust") and "\nB Reverse lunge" in ov and "Cable row, Leg curl" in ov and "Assisted pull-up, DB chest press" in ov and pg.locator(".pkover").count()==1,"   Picking a suggested programme opens its Workouts A–C (sentence case, only the chosen one)")
+  ok(ov.startswith("A Hip thrust") and "\nB Reverse lunge" in ov and "Cable row, Seated leg curl" in ov and "Assisted pull-up, DB chest press" in ov and pg.locator(".pkover").count()==1,"   Picking a suggested programme opens its Workouts A–C (sentence case, only the chosen one)")
   ok("Extra glute work" in pg.inner_text('[data-sprog="glute"]') and "Barbell basics" in pg.inner_text('[data-sprog="fullbody"]'),"   Each programme has a one-line description")
   pg.screenshot(path="setup-2.png")
   pg.click('[data-sprog="own"]');ok(pg.locator("#setbody details.swk[open]").count()==3,"   My own shows the exercise grids to fill in")

@@ -451,7 +451,8 @@ ok(gymOn()==="1,3,5"&&$(w,".prline .prname").textContent==="3-day glute focus","
 ok($(w,'[data-sname="0-0"]').textContent==="Hip Thrust Machine"&&$(w,'[data-sname="1-0"]').textContent==="Reverse Dumbbell Lunge"&&$(w,'[data-sname="2-5"]').textContent==="Reverse Pec Deck"&&$(w,'[data-sexf="1-1-sets"]').value==="3","GL1. Glute focus loads A/B/C with its exercises");
 {const f=$(w,'[data-sexf="1-1-sets"]');type(w,f,"4");ok($(w,".prline .prname").textContent==="Custom","PR2. Editing a workout makes the programme Custom");type(w,$(w,'[data-sexf="1-1-sets"]'),"3");}
 click(w,$(w,'[data-st="set-save"]'));click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="type"][data-type="A"]'));click(w,$(w,'[data-st="start"]'));
-ok($$(w,"#st-main .ex .nm").map(e=>e.textContent).join("|")==="Hip Thrust Machine|Bulgarian Split Squat|Assisted Pull-Up|Flat Dumbbell Chest Press|Seated Cable Row|Leg Curl","   Workout A starts with the glute programme's exercises");
+ok($$(w,"#st-main .ex .nm").map(e=>e.textContent).join("|")==="Hip Thrust Machine|Bulgarian Split Squat|Assisted Pull-Up|Flat Dumbbell Chest Press|Seated Cable Row|Seated Leg Curl","   Workout A starts with the glute programme's exercises");
+ok(/3 × 10–12 per leg/.test($(w,"#ex-1 .rx").textContent)&&!/per leg/.test($(w,"#ex-0 .rx").textContent),"   One-sided lifts say per leg (Bulgarian split squat: 3 × 10–12 per leg); others don't");
 w.close();
 // --- exercise picker and programme-only progress list
 store={};w=boot("2026-10-28T09:00:00");
