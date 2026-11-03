@@ -642,8 +642,11 @@ click(w,$(w,"#setcog"));ok($(w,"[data-snw]").tagName==="SELECT"&&$(w,"[data-snw]
 chg(w,$(w,"[data-snw]"),7);for(let d=0;d<7;d++){const b=$(w,`[data-pgym="${d}"]`);if(b.getAttribute("aria-pressed")!=="true")click(w,b)}
 ok(/Workout G/.test($(w,"#setbody").textContent)&&/Weights days 7\/7/.test($(w,"#setbody .pcount").textContent),"   Seven sessions run A to G, one a day");
 store={};w=boot("2026-10-27T09:00:00");
-click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="log-cardio"]'));type(w,$(w,"#cf-min"),"32,5");type(w,$(w,"#cf-km"),"5.25");click(w,$(w,'[data-st="cf-save"]'));
-ok(/32\.5 min/.test($(w,"#today").textContent)&&/5\.25 km/.test($(w,"#today").textContent),"U2. Minutes take decimals (a comma works too); distance shows in km");
+click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="log-cardio"]'));type(w,$(w,"#cf-min"),"32");type(w,$(w,"#cf-sec"),"75");click(w,$(w,'[data-st="cf-save"]'));ok(/0 to 59/.test($(w,"#cf-err").textContent),"U2. Seconds over 59 are refused");
+type(w,$(w,"#cf-sec"),"30");type(w,$(w,"#cf-km"),"5,25");click(w,$(w,'[data-st="cf-save"]'));
+ok(/32:30/.test($(w,"#today").textContent)&&/5\.25 km/.test($(w,"#today").textContent),"   32 min 30 sec reads 32:30; a comma works in the distance");
+ok(/32:30/.test($(w,"#pane-strength").textContent),"   Training history shows 32:30 too");
+click(w,$(w,"#tab-week"));click(w,$(w,"button.wk.cw"));click(w,$(w,".hitem.open [data-cardio-edit]"));ok($(w,"#cf-min").value==="32"&&$(w,"#cf-sec").value==="30","   Editing it shows 32 and 30 in the two boxes");click(w,$(w,'[data-st="cf-cancel"]'));
 click(w,$(w,"#setcog"));click(w,$(w,'[data-sdist="mi"]'));click(w,$(w,'[data-st="set-save"]'));
 ok(/3\.26 mi/.test($(w,"#today").textContent),"U3. With miles chosen, the same run reads 3.26 mi");
 click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="log-cardio"]'));type(w,$(w,"#cf-min"),"20");type(w,$(w,"#cf-km"),"2");click(w,$(w,'[data-st="cf-save"]'));

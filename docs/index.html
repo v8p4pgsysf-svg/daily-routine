@@ -1,5 +1,5 @@
 <!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<meta name="app-version" content="20261103134653"><meta name="app-fingerprint" content="f87fd7e4ba4a">
+<meta name="app-version" content="20261103135536"><meta name="app-fingerprint" content="c8808b30d48b">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Weekly Routine</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -180,7 +180,8 @@ button{font:inherit;color:inherit}
 .cfin:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
 .cfgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .cfgrid input{max-width:none!important;width:100%}
-.cfgrid .field{display:flex;flex-direction:column}.cfgrid .field input{margin-top:auto} /* a wrapped label keeps the boxes level */
+.cfgrid .field{display:flex;flex-direction:column}.cfgrid .field>input,.cfgrid .cftime{margin-top:auto}
+.cftime{display:flex;align-items:center;gap:6px}.cftime input{flex:1;min-width:0;text-align:center}.cftime span{color:var(--muted);font-weight:600} /* a wrapped label keeps the boxes level */
 .wk.cw{background:var(--surface);color:var(--green);border:1.5px solid var(--green);font-size:.66rem}
 .htype.cw{background:transparent;border:1.5px solid var(--green-mid)}
 @media (max-width:560px){.cfgrid{grid-template-columns:1fr 1fr}.cfgrid .field:last-child{grid-column:1/-1}}
@@ -1567,7 +1568,7 @@ function renderDaily(){
         h+=`<div class="c${td}"><button class="wk" data-open="${wk[d][0].id}" title="Workout ${types.join(", ")} logged · open in Training" aria-label="Workout ${types.join(" and ")} logged on ${DAYS_LONG[d]}. Open it.">${types.join("")}</button></div>`;}
       // strength comes only from saved workouts; ticks recorded by hand before the tracker existed still show (and can be cleared)
       else if(x.k==="cardio"&&cw[d].length){const c=cw[d][0],tot=cw[d].reduce((a,z)=>a+z.minutes,0);
-        h+=`<div class="c${td}"><button class="wk cw" data-cardio="${c.id}" title="${esc(cw[d].map(z=>z.ctype+" · "+fmtMin(z.minutes)+" min").join(", "))} · open" aria-label="${esc(c.ctype)}, ${fmtMin(tot)} minutes, ${DAYS_LONG[d]}. Open it.">${tot}</button></div>`;}
+        h+=`<div class="c${td}"><button class="wk cw" data-cardio="${c.id}" title="${esc(cw[d].map(z=>z.ctype+" · "+fmtDur(z.minutes)).join(", "))} · open" aria-label="${esc(c.ctype)}, ${fmtMin(tot)} minutes, ${DAYS_LONG[d]}. Open it.">${fmtMin(tot)}</button></div>`;}
       else if(x.k==="cardio")h+=w.cardio[d]?`<div class="c${td}">${cb(`d-cardio-${d}`,"cardio",d,true,"Cardio "+DAYS_LONG[d]+", recorded by hand. Untick to clear.")}</div>`:`<div class="c off${td}" aria-hidden="true"></div>`;
       else if(x.k==="strength")h+=w.strength[d]?`<div class="c${td}">${cb(`d-strength-${d}`,"strength",d,true,"Weights "+DAYS_LONG[d]+", recorded by hand. Untick to clear.")}</div>`:`<div class="c off${td}" aria-hidden="true"></div>`;
       else if(x.k==="af"&&drinkMode(w))h+=`<div class="c${td}"><span class="cb drinkcb"><input type="checkbox" id="d-drink-${d}" data-k="drink" data-i="${d}" ${w.drink[d]?"checked":""} aria-label="Drank on ${DAYS_LONG[d]}"><span class="box"></span></span></div>`;
@@ -2030,7 +2031,8 @@ const unitW=()=>isLb()?"lb":"kg";
 const MI=1.609344,isMi=()=>SETTINGS.dist==="mi",unitD=()=>isMi()?"mi":"km";
 const distU=km=>Math.round((isMi()?km/MI:km)*100)/100,fromD=v=>isMi()?v*MI:v,fmtDist=km=>distU(km)+" "+unitD();
 const numIn=v=>{const t=String(v).trim().replace(",",".");return t===""?null:/^\d*\.?\d+$|^\d+\.$/.test(t)?parseFloat(t):NaN}; // "5,2" and "5.2" both work
-const fmtMin=m=>String(Math.round(m*10)/10);
+const fmtMin=m=>String(Math.round(m)); // weekly totals: whole minutes
+const fmtDur=m=>{const t=Math.round(m*60),mm=Math.floor(t/60),ss=t%60;return ss?`${mm}:${pad(ss)}`:`${mm} min`}; // one session: 32:30, or 30 min
 const toU=kg=>kg==null?null:isLb()?kg*LB:kg;
 const fromU=v=>v==null?null:isLb()?Math.round(v/LB*1000)/1000:Math.round(v*100)/100;
 const liftU=kg=>kg==null?null:isLb()?Math.round(kg*LB*2)/2:Math.round(kg*100)/100; // lifts: lb to the half pound
@@ -2260,14 +2262,14 @@ document.addEventListener("click",e=>{
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="addin"){e.preventDefault();addExercise()}});
 /* cardio log: one record per session, in the same store as workouts */
 let cfOpen=false,cfEdit=null,cfDraft=null;
-const cardioLine=c=>[fmtMin(c.minutes)+" min",c.km!=null?fmtDist(c.km):"",c.effort].filter(Boolean).join(" · ");
+const cardioLine=c=>[fmtDur(c.minutes),c.km!=null?fmtDist(c.km):"",c.effort].filter(Boolean).join(" · ");
 function lastCardioType(){const l=cardioSessions().filter(cardioCounts);return l.length?l[l.length-1].ctype:"Run"}
 function openCardio(id,date){
   const c=id?sessions[id]:null;
   if(id&&(!c||c.status==="deleted"))return;
   editingId=null;cfOpen=true;cfEdit=id||null;stMsg("");
-  cfDraft=c?{date:c.date,type:c.ctype,min:c.minutes?fmtMin(c.minutes):"",km:c.km==null?"":String(distU(c.km)),effort:c.effort,notes:c.notes}
-    :{date:date||keyOf(new Date()),type:lastCardioType(),min:"",km:"",effort:"Easy",notes:""};
+  cfDraft=c?{date:c.date,type:c.ctype,min:c.minutes?String(Math.floor(Math.round(c.minutes*60)/60)):"",sec:c.minutes&&Math.round(c.minutes*60)%60?String(Math.round(c.minutes*60)%60):"",km:c.km==null?"":String(distU(c.km)),effort:c.effort,notes:c.notes}
+    :{date:date||keyOf(new Date()),type:lastCardioType(),min:"",sec:"",km:"",effort:"Easy",notes:""};
   showTab("strength");try{location.hash="strength"}catch(e){}
   const old=$("cf-card");if(old)old.remove(); // don't let a previously open form overwrite the new values
   renderStMain();const card=$("cf-card");if(card){card.scrollIntoView({block:"start"});const m=$("cf-min");if(m&&!id)m.focus()}
@@ -2279,7 +2281,7 @@ function cardioCard(){
     <div class="field"><label for="cf-type">Type</label><div class="chiprow">${CARDIO_TYPES.map(t=>`<button class="tchip" aria-pressed="${t.toLowerCase()===d.type.trim().toLowerCase()}" data-ctype="${t}">${t}</button>`).join("")}<button class="tchip" aria-pressed="${!knownType(d.type)}" data-ctype="__other">Other</button></div>
       <input type="text" id="cf-type" class="cfin" value="${esc(d.type)}" maxlength="40" placeholder="What did you do?" autocomplete="off"${knownType(d.type)?" hidden":""}></div>
     <div class="cfgrid">
-      <div class="field"><label for="cf-min">Minutes</label><input type="text" id="cf-min" class="numin" inputmode="decimal" value="${esc(d.min)}" placeholder="e.g. 30" autocomplete="off"></div>
+      <div class="field"><label for="cf-min">Time</label><div class="cftime"><input type="text" id="cf-min" class="numin" inputmode="numeric" value="${esc(d.min)}" placeholder="min" aria-label="Minutes" autocomplete="off"><span aria-hidden="true">:</span><input type="text" id="cf-sec" class="numin" inputmode="numeric" maxlength="2" value="${esc(d.sec||"")}" placeholder="sec" aria-label="Seconds, optional" autocomplete="off"></div></div>
       <div class="field"><label for="cf-km">Distance, ${unitD()} <span class="muted" style="font-weight:400">optional</span></label><input type="text" id="cf-km" class="numin" inputmode="decimal" value="${esc(d.km)}" autocomplete="off"></div>
       <div class="field"><label for="cf-date">Date</label><input type="date" id="cf-date" value="${d.date}" max="${today}"></div>
     </div>
@@ -2288,17 +2290,18 @@ function cardioCard(){
     <div class="phmsg err" id="cf-err"></div>
     <div class="edactions"><button class="btn primary lg" data-st="cf-save">Save cardio</button><button class="btn" data-st="cf-cancel">Cancel</button>${cfEdit?`<button class="btn ghost" data-st="cf-delete">Delete</button>`:""}</div></div>`;
 }
-function readCf(){if(!cfOpen||!$("cf-card"))return;cfDraft={date:$("cf-date").value,type:$("cf-type").value,min:$("cf-min").value,km:$("cf-km").value,effort:(document.querySelector("[data-ceff][aria-pressed=true]")||{dataset:{ceff:"Easy"}}).dataset.ceff,notes:$("cf-notes").value}}
+function readCf(){if(!cfOpen||!$("cf-card"))return;cfDraft={date:$("cf-date").value,type:$("cf-type").value,min:$("cf-min").value,sec:$("cf-sec").value,km:$("cf-km").value,effort:(document.querySelector("[data-ceff][aria-pressed=true]")||{dataset:{ceff:"Easy"}}).dataset.ceff,notes:$("cf-notes").value}}
 const knownType=v=>CARDIO_TYPES.some(t=>t.toLowerCase()===String(v).trim().toLowerCase());
 function syncCfChips(){const inp=$("cf-type"),v=inp.value.trim().toLowerCase(),other=!inp.hidden;document.querySelectorAll("[data-ctype]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.ctype==="__other"?other:!other&&b.dataset.ctype.toLowerCase()===v)))}
 function saveCardio(){
-  readCf();const d=cfDraft,min=numIn(d.min),km=numIn(d.km);
+  readCf();const d=cfDraft,mn=numIn(d.min),sc=numIn(d.sec||""),km=numIn(d.km),min=(mn||0)+(sc||0)/60;
   if(!d.type.trim()){$("cf-err").textContent="Choose or type the kind of cardio.";$("cf-type").focus();return}
-  if(!(min>0)){$("cf-err").textContent="Add how many minutes it took.";$("cf-min").focus();return}
+  if(Number.isNaN(mn)||!(min>0)){$("cf-err").textContent="Add how many minutes it took.";$("cf-min").focus();return}
+  if(sc!=null&&!(Number.isInteger(sc)&&sc<60)){$("cf-err").textContent="Seconds go from 0 to 59.";$("cf-sec").focus();return}
   if(km!=null&&!(km>=0)){$("cf-err").textContent="Distance needs to be a number, or leave it blank.";$("cf-km").focus();return}
   const prev=cfEdit?sessions[cfEdit]:null,id=cfEdit||newId();
   sessions[id]=normaliseSession({id,kind:"cardio",date:/^\d{4}-\d{2}-\d{2}$/.test(d.date)?d.date:keyOf(new Date()),status:"done",
-    startedAt:prev?prev.startedAt:Date.now(),ctype:d.type,minutes:Math.round(min*10)/10,km:km==null?null:prev&&prev.km!=null&&String(km)===String(distU(prev.km))?prev.km:Math.round(fromD(km)*1000)/1000, /* an untouched distance keeps its exact km */effort:d.effort,notes:d.notes});
+    startedAt:prev?prev.startedAt:Date.now(),ctype:d.type,minutes:Math.round(min*60)/60,km:km==null?null:prev&&prev.km!=null&&String(km)===String(distU(prev.km))?prev.km:Math.round(fromD(km)*1000)/1000, /* an untouched distance keeps its exact km */effort:d.effort,notes:d.notes});
   touchS(id);const c=sessions[id];cfOpen=false;cfEdit=null;cfDraft=null;
   stMsg(`${c.ctype} saved: ${cardioLine(c)}. ${cardioCounts(c)?`It counts as a cardio session on ${dateLabel(c.date)}.`:"Walks don't count toward the cardio target."}`);
   renderAll();renderStMain();window.scrollTo({top:0});
@@ -2947,7 +2950,7 @@ const PULSE=`<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
 function histDetail(s){
   if(isCardio(s)){
     const pace=s.km>0?(()=>{const p=s.minutes/distU(s.km),m=Math.floor(p),x=Math.round((p-m)*60);return `${x===60?m+1:m}:${pad(x===60?0:x)} /${unitD()}`})():"";
-    const bits=[`${fmtMin(s.minutes)} min`,s.km!=null?fmtDist(s.km):"",pace,s.effort].filter(Boolean).join(" · ");
+    const bits=[fmtDur(s.minutes),s.km!=null?fmtDist(s.km):"",pace,s.effort].filter(Boolean).join(" · ");
     return `<div class="hdetail"><div class="hline num">${bits}${cardioCounts(s)?"":` <span class="muted">· not counted</span>`}</div>
       ${s.notes?`<div class="hnotes">${esc(s.notes)}</div>`:""}
       <div class="row"><button class="btn" data-cardio-edit="${s.id}">Edit</button><button class="btn ghost" data-st="hdel" data-id="${s.id}">Delete</button></div></div>`;
@@ -2966,7 +2969,7 @@ function renderStHistory(){
   const pages=Math.ceil(list.length/HIST_N);histPage=Math.min(histPage,pages-1);const from=histPage*HIST_N;
   $("st-history").innerHTML=`<div class="panel hlist">${list.slice(from,from+HIST_N).map(s=>{
     const open=histOpen===s.id;let line;
-    if(isCardio(s))line=`<span class="htype cw" title="Cardio">${PULSE}</span><span class="hdate">${dateLabel(s.date)}</span><span class="hsum">${esc(s.ctype)}${s.km!=null?" · "+fmtDist(s.km):""} · ${s.effort}${cardioCounts(s)?"":" · not counted"}${s.notes?" · notes":""}</span><span class="hsets num">${s.minutes} min</span>`;
+    if(isCardio(s))line=`<span class="htype cw" title="Cardio">${PULSE}</span><span class="hdate">${dateLabel(s.date)}</span><span class="hsum">${esc(s.ctype)}${s.km!=null?" · "+fmtDist(s.km):""} · ${s.effort}${cardioCounts(s)?"":" · not counted"}${s.notes?" · notes":""}</span><span class="hsets num">${fmtDur(s.minutes)}</span>`;
     else{const p=setsDone(s);
       // second line names the workout, like a cardio row names its type (a list of exercises never fitted on one line; tap for the detail)
       line=`<span class="htype">${s.type}</span><span class="hdate">${dateLabel(s.date)}</span><span class="hsum">Workout ${s.type}${s.notes?" · notes":""}</span><span class="hsets num">${p.d}/${p.t}${s.accMs?" · "+durTxt(s):""}</span>`;}
