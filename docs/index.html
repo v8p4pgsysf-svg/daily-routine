@@ -1,5 +1,5 @@
 <!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<meta name="app-version" content="20261103114748"><meta name="app-fingerprint" content="49780b1b87a0">
+<meta name="app-version" content="20261103134653"><meta name="app-fingerprint" content="f87fd7e4ba4a">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Weekly Routine</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -180,6 +180,7 @@ button{font:inherit;color:inherit}
 .cfin:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
 .cfgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .cfgrid input{max-width:none!important;width:100%}
+.cfgrid .field{display:flex;flex-direction:column}.cfgrid .field input{margin-top:auto} /* a wrapped label keeps the boxes level */
 .wk.cw{background:var(--surface);color:var(--green);border:1.5px solid var(--green);font-size:.66rem}
 .htype.cw{background:transparent;border:1.5px solid var(--green-mid)}
 @media (max-width:560px){.cfgrid{grid-template-columns:1fr 1fr}.cfgrid .field:last-child{grid-column:1/-1}}
@@ -284,10 +285,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .review .texts{padding:18px;display:flex;flex-direction:column;gap:14px}
 .field{display:flex;flex-direction:column;gap:6px}
 .field label{font-size:.84rem;font-weight:600}
-input[type=number],textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:8px;padding:9px 11px;width:100%}
-input[type=number]{font-family:var(--mono);font-size:1.1rem;max-width:9rem}
+input[type=number],input.numin,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:8px;padding:9px 11px;width:100%}
+input[type=number],input.numin{font-family:var(--mono);font-size:1.1rem;max-width:9rem}
 textarea{resize:vertical;min-height:62px;line-height:1.45}
-input[type=number]:focus,textarea:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
+input[type=number]:focus,input.numin:focus,textarea:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
 
 .exports{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}
 
@@ -1123,7 +1124,8 @@ const BASE_EXERCISES=Object.fromEntries(EXERCISE_CATALOG.map(e=>[e.id,e.name]));
 const ASSISTED=new Set(EXERCISE_CATALOG.filter(e=>e.assisted).map(e=>e.id));
 const EXERCISES=Object.assign({},BASE_EXERCISES);
 const PROGRAMME={};
-const LETTERS=["A","B","C","D"];
+const LETTERS=["A","B","C","D","E","F","G"]; // one weights workout per planned day, so up to 7
+const MAX_W=LETTERS.length;
 
 /* ---------- settings: everything personal about the routine ----------
    One record per person, private to them. Jack's original setup is the default,
@@ -1173,14 +1175,14 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 const intIn=(v,lo,hi,d)=>{const n=Math.round(+v);return isFinite(n)&&n>=lo&&n<=hi?n:d};
 const dayList=a=>[...new Set((Array.isArray(a)?a:[]).map(Number).filter(d=>Number.isInteger(d)&&d>=0&&d<7))];
 // settings this version reads (checked above) plus the storage record's own fields, which aren't settings
-const SETTINGS_KNOWN=new Set(["v","updatedAt","exNames","workouts","cardio","habits","prep","setupDone","startedOn","custom","unit","review","kind","id"]);
+const SETTINGS_KNOWN=new Set(["v","updatedAt","exNames","workouts","cardio","habits","prep","setupDone","startedOn","custom","unit","dist","review","kind","id"]);
 function normaliseSettings(o){
   const D=DEFAULT_SETTINGS,S=clone(D);if(!o||typeof o!=="object")return S;
   S.updatedAt=+o.updatedAt||0;
   if(o.exNames&&typeof o.exNames==="object")for(const id in o.exNames){if(/^custom_[a-z0-9_]{1,40}$/.test(id)&&typeof o.exNames[id]==="string"&&o.exNames[id].trim())S.exNames[id]=o.exNames[id].trim().slice(0,60)}
   if(Array.isArray(o.workouts)&&o.workouts.length===0)S.workouts=[]; // no weights sessions
   else if(Array.isArray(o.workouts)){
-    const ws=o.workouts.slice(0,4).map(w=>({day:intIn(w&&w.day,-1,6,-1),
+    const ws=o.workouts.slice(0,MAX_W).map(w=>({day:intIn(w&&w.day,-1,6,-1),
       items:(Array.isArray(w&&w.items)?w.items:[]).filter(r=>Array.isArray(r)&&typeof r[0]==="string"&&(BASE_EXERCISES[r[0]]||S.exNames[r[0]])).slice(0,12)
         .map(r=>{const lo=intIn(r[2],1,50,8);return [r[0],intIn(r[1],1,10,3),lo,Math.max(lo,intIn(r[3],1,50,lo))]})})).filter(w=>w.items.length);
     if(ws.length)S.workouts=ws;
@@ -1198,6 +1200,7 @@ function normaliseSettings(o){
   S.custom=(Array.isArray(o.custom)?o.custom:[]).filter(c=>c&&/^x_[a-z0-9]{4,12}$/.test(c.k)&&typeof c.name==="string"&&c.name.trim()).slice(0,8)
     .map(c=>({k:c.k,name:c.name.trim().slice(0,24),sub:typeof c.sub==="string"?c.sub.trim().slice(0,24):"",target:intIn(c.target,1,7,7),on:c.on!==false}));
   S.unit=o.unit==="lb"?"lb":"kg";
+  S.dist=o.dist==="mi"?"mi":"km";
   if(o.review&&typeof o.review==="object"){S.review.on=o.review.on!==false;S.review.day=intIn(o.review.day,0,6,6)}
   // settings added by a later version are kept as they are, so an older copy of the app (another device, not yet
   // updated) doesn't drop them when it saves. Keys this version reads are always the checked values above
@@ -1564,7 +1567,7 @@ function renderDaily(){
         h+=`<div class="c${td}"><button class="wk" data-open="${wk[d][0].id}" title="Workout ${types.join(", ")} logged · open in Training" aria-label="Workout ${types.join(" and ")} logged on ${DAYS_LONG[d]}. Open it.">${types.join("")}</button></div>`;}
       // strength comes only from saved workouts; ticks recorded by hand before the tracker existed still show (and can be cleared)
       else if(x.k==="cardio"&&cw[d].length){const c=cw[d][0],tot=cw[d].reduce((a,z)=>a+z.minutes,0);
-        h+=`<div class="c${td}"><button class="wk cw" data-cardio="${c.id}" title="${esc(cw[d].map(z=>z.ctype+" · "+z.minutes+" min").join(", "))} · open" aria-label="${esc(c.ctype)}, ${tot} minutes, ${DAYS_LONG[d]}. Open it.">${tot}</button></div>`;}
+        h+=`<div class="c${td}"><button class="wk cw" data-cardio="${c.id}" title="${esc(cw[d].map(z=>z.ctype+" · "+fmtMin(z.minutes)+" min").join(", "))} · open" aria-label="${esc(c.ctype)}, ${fmtMin(tot)} minutes, ${DAYS_LONG[d]}. Open it.">${tot}</button></div>`;}
       else if(x.k==="cardio")h+=w.cardio[d]?`<div class="c${td}">${cb(`d-cardio-${d}`,"cardio",d,true,"Cardio "+DAYS_LONG[d]+", recorded by hand. Untick to clear.")}</div>`:`<div class="c off${td}" aria-hidden="true"></div>`;
       else if(x.k==="strength")h+=w.strength[d]?`<div class="c${td}">${cb(`d-strength-${d}`,"strength",d,true,"Weights "+DAYS_LONG[d]+", recorded by hand. Untick to clear.")}</div>`:`<div class="c off${td}" aria-hidden="true"></div>`;
       else if(x.k==="af"&&drinkMode(w))h+=`<div class="c${td}"><span class="cb drinkcb"><input type="checkbox" id="d-drink-${d}" data-k="drink" data-i="${d}" ${w.drink[d]?"checked":""} aria-label="Drank on ${DAYS_LONG[d]}"><span class="box"></span></span></div>`;
@@ -1664,7 +1667,7 @@ function renderRevSum(){
   const sx=startIdx(viewKey);
   $("revsum").innerHTML=`<div class="eyebrow">${sx?`Your starter week · ${7-sx} day${7-sx===1?"":"s"}`:"This week at a glance"}</div>
     <dl class="hdl sumdl"><div><dt>Check-ins</dt><dd class="num">${st.done}/${st.total} · ${st.pct}%</dd></div>${tg("strength")?`<div><dt>Weights</dt><dd class="num">${st.per.strength||0}/${tg("strength")}</dd></div>`:""}
-    ${tg("cardio")?`<div><dt>Cardio</dt><dd><span class="num">${st.per.cardio||0}/${tg("cardio")}</span> <span class="muted">· ${cmin} min</span></dd></div>`:""}${extra}</dl>
+    ${tg("cardio")?`<div><dt>Cardio</dt><dd><span class="num">${st.per.cardio||0}/${tg("cardio")}</span> <span class="muted">· ${fmtMin(cmin)} min</span></dd></div>`:""}${extra}</dl>
     ${look.length?`<div class="sumlook">${look.map(esc).join("<br>")}</div>`:(cur?"":`<div class="sumlook ok">Every target hit.</div>`)}`;
 }
 function renderRevStatus(){
@@ -1727,8 +1730,8 @@ function renderCardioTrends(){
   const cur=currentKey(),first=keyOf(mondayOf(parseKey(cs[0].date))),span=[];for(let i=11;i>=0;i--)span.push(keyOf(addDays(parseKey(cur),-7*i)));
   const data=span.filter(k=>k>=first||k===cur).map(k=>({k,n:cardioByDay(k).flat().reduce((a,c)=>a+c.minutes,0)}));
   const wk=cardioByDay(cur).flat(),walks=cs.filter(c=>!cardioCounts(c)&&keyOf(mondayOf(parseKey(c.date)))===cur);
-  $("pccchart").innerHTML=barChart(data,cur,{min:60,step:m=>m>240?60:30,aria:"Cardio minutes per week",tip:n=>n+" min"})
-    +`<div class="muted" style="font-size:.84rem">This week <span class="num">${wk.reduce((a,c)=>a+c.minutes,0)} min</span> across ${wk.length} session${wk.length===1?"":"s"}${walks.length?` · walks <span class="num">${walks.reduce((a,c)=>a+c.minutes,0)} min</span>, not counted`:""}</div>`;
+  $("pccchart").innerHTML=barChart(data,cur,{min:60,step:m=>m>240?60:30,aria:"Cardio minutes per week",tip:n=>fmtMin(n)+" min"})
+    +`<div class="muted" style="font-size:.84rem">This week <span class="num">${fmtMin(wk.reduce((a,c)=>a+c.minutes,0))} min</span> across ${wk.length} session${wk.length===1?"":"s"}${walks.length?` · walks <span class="num">${fmtMin(walks.reduce((a,c)=>a+c.minutes,0))} min</span>, not counted`:""}</div>`;
 }
 function renderStrengthTrends(){trendsBody();foldProgress()}
 function trendsBody(){
@@ -2023,6 +2026,11 @@ const fmtW=w=>w==null?"–":String(Math.round(w*100)/100);
 const LB=2.20462;
 const isLb=()=>SETTINGS.unit==="lb";
 const unitW=()=>isLb()?"lb":"kg";
+/* distances are stored in km (3 places, so miles round-trip); the distance setting only changes what people see and type */
+const MI=1.609344,isMi=()=>SETTINGS.dist==="mi",unitD=()=>isMi()?"mi":"km";
+const distU=km=>Math.round((isMi()?km/MI:km)*100)/100,fromD=v=>isMi()?v*MI:v,fmtDist=km=>distU(km)+" "+unitD();
+const numIn=v=>{const t=String(v).trim().replace(",",".");return t===""?null:/^\d*\.?\d+$|^\d+\.$/.test(t)?parseFloat(t):NaN}; // "5,2" and "5.2" both work
+const fmtMin=m=>String(Math.round(m*10)/10);
 const toU=kg=>kg==null?null:isLb()?kg*LB:kg;
 const fromU=v=>v==null?null:isLb()?Math.round(v/LB*1000)/1000:Math.round(v*100)/100;
 const liftU=kg=>kg==null?null:isLb()?Math.round(kg*LB*2)/2:Math.round(kg*100)/100; // lifts: lb to the half pound
@@ -2252,13 +2260,13 @@ document.addEventListener("click",e=>{
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="addin"){e.preventDefault();addExercise()}});
 /* cardio log: one record per session, in the same store as workouts */
 let cfOpen=false,cfEdit=null,cfDraft=null;
-const cardioLine=c=>[c.minutes+" min",c.km!=null?fmtW(c.km)+" km":"",c.effort].filter(Boolean).join(" · ");
+const cardioLine=c=>[fmtMin(c.minutes)+" min",c.km!=null?fmtDist(c.km):"",c.effort].filter(Boolean).join(" · ");
 function lastCardioType(){const l=cardioSessions().filter(cardioCounts);return l.length?l[l.length-1].ctype:"Run"}
 function openCardio(id,date){
   const c=id?sessions[id]:null;
   if(id&&(!c||c.status==="deleted"))return;
   editingId=null;cfOpen=true;cfEdit=id||null;stMsg("");
-  cfDraft=c?{date:c.date,type:c.ctype,min:String(c.minutes||""),km:c.km==null?"":String(c.km),effort:c.effort,notes:c.notes}
+  cfDraft=c?{date:c.date,type:c.ctype,min:c.minutes?fmtMin(c.minutes):"",km:c.km==null?"":String(distU(c.km)),effort:c.effort,notes:c.notes}
     :{date:date||keyOf(new Date()),type:lastCardioType(),min:"",km:"",effort:"Easy",notes:""};
   showTab("strength");try{location.hash="strength"}catch(e){}
   const old=$("cf-card");if(old)old.remove(); // don't let a previously open form overwrite the new values
@@ -2271,8 +2279,8 @@ function cardioCard(){
     <div class="field"><label for="cf-type">Type</label><div class="chiprow">${CARDIO_TYPES.map(t=>`<button class="tchip" aria-pressed="${t.toLowerCase()===d.type.trim().toLowerCase()}" data-ctype="${t}">${t}</button>`).join("")}<button class="tchip" aria-pressed="${!knownType(d.type)}" data-ctype="__other">Other</button></div>
       <input type="text" id="cf-type" class="cfin" value="${esc(d.type)}" maxlength="40" placeholder="What did you do?" autocomplete="off"${knownType(d.type)?" hidden":""}></div>
     <div class="cfgrid">
-      <div class="field"><label for="cf-min">Minutes</label><input type="number" id="cf-min" inputmode="numeric" min="1" step="1" value="${esc(d.min)}" placeholder="e.g. 30"></div>
-      <div class="field"><label for="cf-km">Distance, km <span class="muted" style="font-weight:400">optional</span></label><input type="number" id="cf-km" inputmode="decimal" min="0" step="0.01" value="${esc(d.km)}"></div>
+      <div class="field"><label for="cf-min">Minutes</label><input type="text" id="cf-min" class="numin" inputmode="decimal" value="${esc(d.min)}" placeholder="e.g. 30" autocomplete="off"></div>
+      <div class="field"><label for="cf-km">Distance, ${unitD()} <span class="muted" style="font-weight:400">optional</span></label><input type="text" id="cf-km" class="numin" inputmode="decimal" value="${esc(d.km)}" autocomplete="off"></div>
       <div class="field"><label for="cf-date">Date</label><input type="date" id="cf-date" value="${d.date}" max="${today}"></div>
     </div>
     <div class="field"><span class="flabel">Effort</span><div class="seg" role="group" aria-label="Effort">${EFFORTS.map(e=>`<button aria-pressed="${e===d.effort}" data-ceff="${e}">${e}</button>`).join("")}</div></div>
@@ -2284,13 +2292,13 @@ function readCf(){if(!cfOpen||!$("cf-card"))return;cfDraft={date:$("cf-date").va
 const knownType=v=>CARDIO_TYPES.some(t=>t.toLowerCase()===String(v).trim().toLowerCase());
 function syncCfChips(){const inp=$("cf-type"),v=inp.value.trim().toLowerCase(),other=!inp.hidden;document.querySelectorAll("[data-ctype]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.ctype==="__other"?other:!other&&b.dataset.ctype.toLowerCase()===v)))}
 function saveCardio(){
-  readCf();const d=cfDraft,min=parseFloat(d.min),km=d.km===""?null:parseFloat(d.km);
+  readCf();const d=cfDraft,min=numIn(d.min),km=numIn(d.km);
   if(!d.type.trim()){$("cf-err").textContent="Choose or type the kind of cardio.";$("cf-type").focus();return}
   if(!(min>0)){$("cf-err").textContent="Add how many minutes it took.";$("cf-min").focus();return}
   if(km!=null&&!(km>=0)){$("cf-err").textContent="Distance needs to be a number, or leave it blank.";$("cf-km").focus();return}
   const prev=cfEdit?sessions[cfEdit]:null,id=cfEdit||newId();
   sessions[id]=normaliseSession({id,kind:"cardio",date:/^\d{4}-\d{2}-\d{2}$/.test(d.date)?d.date:keyOf(new Date()),status:"done",
-    startedAt:prev?prev.startedAt:Date.now(),ctype:d.type,minutes:Math.round(min),km:km==null?null:Math.round(km*100)/100,effort:d.effort,notes:d.notes});
+    startedAt:prev?prev.startedAt:Date.now(),ctype:d.type,minutes:Math.round(min*10)/10,km:km==null?null:prev&&prev.km!=null&&String(km)===String(distU(prev.km))?prev.km:Math.round(fromD(km)*1000)/1000, /* an untouched distance keeps its exact km */effort:d.effort,notes:d.notes});
   touchS(id);const c=sessions[id];cfOpen=false;cfEdit=null;cfDraft=null;
   stMsg(`${c.ctype} saved: ${cardioLine(c)}. ${cardioCounts(c)?`It counts as a cardio session on ${dateLabel(c.date)}.`:"Walks don't count toward the cardio target."}`);
   renderAll();renderStMain();window.scrollTo({top:0});
@@ -2340,14 +2348,14 @@ function openSettings(){
   const S=SETTINGS;
   SD={nw:S.workouts.length,
     workouts:S.workouts.map(w=>({day:w.day,items:w.items.map(([ex,sets,lo,hi])=>({name:EXERCISES[ex]||ex,sets,lo,hi}))})),
-    cardio:clone(S.cardio),habits:clone(S.habits),prep:clone(S.prep),review:clone(S.review),unit:S.unit||"kg",custom:clone(S.custom||[])};
-  while(SD.workouts.length<4)SD.workouts.push({day:-1,items:[{name:"",sets:3,lo:8,hi:12}]});
+    cardio:clone(S.cardio),habits:clone(S.habits),prep:clone(S.prep),review:clone(S.review),unit:S.unit||"kg",dist:S.dist==="mi"?"mi":"km",custom:clone(S.custom||[])};
+  while(SD.workouts.length<MAX_W)SD.workouts.push({day:-1,items:[{name:"",sets:3,lo:8,hi:12}]});
   SD.open=new Set();SD.editing=null;SD.pexp=null;
   SD.gym=SD.workouts.slice(0,SD.nw).map(w=>w.day).filter(d=>d>=0).sort((a,b)=>a-b);SD.gymMsg="";
   setArmed=false;flashSetErr("");SD.presets=false;sdStart=sdKey(SD);renderSettings();
   $("setsheet").hidden=false;document.body.style.overflow="hidden";$("setsheet").scrollTop=0;
 }
-const sdKey=D=>JSON.stringify([D.custom,D.unit,D.nw,D.workouts.slice(0,D.nw).map(w=>[w.day,w.items.map(r=>[String(r.name).trim(),String(r.sets),String(r.lo),String(r.hi)])]),D.cardio,D.habits,D.prep,D.review]);
+const sdKey=D=>JSON.stringify([D.custom,D.unit,D.dist,D.nw,D.workouts.slice(0,D.nw).map(w=>[w.day,w.items.map(r=>[String(r.name).trim(),String(r.sets),String(r.lo),String(r.hi)])]),D.cardio,D.habits,D.prep,D.review]);
 let sdStart="";const setDirty=()=>!!SD&&sdKey(SD)!==sdStart;
 /* ---------- feedback: ideas and problems, sent to whoever runs the app (hosted only) ---------- */
 let fbDraft={kind:"",text:""},fbBusy=false; // the draft survives Cancel, so nothing typed is lost
@@ -2391,7 +2399,7 @@ function secPrep(D){let h="";
   </div>`;
   return h}
 function secCounts(D){const ct=D.cardio.target;
-  return `<div class="shrow"><div class="grow"><b>Weights</b> <span class="muted">per week</span></div><div class="seg sseg" role="group" aria-label="Weights sessions a week">${[0,1,2,3,4].map(n=>`<button aria-pressed="${D.nw===n}" data-snw="${n}">${n}</button>`).join("")}</div></div>
+  return `<div class="shrow"><div class="grow"><b>Weights</b> <span class="muted">per week</span></div><select data-snw aria-label="Weights sessions a week">${Array.from({length:MAX_W+1},(_,n)=>`<option value="${n}" ${D.nw===n?"selected":""}>${n===0?"None":n}</option>`).join("")}</select></div>
     <div class="shsep"></div>
     <div class="shrow"><div class="grow"><b>Cardio</b> <span class="muted">per week</span></div><select data-scard aria-label="Cardio sessions a week">${[0,1,2,3,4,5,6,7].map(n=>`<option value="${n}" ${ct===n?"selected":""}>${n===0?"None":n}</option>`).join("")}</select></div>
     ${D.nw===0&&ct===0?`<div class="ts" style="margin:-4px 0 0">With no sessions, the app tracks your habits and the Training tab is hidden. You can add sessions any time.</div>`:""}`}
@@ -2443,7 +2451,7 @@ function secPresets(D,after=""){ // after: the workout rows, shown below the Pro
         <div class="pwrow"><button type="button" class="btn primary" data-preset="${P.id}">Switch to ${esc(P.name)}</button><button type="button" class="btn ghost" data-st="pr-cancel">Cancel</button></div></div>`:""}</div>`}).join("");
   return h+(SD.presets?"":after)+`</div>`}
 function secAccount(D){let h="";
-  const units=`<div class="shrow"><div class="grow"><b>Units</b></div>${unitSeg(D)}</div>`;
+  const units=`<div class="shrow"><div class="grow"><b>Weight unit</b></div>${unitSeg(D)}</div><div class="shsep"></div><div class="shrow"><div class="grow"><b>Distance unit</b></div>${distSeg(D)}</div>`;
   if(!(HOST&&HOST.email))return `<section class="sset"><h3>Units</h3><div class="panel shab">${units}</div></section>`;
   const open=!!(SD.acct||SD.pw||SD.del||SD.pwDone);
   h+=`<section class="sset"><h3>Account</h3><div class="panel shab">${units}<div class="shsep"></div>
@@ -2462,6 +2470,7 @@ function secAccount(D){let h="";
       :`<div class="shsep"></div><div class="shrow"><button type="button" class="linkbtn delink" data-st="del-open">Delete my account</button></div>`):""}`:""}
   </div></section>`;
   return h}
+const distSeg=D=>`<div class="seg sseg" role="group" aria-label="Distance unit">${["km","mi"].map(u=>`<button aria-pressed="${D.dist===u}" data-sdist="${u}">${u}</button>`).join("")}</div>`;
 const unitSeg=D=>`<div class="seg sseg" role="group" aria-label="Weight unit">${["kg","lb"].map(u=>`<button aria-pressed="${D.unit===u}" data-sunit="${u}">${u}</button>`).join("")}</div>`;
 function setBar(l,la,title,r,ra){$("setbar").innerHTML=`${l?`<button class="sbtn" data-st="${la}">${l}</button>`:"<span></span>"}<h2 id="set-title">${title}</h2>${r?`<button class="btn primary sbsave" data-st="${ra}">${r}</button>`:"<span></span>"}`}
 /* ---------- first-time setup: a few short steps built from the same pieces as settings ---------- */
@@ -2481,9 +2490,9 @@ const WELCOME_POINTS=[
   ["Train and tick off habits","Log each workout set by set. The app remembers what you lifted last time and tells you when to add weight. Log cardio too, and tick off your habits each day."],
   ["Review how it went","Each week gets a score: the share of your check-ins you completed. Once a week, a short review records your weight and photos and sets a focus for next week. Progress charts show how you're doing over time."]];
 function newcomerDraft(){ // a neutral starting point (not Jack's routine)
-  return {nw:3,workouts:[0,1,2,3].map(()=>({day:-1,items:[{name:"",sets:3,lo:8,hi:12}]})),
+  return {nw:3,workouts:Array.from({length:MAX_W},()=>({day:-1,items:[{name:"",sets:3,lo:8,hi:12}]})),
     cardio:{target:2,days:[1,5]},habits:habitDefaults("start"),
-    prep:Object.fromEntries(PREP_KEYS.map(k=>[k,{on:k==="lunch",days:[6]}])) /* lunch prep on (Sunday), breakfast off */,review:{on:true,day:6},unit:"kg",weight:"",protAuto:true,custom:[]};
+    prep:Object.fromEntries(PREP_KEYS.map(k=>[k,{on:k==="lunch",days:[6]}])) /* lunch prep on (Sunday), breakfast off */,review:{on:true,day:6},unit:"kg",dist:"km",weight:"",protAuto:true,custom:[]};
 }
 function openSetup(){
   SD=newcomerDraft();SD.setup=1;SD.welAt=-1;SD.welSeen=new Set();SD.prog=null;SD.open=new Set();SD.editing=null;SD.pexp=null;SD.gym=[0,2,4];SD.gymMsg="";assignGym();
@@ -2601,7 +2610,7 @@ function toggleDay(arr,d){const i=arr.indexOf(d);if(i>=0)arr.splice(i,1);else ar
 document.addEventListener("click",e=>{
   if(!SD||$("setsheet").hidden)return;const t=e.target;
   const sp=t.closest("[data-sprog]");if(sp&&SD.setup){const id=sp.dataset.sprog;SD.prog=id;
-    if(id==="own"){for(let i=0;i<4;i++)if(!SD.workouts[i].items.length||SD.workouts[i].items.every(r=>!String(r.name).trim()))SD.workouts[i]={day:SD.workouts[i].day,items:[{name:"",sets:3,lo:8,hi:12}]}}
+    if(id==="own"){for(let i=0;i<MAX_W;i++)if(!SD.workouts[i].items.length||SD.workouts[i].items.every(r=>!String(r.name).trim()))SD.workouts[i]={day:SD.workouts[i].day,items:[{name:"",sets:3,lo:8,hi:12}]}}
     else{const P=PRESETS.find(x=>x.id===id);P.workouts.forEach((items,i)=>{SD.workouts[i]={day:-1,items:items.map(([ex,sets,lo,hi])=>({name:EXERCISES[ex]||BASE_EXERCISES[ex]||ex,sets,lo,hi}))}});
       if(SD.nw!==P.workouts.length){SD.nw=P.workouts.length;SD.gym=keepGym(SD.nw,P.days)}}
     assignGym();flashSetErr("");renderSettings();return}
@@ -2611,10 +2620,10 @@ document.addEventListener("click",e=>{
     P.workouts.forEach((items,i)=>{SD.workouts[i]={day:-1,items:items.map(([ex,sets,lo,hi])=>({name:EXERCISES[ex]||BASE_EXERCISES[ex]||ex,sets,lo,hi}))}});
     SD.gym=keepGym(SD.nw,P.days);assignGym();renderSettings();return}
   const cd=t.closest("[data-scdel]");if(cd){SD.custom.splice(+cd.dataset.scdel,1);renderSettings();return}
+  const du=t.closest("[data-sdist]");if(du){SD.dist=du.dataset.sdist;renderSettings();return}
   const un=t.closest("[data-sunit]");if(un){const was=SD.unit;SD.unit=un.dataset.sunit;
     if(SD.setup&&was!==SD.unit){const v=parseFloat(String(SD.weight).replace(",","."));if(isFinite(v))SD.weight=String(Math.round((SD.unit==="lb"?v*LB:v/LB)*10)/10)}
     renderSettings();return}
-  const nw=t.closest("[data-snw]");if(nw){if(SD.setup&&SD.prog&&SD.prog!=="own"&&+nw.dataset.snw!==SD.nw)SD.prog="own";SD.nw=+nw.dataset.snw;SD.gym=SD.gym.slice(0,SD.nw);SD.gymMsg="";assignGym();renderSettings();return}
   const sn=t.closest("[data-sname]");if(sn){SD.editing=sn.dataset.sname;renderSettings();const inp=$("setbody").querySelector(`[data-sexn="${SD.editing}"]`);if(inp){inp.focus();inp.select&&inp.select()}return}
   const ad=t.closest("[data-sexadd]");if(ad){const w=SD.workouts[+ad.dataset.sexadd];SD.open.add(+ad.dataset.sexadd);w.items.push({name:"",sets:3,lo:8,hi:12});SD.editing=ad.dataset.sexadd+"-"+(w.items.length-1);renderSettings();
     const inp=$("setbody").querySelector(`[data-sexn="${ad.dataset.sexadd}-${w.items.length-1}"]`);if(inp)inp.focus();return}
@@ -2652,6 +2661,7 @@ document.addEventListener("input",e=>{
 document.addEventListener("change",e=>{
   if(!SD)return;const t=e.target;
   if(t.dataset.swday!=null){SD.workouts[+t.dataset.swday].day=+t.value;return}
+  if(t.hasAttribute("data-snw")){const n=+t.value;if(SD.setup&&SD.prog&&SD.prog!=="own"&&n!==SD.nw)SD.prog="own";SD.nw=n;SD.gym=SD.gym.slice(0,SD.nw);SD.gymMsg="";assignGym();renderSettings();return}
   if(t.hasAttribute("data-scard")){SD.cardio.target=+t.value;SD.cardio.days=SD.cardio.days.slice().sort((a,b)=>a-b).slice(0,SD.cardio.target);SD.gymMsg="";renderSettings();return}
   if(t.dataset.sdays!=null){SD.habits[t.dataset.sdays].target=+t.value;return}
   if(t.dataset.scon!=null){SD.custom[+t.dataset.scon].on=t.checked;renderSettings();return}
@@ -2679,7 +2689,7 @@ function saveFromDraft(){
   if(!err&&SD.gym.length!==D.nw)err=`Pick ${D.nw} weights day${D.nw===1?"":"s"} in Planned days (${SD.gym.length} picked).`;
   if(!err&&D.cardio.target>0&&D.cardio.days.length!==D.cardio.target)err=`Pick ${D.cardio.target} cardio day${D.cardio.target===1?"":"s"} in Planned days (${D.cardio.days.length} picked).`;
   if(err){ws.forEach((w,i)=>{if(!w.items.length)SD.open.add(i)});renderSettings();$("setsheet").scrollTop=0;flashSetErr(err);return}
-  S.workouts=ws;S.exNames=exNames;S.cardio=clone(D.cardio);S.habits=clone(D.habits);S.review=clone(D.review);S.unit=D.unit==="lb"?"lb":"kg";S.custom=clone((D.custom||[]).filter(c=>c.name.trim()));
+  S.workouts=ws;S.exNames=exNames;S.cardio=clone(D.cardio);S.habits=clone(D.habits);S.review=clone(D.review);S.unit=D.unit==="lb"?"lb":"kg";S.dist=D.dist==="mi"?"mi":"km";S.custom=clone((D.custom||[]).filter(c=>c.name.trim()));
   S.prep=clone(D.prep);PREP_KEYS.forEach(k=>{if(!S.prep[k].days.length)S.prep[k].on=false});
   if(D.setup){S.setupDone=true;S.startedOn=keyOf(new Date());const kg=suKg(D);if(kg){const k=currentKey(),w=ensureWeek(k);w.weight=Math.round(kg*1000)/1000;touch(k)}}
   saveSettings(S);afterSettings();
@@ -2936,8 +2946,8 @@ let histOpen=null;
 const PULSE=`<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><polyline points="1,9 4,9 6,4 9,13 11,7 12,9 15,9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 function histDetail(s){
   if(isCardio(s)){
-    const pace=s.km>0?(()=>{const p=s.minutes/s.km,m=Math.floor(p),x=Math.round((p-m)*60);return `${m}:${pad(x===60?0:x)} /km`})():"";
-    const bits=[`${s.minutes} min`,s.km!=null?`${fmtW(s.km)} km`:"",pace,s.effort].filter(Boolean).join(" · ");
+    const pace=s.km>0?(()=>{const p=s.minutes/distU(s.km),m=Math.floor(p),x=Math.round((p-m)*60);return `${x===60?m+1:m}:${pad(x===60?0:x)} /${unitD()}`})():"";
+    const bits=[`${fmtMin(s.minutes)} min`,s.km!=null?fmtDist(s.km):"",pace,s.effort].filter(Boolean).join(" · ");
     return `<div class="hdetail"><div class="hline num">${bits}${cardioCounts(s)?"":` <span class="muted">· not counted</span>`}</div>
       ${s.notes?`<div class="hnotes">${esc(s.notes)}</div>`:""}
       <div class="row"><button class="btn" data-cardio-edit="${s.id}">Edit</button><button class="btn ghost" data-st="hdel" data-id="${s.id}">Delete</button></div></div>`;
@@ -2956,7 +2966,7 @@ function renderStHistory(){
   const pages=Math.ceil(list.length/HIST_N);histPage=Math.min(histPage,pages-1);const from=histPage*HIST_N;
   $("st-history").innerHTML=`<div class="panel hlist">${list.slice(from,from+HIST_N).map(s=>{
     const open=histOpen===s.id;let line;
-    if(isCardio(s))line=`<span class="htype cw" title="Cardio">${PULSE}</span><span class="hdate">${dateLabel(s.date)}</span><span class="hsum">${esc(s.ctype)}${s.km!=null?" · "+fmtW(s.km)+" km":""} · ${s.effort}${cardioCounts(s)?"":" · not counted"}${s.notes?" · notes":""}</span><span class="hsets num">${s.minutes} min</span>`;
+    if(isCardio(s))line=`<span class="htype cw" title="Cardio">${PULSE}</span><span class="hdate">${dateLabel(s.date)}</span><span class="hsum">${esc(s.ctype)}${s.km!=null?" · "+fmtDist(s.km):""} · ${s.effort}${cardioCounts(s)?"":" · not counted"}${s.notes?" · notes":""}</span><span class="hsets num">${s.minutes} min</span>`;
     else{const p=setsDone(s);
       // second line names the workout, like a cardio row names its type (a list of exercises never fitted on one line; tap for the detail)
       line=`<span class="htype">${s.type}</span><span class="hdate">${dateLabel(s.date)}</span><span class="hsum">Workout ${s.type}${s.notes?" · notes":""}</span><span class="hsets num">${p.d}/${p.t}${s.accMs?" · "+durTxt(s):""}</span>`;}

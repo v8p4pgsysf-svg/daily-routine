@@ -15,7 +15,7 @@ def do_setup(pg,prog="fullbody",habits=(),weights=None):
   pg.fill("#su-weight","70")
   for k in habits:pg.click(f'[data-shab="{k}"]')
   pg.click('[data-st="set-next"]')
-  if weights is not None:pg.click(f'[data-snw="{weights}"]')
+  if weights is not None:pg.select_option('[data-snw]', str(weights))
   if weights!=0:pg.click(f'[data-sprog="{prog}"]')
   pg.click('[data-st="set-next"]');pg.click('[data-st="set-next"]');pg.click('[data-st="set-next"]')
   pg.click('[data-st="set-start"]');pg.wait_for_selector("#setsheet",state="hidden")
@@ -137,7 +137,7 @@ try:
   # signing out from another tab, then back in, starts on Today
   pg.click("#tab-progress");pg.wait_for_timeout(100)
   # change password, sign out, sign back in with it
-  pg.click("#setcog");ok("Units" in pg.inner_text("#setbody") and "Weights in" not in pg.inner_text("#setbody"),"   Settings: the kg/lb row is called Units")
+  pg.click("#setcog");ok("Weight unit" in pg.inner_text("#setbody") and "Distance unit" in pg.inner_text("#setbody") and "Weights in" not in pg.inner_text("#setbody"),"   Settings: kg/lb and km/mi rows are Weight unit and Distance unit")
   pg.click('[data-st="acct"]');pg.click('[data-st="pw-open"]');pg.fill("#pw1","short");pg.fill("#pw2","short");pg.click('[data-st="pw-save"]')
   ok("at least 8" in pg.inner_text("#pwmsg"),"H15a. Too-short new password is refused")
   pg.fill("#pw1","New-pass-99");pg.fill("#pw2","New-pass-99");pg.click('[data-st="pw-save"]');pg.wait_for_timeout(300)

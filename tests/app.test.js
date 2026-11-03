@@ -379,7 +379,7 @@ store={};w=boot("2026-10-28T09:00:00");
 const chg=(w,el,v)=>{if(el.type==="checkbox")el.checked=v;else el.value=String(v);el.dispatchEvent(new w.Event("change",{bubbles:true}))};
 click(w,$(w,"#d-protein-0"));save(w);w.close();w=boot("2026-10-28T09:00:00");
 click(w,$(w,"#tab-progress"));click(w,$(w,'#setcog'));
-ok(!$(w,"#setsheet").hidden&&$$(w,"#setbody .swk").length===3&&$(w,'[data-snw="3"]').getAttribute("aria-pressed")==="true","SET1. Edit routine opens with the current 3 workouts");
+ok(!$(w,"#setsheet").hidden&&$$(w,"#setbody .swk").length===3&&$(w,"[data-snw]").value==="3","SET1. Edit routine opens with the current 3 workouts");
 const lab=d=>$$(w,"#setbody .pgw")[d].textContent;
 ok(["0","2","5"].every(d=>$(w,`[data-pgym="${d}"]`).getAttribute("aria-pressed")==="true")&&lab(0)==="Workout A"&&lab(1)==="Cardio"&&lab(2)==="Workout B"&&lab(5)==="Workout C"&&lab(6)==="Cardio"&&lab(3)==="Rest","   Planned days read Workout A / Cardio / Workout B / Rest… with Gym and Cardio buttons");
 ok($(w,'[data-pgym="0"]').textContent==="Weights"&&$$(w,"#daily .lbl .n").some(n=>n.textContent==="Weights")&&!/\bGym\b|Strength workouts/.test($(w,"#setbody").textContent+$(w,"#daily").textContent),"TW1. One word for weight training: Weights on the planned-day buttons and the grid row (no Gym or Strength)");
@@ -388,7 +388,7 @@ click(w,$(w,'[data-st="set-save"]'));ok(!$(w,"#setsheet").hidden&&/Pick 3 weight
 click(w,$(w,'[data-pgym="3"]'));click(w,$(w,'[data-pgym="4"]'));ok(/You have 3 weights sessions a week/.test($(w,"#setbody").textContent)&&lab(4)==="Rest","   Can't tick more gym days than sessions");
 click(w,$(w,'[data-pgym="3"]'));click(w,$(w,'[data-pgym="2"]'));ok(lab(2)==="Workout B"&&lab(5)==="Workout C","   Ticking Wednesday again restores A/B/C");
 ok($(w,'[data-sname="0-0"]').textContent==="Barbell Squat"&&$(w,'[data-sexf="0-0-sets"]').value==="3"&&$(w,'[data-sexf="0-0-lo"]').value==="6"&&$(w,'[data-sexf="0-0-hi"]').value==="8","   Workout A starts with Barbell Squat · 3 · 6 – 8 in a grid row");
-click(w,$(w,'[data-snw="2"]'));click(w,$(w,'[data-pgym="2"]'));click(w,$(w,'[data-pgym="3"]'));
+chg(w,$(w,"[data-snw]"),2);click(w,$(w,'[data-pgym="2"]'));click(w,$(w,'[data-pgym="3"]'));
 click(w,$(w,'[data-sexadd="0"]'));{const n=$$(w,'#setbody [data-row^="0-"]').length-1;ok(!!$(w,`input[data-sexn="0-${n}"]`),"   Add exercise opens a name box on the new row");type(w,$(w,`[data-sexn="0-${n}"]`),"Hip Thrust");type(w,$(w,`[data-sexf="0-${n}-lo"]`),"8");type(w,$(w,`[data-sexf="0-${n}-hi"]`),"12");}
 chg(w,$(w,'[data-shab="protein"]'),false);chg(w,$(w,"[data-scard]"),3);click(w,$(w,'[data-pcard="4"]'));
 chg(w,$(w,'[data-sdays="af"]'),5);
@@ -485,7 +485,7 @@ click(w,$(w,'[data-st="set-cancel"]'));ok($(w,"#setsheet").hidden&&/Workout B/.t
 w.close();
 // --- no weights sessions
 store={};w=boot("2026-10-28T09:00:00");
-click(w,$(w,'#setcog'));click(w,$(w,'[data-snw="0"]'));
+click(w,$(w,'#setcog'));chg(w,$(w,"[data-snw]"),0);
 ok(!$(w,'[data-pgym]')&&$$(w,"#setbody details.swk").length===0&&!/Weights days/.test($(w,"#setbody .pcount").textContent),"Z1. Weights 0: no gym buttons, no workouts, no gym-day count");
 click(w,$(w,'[data-st="set-save"]'));
 ok($(w,"#setsheet").hidden&&!$(w,'[data-ct="strength"]'),"Z2. Saved: the Strength row leaves the check-ins grid");
@@ -608,12 +608,12 @@ w.location.hash="strength";w.dispatchEvent(new w.HashChangeEvent("hashchange"));
 ok($(w,"#pane-strength").hidden&&!$(w,"#pane-week").hidden,"   A link to the Training tab lands on Today instead");
 click(w,$(w,"#setcog"));
 ok(/the Training tab is hidden/.test($(w,"#setbody").textContent),"HO3. Settings say what no sessions means");
-click(w,$(w,'[data-snw="2"]'));
+chg(w,$(w,"[data-snw]"),2);
 ok(!/the Training tab is hidden/.test($(w,"#setbody").textContent),"   and the line goes once a session is chosen");
 w.close();
 store={};w=boot("2026-10-27T12:00:00");
 click(w,$(w,'#today [data-st="log-cardio"]'));type(w,$(w,"#cf-min"),30);click(w,$(w,'[data-st="cf-save"]'));
-click(w,$(w,"#setcog"));click(w,$(w,'[data-snw="0"]'));chg(w,$(w,"[data-scard]"),0);click(w,$(w,'[data-st="set-save"]'));
+click(w,$(w,"#setcog"));chg(w,$(w,"[data-snw]"),0);chg(w,$(w,"[data-scard]"),0);click(w,$(w,'[data-st="set-save"]'));
 ok(!$(w,"#tab-strength").hidden&&$(w,"#plantoggle").closest(".section").hidden,"HO4. Someone who logged sessions before keeps the Training tab (their history) after switching sessions off");
 w.close();
 // --- past weeks keep their own targets
@@ -636,6 +636,19 @@ ok($(w,'[data-ct="cardio"]').textContent==="0/1"&&$(w,'[data-ct="protein"]').tex
 save(w);w.close();w=boot("2026-11-03T12:00:00");click(w,$(w,"#prev"));
 ok($(w,'[data-ct="cardio"]').textContent==="0/1"&&$(w,'[data-ct="protein"]').textContent==="1/4","   Still frozen after a reload");
 w.close();
+// up to 7 weights days; decimal minutes; miles or km
+store={};w=boot("2026-10-27T09:00:00");
+click(w,$(w,"#setcog"));ok($(w,"[data-snw]").tagName==="SELECT"&&$(w,"[data-snw]").options.length===8,"U1. Weights per week is a dropdown, None to 7");
+chg(w,$(w,"[data-snw]"),7);for(let d=0;d<7;d++){const b=$(w,`[data-pgym="${d}"]`);if(b.getAttribute("aria-pressed")!=="true")click(w,b)}
+ok(/Workout G/.test($(w,"#setbody").textContent)&&/Weights days 7\/7/.test($(w,"#setbody .pcount").textContent),"   Seven sessions run A to G, one a day");
+store={};w=boot("2026-10-27T09:00:00");
+click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="log-cardio"]'));type(w,$(w,"#cf-min"),"32,5");type(w,$(w,"#cf-km"),"5.25");click(w,$(w,'[data-st="cf-save"]'));
+ok(/32\.5 min/.test($(w,"#today").textContent)&&/5\.25 km/.test($(w,"#today").textContent),"U2. Minutes take decimals (a comma works too); distance shows in km");
+click(w,$(w,"#setcog"));click(w,$(w,'[data-sdist="mi"]'));click(w,$(w,'[data-st="set-save"]'));
+ok(/3\.26 mi/.test($(w,"#today").textContent),"U3. With miles chosen, the same run reads 3.26 mi");
+click(w,$(w,"#tab-strength"));click(w,$(w,'[data-st="log-cardio"]'));type(w,$(w,"#cf-min"),"20");type(w,$(w,"#cf-km"),"2");click(w,$(w,'[data-st="cf-save"]'));
+click(w,$(w,"#setcog"));click(w,$(w,'[data-sdist="km"]'));click(w,$(w,'[data-st="set-save"]'));
+ok(/3\.22 km/.test($(w,"#today").textContent),"   A distance typed in miles is kept in km (2 mi reads 3.22 km)");
 store={};w=boot("2026-10-28T09:00:00");
 ok(!$(w,"#exp-week")&&!$(w,'[data-st="exp-csv"]')&&$(w,"#exp-master"),"EX1. Exports removed from Today and Training; one Export on Progress");
 click(w,$(w,"#tab-progress"));click(w,$(w,"#exp-master"));
