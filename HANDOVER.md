@@ -1,41 +1,44 @@
-# Handover: Weekly Routine app
-Updated: 2 Nov 2026, evening.
+# Session Handover: Weekly Routine app
+Generated: 3 Nov 2026
+Source: current chat (2 Nov 2026). A long session: check files on disk rather than trusting this summary's details.
 
-## Current goal
-Get the hosted app (GitHub Pages + Supabase) ready for Jack to invite his girlfriend and friends. Step 1 (name and story) is shipped; the own domain is next and must come before any invites.
+## Current Goal
+Get the hosted app (GitHub Pages + Supabase) ready for Jack to invite his girlfriend and friends. Polish from 2 Nov is all live; the own domain is the next real step and must come before any invites.
 
-## Read first
-`CLAUDE.md` (architecture, single-source lists, how to ship, starter week, Welcome page). `src/weekly-routine.html` is one big file: grep for what you need. `RATIONALE.md` before reversing any past decision.
+## Output Files (pointers)
 
-## Shipped this session (2 Nov; all live, all tests green)
-- Renamed to Weekly Routine; sign-in tagline; setup Welcome page (three closed points, pinned Next → Get started).
-- Exercise progress: menu lists only logged lifts; "Building data on N lifts".
-- Workout screen: "Last time you also did Set N" (never carried forward); swap/added notes on their own line ("Instead of …"); Today's done lines shortened.
-- Suggested programmes rewritten to Jack's spec (all 3 sets; Leg Extension and Cable Chest Fly added; both Mon/Wed/Fri). Jack's own programme reads "Custom" until he taps Switch.
-- Names: Flat/Incline Dumbbell Chest Press, Seated Leg Curl, Leg Press; every exercise has a short label (test EC1); "per leg" for lunges and split squats.
-- Share card: an image of a finished workout, every set, from the saved message, history and the saved-workout screen; footer "Made with Weekly Routine"; the link travels alongside where the app keeps it.
+### src/weekly-routine.html
+**Path**: /home/claude/daily-routine/src/weekly-routine.html (clone fresh: `git clone https://github.com/v8p4pgsysf-svg/daily-routine`)
+**Type & shape**: single-file app, ~259 KB / 3,181 lines; built into `docs/index.html` by `tools/build.py`. Grep for what you need.
+**Recent changes (2 Nov, all live, last commit 149649c)**: Weekly Routine name and sign-in tagline; setup Welcome page; updated suggested programmes; exercise renames and short labels (Barbell → BB, Dumbbell → DB; test EC1); "per leg"; share card; Training history rows ("Workout A" line, sets as one line under each full name, "Not done: …" line). CLAUDE.md describes each.
+**Open work**: none in progress. `main` is clean and matches what's deployed.
 
-## To check on Jack's phone
-- Jack once saw two Training history entries open together; the code allows one, and a test with two workouts agreed. Ask what he tapped (View workout from Today? the scorecard? Share?) and reproduce.
-- `photo-encryption.py` timed out once clicking setup's Start (passed three reruns); if it recurs, wait for the button to be enabled before clicking.
-- Share a workout once: Save Image and Instagram should still appear in the share sheet now that a link goes with the picture. If either is missing, share the picture alone (drop `url`/`text` in `shareWorkout`).
+**Note**: read the file and CLAUDE.md directly before reasoning about how anything works.
 
-## Testing
-- App: `npm i jsdom` somewhere, then `NODE_PATH=<that>/node_modules node tests/app.test.js src/weekly-routine.html`.
-- Hosted: `tests/hosted/setup.sh <folder>` then run the suites there (`run.py` 70, plus `share-card.py`, `photo-encryption.py`, `feedback.py`, `forgot-password.py`, `home-screen.py`, `review-photos.py`, `settings-workouts.py`; sweeps `layout-review.py`, `screens-sweep.py`). `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`. Any suite that does setup must click Next three times on the Welcome page, then Get started (`set-next`).
-- `forgot-password.py` failed once at its sign-out step this session and passed every rerun; if it recurs, give it the same settle wait as run.py's `sign_out_done`.
-- Claude can't reach the live site or Supabase; Jack checks live behaviour on his phone.
+## Source References
+- **CLAUDE.md** (authoritative): architecture, single-source lists, how to test and ship, current behaviour.
+- **RATIONALE.md** (authoritative, append-only): why things are as they are, including the history layouts tried and rejected on 2 Nov. Now ~42 KB (~10k tokens): consider summarising older entries into a separate archive file if it keeps growing (don't edit existing entries).
+- **tests/** (authoritative): app suite plus hosted suites, including the new `tests/hosted/share-card.py`.
 
-## Working with Jack
-- Discuss options before design changes; he decides. Short visible updates (SendUserMessage) during anything longer than a couple of minutes. Show screenshots (390 light/dark, 320) before pushing UI changes.
-- Work in progress can sit on a branch (Pages only deploys `main`); merge to `main` in one push once Jack approves.
+## Stated Preferences
+- "Discuss options and give me your honest view before any design change, and I decide."
+- "Send me a short update if anything takes more than a couple of minutes." (Use SendUserMessage.)
+- "Push in batches, only when all tests are clean, and confirm the deploy succeeded before telling me it's live."
+- Show screenshots (390px light and dark, 320px) before pushing UI changes; keep work in progress on a branch until Jack says go.
+- Names should be consistent everywhere; short labels only where space is fixed (setup summary, key-lifts table), never mixed into lists that use full names.
 
-## Next (in this order)
-1. **Own domain** (Jack is buying it and will say the name). With it: decide what a stranger who follows a shared card's link can do ("Request an invite" on sign-in, Claude's pick, or a line saying to ask whoever shared it); maybe print the short address on the card. Claude's advice: `weeklyroutine.app` at Cloudflare Registrar (cost-price renewals, free DNS), falling back to `weeklyroutine.co.uk`; avoid cheap novelty TLDs since the same domain will send reset emails via Resend. Then: CNAME in `docs/`, DNS records at the registrar set to "DNS only" (grey cloud) so GitHub can issue the certificate (.app is HTTPS-only, so it won't load until then), Supabase Auth site URL and redirects, Resend DNS records. A new domain is a new origin: existing installs must reinstall and sign in again (data is safe); the github.io link redirects.
-2. **Pre-invite checks**: their email in `public.invites` (or the invite code); a forgot-password test to see if the email still lands in junk; send the link with "Open in Safari, then follow the Add to Home Screen steps".
-3. **Watch session**: first invitee sets it up while Jack watches for ten minutes without helping; note every pause (including whether people read the Welcome points or tap straight through). End with "What would you tell a friend this app is for?" Then a week of real use with feedback via the speech-bubble button.
-4. **Backup nudge**: decide after that.
+## Open Threads
+- **Domain (next step, waiting on Jack)**: Jack is buying it and will say the name. Claude's advice: `weeklyroutine.app` at Cloudflare Registrar, fallback `weeklyroutine.co.uk`. Then CNAME in `docs/`, DNS records "DNS only" (grey cloud), Supabase Auth site URL and redirects, Resend DNS for reset emails. A new origin means existing installs reinstall and sign in again.
+- **What a stranger following a shared card's link can do** (decide with the domain): "Request an invite" on sign-in (Claude's pick) or a line saying to ask whoever shared it. Sign-up is invite-only; no QR code (Jack); the card has no printed address until the domain exists.
+- **Phone check for Jack**: share a workout once and confirm Save Image and Instagram still appear in the share sheet now that a link goes with the picture. If either is missing, drop `url`/`text` in `shareWorkout`.
+- **Two history entries open at once**: Jack saw it once; the code allows one and a test agreed. Ask what he tapped before (View workout from Today? the scorecard? Share?) and reproduce.
+- **Jack's own programme** reads "Custom" since the full-body preset changed; he can tap Change → Switch to 3-day full body (history stays).
+- **Test flakes**: `photo-encryption.py` once timed out clicking setup's Start; `forgot-password.py` once at sign-out. Both passed every rerun. If either recurs, add a wait-until-enabled / settle step.
+- **Stale branches on GitHub**: history-compact, history-fit (unused experiment), history-rows, history-sets, programmes, share-card, training-tidy, weekly-routine-rename (all merged or parked; Claude can't delete remote branches, a 403). `wip/accounts-units-habits` predates this session; leave it. Jack can delete the rest under Branches.
+- **After the domain**: pre-invite checks, a watch session with the first invitee, then decide on a backup nudge. Parked until there's evidence: "Other activity", feedback alerts, a cardio share card.
 
-## Parked until there's evidence
-- Backup nudge and "Other activity" (1 Nov).
-- Feedback alerts; wait until feedback flows.
+## Testing quick reference
+App: `npm i jsdom` in a scratch folder, then `NODE_PATH=<folder>/node_modules node tests/app.test.js src/weekly-routine.html`. Hosted: `tests/hosted/setup.sh <folder>`, then each suite in that folder (`run.py` is 70 checks) with `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`; put a `timeout` on each run. Rebuild (`python3 tools/build.py`) and re-run `setup.sh` before hosted runs, or they test the old build. Claude can't reach the live site or Supabase.
+
+## Suggested First Move for Next Session
+Ask Jack whether he has bought the domain yet (and which name); if not, ask about the share-sheet check and the two-open history report before starting anything new.
