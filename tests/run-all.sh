@@ -3,6 +3,9 @@
 #   tests/run-all.sh                  app suite + all hosted suites (about 6–8 minutes)
 #   tests/run-all.sh --quick          app suite + run.py only (about 2 minutes)
 #   tests/run-all.sh --sweeps         also the screenshot sweeps (layout-review, screens-sweep)
+#   tests/run-all.sh --list           just list what would run
+# Every tests/hosted/*.py is picked up automatically: a new suite needs no change here. Only helpers (clock.py) and the
+# screenshot-only sweeps are left out of a normal run (SWEEPS below).
 # Rebuilds the app first (tools/build.py), so the hosted suites never test an old build.
 # Needs node, python3 with Playwright and npm; jsdom and jszip are installed into the work folder on first use.
 # Work folder: $RUN_DIR, or a temp folder. Logs for each suite are kept there (<suite>.log).
@@ -10,8 +13,14 @@ set -uo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"; repo="$(cd "$here/.." && pwd)"
 work="${RUN_DIR:-${TMPDIR:-/tmp}/routine-tests}"; mkdir -p "$work"
 export PLAYWRIGHT_BROWSERS_PATH="${PLAYWRIGHT_BROWSERS_PATH:-/opt/pw-browsers}"
-quick=0; sweeps=0
-for a in "$@"; do case "$a" in --quick) quick=1;; --sweeps) sweeps=1;; esac; done
+quick=0; sweeps=0; list=0
+for a in "$@"; do case "$a" in --quick) quick=1;; --sweeps) sweeps=1;; --list) list=1;; esac; done
+HELPERS="clock"; SWEEPS="layout-review screens-sweep"
+all=$(cd "$here/hosted" && ls *.py | sed 's/\.py$//' | sort)
+pick(){ for s in $all; do case " $HELPERS $SWEEPS " in *" $s "*) ;; *) echo "$s";; esac; done; }
+suites="run"; [ $quick -eq 0 ] && suites="run $(pick | grep -vx run | tr '\n' ' ')"
+[ $sweeps -eq 1 ] && suites="$suites $SWEEPS"
+if [ $list -eq 1 ]; then echo "app $suites"; exit 0; fi
 fail=0
 line(){ printf '%-20s %s\n' "$1" "$2"; }
 
@@ -27,9 +36,6 @@ if [ $rc -eq 0 ] && [ "$f" -eq 0 ]; then line app "ok ($p checks)"; else line ap
 
 # hosted suites (Playwright against the mock Supabase)
 "$here/hosted/setup.sh" "$work/hosted" >/dev/null || { echo "hosted setup failed"; exit 1; }
-suites="run"
-[ $quick -eq 0 ] && suites="run photo-encryption feedback forgot-password home-screen review-photos settings-workouts share-card"
-[ $sweeps -eq 1 ] && suites="$suites layout-review screens-sweep"
 for s in $suites; do
   (cd "$work/hosted" && timeout 300 python3 "$s.py" > "$s.log" 2>&1); rc=$?
   last=$(tail -1 "$work/hosted/$s.log" | cut -c1-60); f=$(grep -c '^FAIL' "$work/hosted/$s.log")
