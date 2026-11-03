@@ -29,7 +29,8 @@ def finish_setup(pg):
 def sign_out(pg):
     pg.wait_for_timeout(1500)
     pg.click("#setcog"); pg.wait_for_selector("#setsheet", state="visible"); pg.wait_for_timeout(150); pg.click('[data-st="acct"]'); pg.wait_for_selector('[data-st="sign-out"]', state="visible"); pg.click('[data-st="sign-out"]'); pg.wait_for_timeout(400)
-    if pg.locator("#login").is_hidden() or pg.locator("#lg-email").count() == 0: pg.click('[data-st="sign-out"]')
+    # Tap again only if the button asked to (a save still pending); otherwise the page is already reloading.
+    if pg.locator('[data-st="sign-out"].armed').count(): pg.click('[data-st="sign-out"].armed')
     pg.wait_for_selector("#lg-email", state="visible")
 def open_review(pg):
     pg.click("#tab-week"); pg.wait_for_timeout(200)
@@ -54,14 +55,16 @@ try:
         pg.evaluate(f"localStorage.setItem('mock-storage',JSON.stringify({{'{uid}/{OLD}':{json.dumps(jpg)}}}))")
 
         # 1. first sign-in: a key is made; the older photo gets secured once a recovery code is saved
-        sign_in(pg, "Start-1234"); finish_setup(pg)
+        # The card for the older photo opens on its own soon after sign-in, over setup; deal with it first, or it can
+        # land on top of setup's Start button mid-click (the old flake).
+        sign_in(pg, "Start-1234")
         pg.wait_for_selector("#pk-saved", timeout=10000)
         code = pg.inner_text("#pk-code").strip()
         check("Older plain photo: the recovery code card appears on its own", len(code) == 23 and code.count("-") == 3)
         shot(pg, "enc-recovery-code")
         rec = pg.evaluate(REC)
         check("A key record exists, locked with the password, no recovery lock yet", rec and rec.get("pw") and not rec.get("rc"))
-        pg.click("#pk-saved"); pg.wait_for_timeout(1500)
+        pg.click("#pk-saved"); pg.wait_for_timeout(1500); finish_setup(pg)
         heads = pg.evaluate(HEADS)
         check("The older photo is now encrypted in storage", heads.get(OLD) == "RPE1")
         check("The record now has a recovery lock too", bool(pg.evaluate(REC).get("rc")))
