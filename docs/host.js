@@ -96,14 +96,13 @@ function addInstallHint(box){
   return true;
 }
 
-/* ---------- sign in: email and password (default), or a code by email if config says authMode:"code" ----------
+/* ---------- sign in: email and password ----------
    Both forms stay on the page (one hidden) so password managers always find a stable sign-in form. */
 let errT={};
 function flashErr(id,msg){const el=$(id);if(!el)return;clearTimeout(errT[id]);el.classList.remove("fade");el.textContent=msg||"";el.hidden=!msg;
   if(msg)errT[id]=setTimeout(()=>{el.classList.add("fade");errT[id]=setTimeout(()=>{el.hidden=true;el.textContent="";el.classList.remove("fade")},350)},5000)}
 function showLogin(note){
   const box=$("login");box.hidden=false;
-  if(C.authMode==="code")return codeLogin(note);
   box.innerHTML=`<form class="lg-card" id="lg-fp" method="post" action="#" novalidate>
       <h1>Weekly Routine</h1><p class="lg-sub">Plan your week. Train and tick off habits. Review how it&nbsp;went.</p>
       <p class="lg-err" id="lg-err" role="alert" hidden></p>
@@ -201,34 +200,6 @@ function showLogin(note){
     if(res.data&&res.data.session){box.hidden=true;start(res.data.session,p1);return}
     toSignIn();flashErr("lg-err","Account created. Check your email for a confirmation link, then sign in here.")};
   if(!hint||!box.classList.contains("a2hs"))setTimeout(()=>$("lg-email").focus(),50);
-}
-function codeLogin(note){
-  const box=$("login");box.hidden=false;let email="";
-  const step1=n=>{box.innerHTML=`<form class="lg-card" id="lg-f1" novalidate>
-      <h1>Weekly Routine</h1><p class="lg-sub">Sign in with your email. We'll send you a code — no password needed.</p>
-      ${n?`<p class="lg-err" role="alert">${esc(n)}</p>`:""}
-      <label for="lg-email">Email</label><input id="lg-email" type="email" autocomplete="email" inputmode="email" required value="${esc(email)}">
-      <button class="lg-btn" type="submit">Send code</button></form>`;
-    $("lg-f1").onsubmit=async e=>{e.preventDefault();email=$("lg-email").value.trim().toLowerCase();if(!/^\S+@\S+\.\S+$/.test(email)){step1("Enter a valid email address.");return}
-      const b=e.submitter||box.querySelector("button");b.disabled=true;b.textContent="Sending…";
-      const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:!!C.allowSignups}});
-      if(error){step1(/signup|not allowed|not found/i.test(error.message)?"This email isn't set up yet. Ask whoever shared the app with you to add it.":/rate|seconds/i.test(error.message)?"Too many attempts. Wait a minute, then try again.":"Couldn't send the code. Check your connection and try again.");return}
-      step2()};
-    if(!(!n&&addInstallHint(box)&&box.classList.contains("a2hs")))setTimeout(()=>$("lg-email").focus(),50)};
-  const step2=n=>{box.innerHTML=`<form class="lg-card" id="lg-f2" novalidate>
-      <h1>Check your email</h1><p class="lg-sub">Enter the code sent to <b>${esc(email)}</b>.</p>
-      ${n?`<p class="lg-err" role="alert">${esc(n)}</p>`:""}
-      <label for="lg-code">Code</label><input id="lg-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required>
-      <button class="lg-btn" type="submit">Sign in</button>
-      <button class="lg-link" type="button" id="lg-back">Use a different email</button></form>`;
-    $("lg-back").onclick=()=>step1();
-    $("lg-f2").onsubmit=async e=>{e.preventDefault();const token=$("lg-code").value.replace(/\s/g,"");if(!/^\d{6,10}$/.test(token)){step2("Enter the code from the email.");return}
-      const b=e.submitter||box.querySelector(".lg-btn");b.disabled=true;b.textContent="Signing in…";
-      const {data,error}=await sb.auth.verifyOtp({email,token,type:"email"});
-      if(error||!data.session){step2("That code didn't work. Check it, or go back and send a new one.");return}
-      box.hidden=true;start(data.session)};
-    setTimeout(()=>$("lg-code").focus(),50)};
-  step1(note);
 }
 
 /* ---------- the adapter: same interface the app uses inside Claude ---------- */
@@ -431,7 +402,7 @@ function start(session,pw){
     setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);return {status:"saved"}}};
 
   window.claude={use:async name=>({db,user:{id:async()=>uid},assets,downloads})[name]||null};
-  window.__routineHost={email:user.email,photoUrl,photoBlob,canChangePassword:C.authMode!=="code",
+  window.__routineHost={email:user.email,photoUrl,photoBlob,canChangePassword:true,
     changePassword:async np=>{const {error}=await sb.auth.updateUser({password:np});if(error)throw new Error(/same|different/i.test(error.message)?"same":/weak|short|least/i.test(error.message)?"weak":"failed");
       // the photo key follows the new password (if this device has it unlocked)
       if(praw){try{if(!krec)krec=(await readRec())||{rc:null};await saveRec(Object.assign({},krec,{pw:await lockRaw(praw,np,PW_ITER)}))}catch(e){}}},

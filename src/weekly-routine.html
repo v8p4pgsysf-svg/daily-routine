@@ -56,13 +56,13 @@ button{font:inherit;color:inherit}
 
 /* summary */
 .summary{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,2fr);gap:24px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px}
-.ring-row{display:flex;align-items:center;gap:18px}
-.ring{width:96px;height:96px;flex:none}
-.ring circle{fill:none;stroke-width:9}
-.ring .track{stroke:var(--green-soft)}
-.ring .val{stroke:var(--green);stroke-linecap:round;transition:stroke-dashoffset .35s ease}
-.ring text{fill:var(--ink);font-family:var(--mono);font-size:22px;font-weight:500;text-anchor:middle;dominant-baseline:central}
-.big{font-size:2rem;font-weight:700;letter-spacing:-.02em;line-height:1}
+
+
+
+
+
+
+
 .bar{height:6px;background:var(--green-soft);border-radius:99px;overflow:hidden;margin-top:10px}
 .bar>i{display:block;height:100%;background:var(--green);border-radius:99px;transition:width .35s ease}
 .chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
@@ -86,7 +86,7 @@ button{font:inherit;color:inherit}
 .revhead[aria-expanded="true"] .chev{transform:translateY(2px) rotate(-135deg)}
 .revbody{display:flex;flex-direction:column;gap:14px}
 .tfocus{display:flex;flex-direction:column;gap:2px}
-.tfx{font-size:.98rem;line-height:1.45;max-width:65ch}
+
 /* drinking nights, duration edit, review summary, tomorrow */
 .drinkcb input:checked + .box{background:var(--warn);border-color:var(--warn)}
 .drinkcb input:checked + .box::after{content:"";width:10px;height:2px;border:0;background:var(--surface);transform:none}
@@ -95,7 +95,7 @@ button{font:inherit;color:inherit}
 .sumdl{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
 .sumlook{font-size:.86rem;color:var(--warn);line-height:1.5}
 .sumlook.ok{color:var(--green)}
-.tmrw{display:flex;align-items:baseline;gap:8px;font-size:.88rem;color:var(--muted);padding-top:2px;border-top:1px solid var(--line);padding-top:10px}
+
 @media (max-width:640px){
   .plan-grid{grid-template-columns:1fr;min-width:0}
   .pday{flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:4px 10px;border-left:0;border-top:1px solid var(--line);padding:10px 14px}
@@ -107,17 +107,17 @@ button{font:inherit;color:inherit}
 .ovw .sttitle .num{font-size:1.05rem;margin-left:4px}
 .upc{color:var(--green);font-weight:500}
 .grid-l.zero{stroke:var(--line-strong);stroke-width:1.5}
-.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.bcol{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:10px;background:var(--bg);min-width:0}
+
+
 .bh{display:flex;align-items:center;gap:6px;font-weight:650;font-size:.88rem}
 .bdot{width:8px;height:8px;border-radius:50%;background:var(--faint)}
-.bcol.up .bdot{background:var(--green)}
-.bcol.hold .bdot{background:var(--muted)}
-.bcol.stalled .bdot{background:var(--warn)}
+
+
+
 .bchips{display:flex;flex-wrap:wrap;gap:6px}
 .lchip{border:1px solid var(--line-strong);background:var(--surface);border-radius:99px;padding:3px 10px;font-size:.8rem;cursor:pointer;text-align:left}
 .lchip:hover{border-color:var(--green);color:var(--green)}
-@media (max-width:640px){.board{grid-template-columns:1fr}}
+
 /* history dropdown */
 .hitem{border-top:1px solid var(--line)}
 .hitem:first-child{border-top:0}
@@ -153,7 +153,7 @@ button{font:inherit;color:inherit}
 .sbp{font-size:.84rem;white-space:nowrap}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
 .timer{display:flex;flex-direction:column;align-items:flex-start}
-.tline2{display:flex;align-items:center;gap:10px}
+
 .tbig{font-size:1.5rem;font-weight:500;letter-spacing:-.01em;line-height:1.1}
 .exside{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 .swapbtn{border:1px solid var(--line-strong);background:transparent;border-radius:99px;padding:2px 10px;font-size:.74rem;font-weight:600;color:var(--muted);cursor:pointer}
@@ -170,7 +170,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 /* today */
 .today{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;border:1px solid var(--green-mid);background:var(--green-soft);border-radius:14px;padding:18px 20px}
 .today .plan{font-size:1.15rem;font-weight:650}
-.quick{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+
 .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px 8px 10px;border-radius:99px;background:var(--surface);border:1px solid var(--line-strong);cursor:pointer;font-size:.86rem;font-weight:550;user-select:none}
 .pill:has(input:checked){background:var(--green);border-color:var(--green);color:var(--green-ink)}
 .pill input{position:absolute;opacity:0;pointer-events:none}
@@ -207,7 +207,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 /* daily grid */
 .dgrid{--col:38px;display:grid;grid-template-columns:minmax(0,1fr) repeat(7,var(--col)) 48px;align-items:stretch}
 .dgrid .span{grid-column:span 7;display:flex}
-.dgrid .slot{width:var(--col);display:grid;place-items:center}
+
 .cb.extra .box{border-style:dashed;background:transparent}
 .cb.extra .box::before{content:"+";font-size:.8rem;font-weight:600;color:var(--faint);line-height:1}
 .cb.extra input:checked + .box::before{content:none}
@@ -227,19 +227,19 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .dgrid .ct.done{color:var(--green);font-weight:500}
 
 /* weekly rows */
-.wrows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
-.wrow{display:flex;align-items:center;gap:12px;padding:14px 18px;border-top:1px solid var(--line);min-width:0}
-.wrows .wrow:nth-child(-n+2){border-top:0}
-.wrows .wrow:nth-child(even){border-left:1px solid var(--line)}
-.wrows .wrow:last-child:nth-child(odd){grid-column:1/-1}
-.wrow .lbl{flex:1;min-width:0}
-.wrow .lbl .n{font-weight:600;font-size:.92rem}
-.wrow .lbl .x{font-size:.78rem;color:var(--muted)}
-.wboxes{display:flex;gap:6px}
-.wbox{display:flex;flex-direction:column;align-items:center;gap:1px}
-.wbox small{font-size:.66rem;color:var(--faint);letter-spacing:.03em}
-.wrow .ct{font-size:.84rem;color:var(--muted);width:34px;text-align:right}
-.wrow .ct.done{color:var(--green);font-weight:500}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* review */
 .review{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:0}
@@ -251,7 +251,7 @@ input[type=number],textarea{font:inherit;color:var(--ink);background:var(--bg);b
 input[type=number]{font-family:var(--mono);font-size:1.1rem;max-width:9rem}
 textarea{resize:vertical;min-height:62px;line-height:1.45}
 input[type=number]:focus,textarea:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
-.inline{display:flex;align-items:center;gap:8px;font-size:.9rem;font-weight:550;cursor:pointer}
+
 .exports{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}
 
 /* charts */
@@ -350,7 +350,7 @@ input[type=date],select{font:inherit;color:var(--ink);background:var(--bg);borde
 .exflags{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end}
 .exprev{font-size:.8rem;color:var(--muted)}
 .setrow{display:grid;grid-template-columns:30px minmax(0,1fr) 76px 64px 42px;gap:8px;align-items:center}
-.setrow.sethd{font-size:.68rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+
 .setrow .sn{font-family:var(--mono);font-size:.85rem;color:var(--muted);text-align:center}
 .setrow .pv{font-size:.8rem;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .setrow input[type=number]{max-width:none;padding:8px 6px;font-size:1rem;text-align:center}
@@ -388,13 +388,13 @@ input[type=date],select{font:inherit;color:var(--ink);background:var(--bg);borde
 
 /* today */
 .todaycard{padding:20px;display:flex;flex-direction:column;gap:16px}
-.thead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+
 .tday{font-size:1.4rem;font-weight:700;letter-spacing:-.015em}
 .tact{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 16px;border-radius:12px;background:var(--green-soft);border:1px solid var(--green-mid)}
 .tact.quiet{background:transparent;border-style:dashed;border-color:var(--line-strong)}
 .tl{font-weight:650;font-size:1.05rem}
 .ts{font-size:.84rem;color:var(--muted)}
-.tcols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 32px}
+
 .tgroup{display:flex;flex-direction:column;gap:2px;min-width:0}
 .tlist{display:flex;flex-direction:column}
 .trow{display:flex;align-items:center;gap:12px;padding:7px 0;border-top:1px solid var(--line);cursor:pointer;min-width:0}
@@ -418,7 +418,7 @@ button.trow{width:100%;background:none;border-left:0;border-right:0;border-botto
 /* the review on its day and the day after, not yet done: amber */
 .revpill.due{background:color-mix(in srgb,var(--warn) 14%,var(--surface));border-color:color-mix(in srgb,var(--warn) 55%,transparent);color:var(--warn)}
 .trow .revpill{width:36px;justify-content:center;padding:2px 0;font-size:.68rem}
-.dgrid .slotwide{display:flex;align-items:center;padding-left:6px}
+
 .revstatus{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:2px}
 .lifts{display:flex;flex-direction:column}
 .lrow{display:grid;grid-template-columns:minmax(0,1fr) 84px 72px;gap:8px;align-items:center;padding:9px 0;border:0;border-top:1px solid var(--line);background:none;text-align:left;cursor:pointer;width:100%;font-size:.88rem}
@@ -429,24 +429,24 @@ button.trow{width:100%;background:none;border-left:0;border-right:0;border-botto
 .lrow .lc.up{color:var(--green);font-weight:500}
 .tline{stroke:var(--green);stroke-width:1.5;stroke-dasharray:4 4}
 .tlab{fill:var(--green);font-family:var(--mono);font-size:11px}
-@media (max-width:640px){.tcols{grid-template-columns:1fr}.todaycard{padding:16px}}
+@media (max-width:640px){.todaycard{padding:16px}}
 
 /* confirm + export sheets */
 .sheet{border:1px solid var(--danger);background:var(--danger-soft);border-radius:12px;padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
 .sheet.neutral{border-color:var(--line-strong);background:var(--surface);flex-direction:column;align-items:stretch}
 .sheet.neutral textarea{min-height:160px;font-family:var(--mono);font-size:.8rem}
 .row{display:flex;gap:8px;flex-wrap:wrap}
-.foot{font-size:.8rem;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
 
 @media (max-width:760px){
   .summary{grid-template-columns:1fr;padding:18px}
   .chips{grid-template-columns:repeat(2,minmax(0,1fr))}
   .today{grid-template-columns:1fr}
-  .quick{justify-content:flex-start}
-  .wrows{grid-template-columns:1fr}
-  .wrows .wrow:nth-child(-n+2){border-top:1px solid var(--line)}
-  .wrows .wrow:first-child{border-top:0}
-  .wrows .wrow:nth-child(even){border-left:0}
+  
+  
+  
+  
+  
   .review{grid-template-columns:1fr}
   .review .meta{border-right:0;border-bottom:1px solid var(--line)}
   .charts{grid-template-columns:1fr}
@@ -458,21 +458,21 @@ button.trow{width:100%;background:none;border-left:0;border-right:0;border-botto
   .dgrid .ct{padding-right:10px}
   .dgrid .lbl .x{display:none}
   .cb{width:28px;height:28px}.cb .box{width:22px;height:22px}
-  .wrow{padding:12px 14px}
+  
   .weeklabel{min-width:0}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
 /* ---- phone pass: last in the sheet so these win ---- */
 .top{align-items:center}
-.navwrap{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
-.wtargets{padding:14px 20px 18px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line)}
-.dash .todaycard[hidden] + .wtargets{border-top:0}
-.wtrow{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-.wtn{font-weight:600}
-.wtn .num{font-size:1.3rem;font-weight:500}
-.wtsub{font-size:.84rem}
-.wtargets .bar{margin-top:0}
+
+
+
+
+
+
+
+
 .dgrid .lbl .x.keep{display:block}
 .setrow input::placeholder{color:var(--faint);opacity:1}
 /* no up/down arrows in set boxes (phones never show them; desktop browsers reserved space for them and cut "10–12" to "10–1") */
@@ -484,10 +484,10 @@ button.trow{width:100%;background:none;border-left:0;border-right:0;border-botto
 .hrow .hdate{grid-area:d}
 .hrow .hsets{grid-area:s;text-align:right}
 .hrow .hsum{grid-area:m}
-.linkrow{display:flex;gap:18px;padding:0 4px}
+
 .linkbtn{border:0;background:none;padding:4px 0;color:var(--muted);font-size:.84rem;font-weight:550;text-decoration:underline;text-underline-offset:3px;cursor:pointer;align-self:flex-start}
 .linkbtn:hover{color:var(--ink)}
-.slist{display:flex;flex-direction:column}
+
 .srow{display:flex;flex-direction:column;gap:8px;padding:10px 0;border-top:1px solid var(--line)}
 .srow:first-child{border-top:0;padding-top:2px}
 .srow.up .bdot{background:var(--green)}
@@ -513,7 +513,7 @@ button.trow{width:100%;background:none;border-left:0;border-right:0;border-botto
   h1{font-size:1.3rem}
   .wrap{gap:22px;padding-block:18px 48px}
   .todaycard{padding:16px}
-  .wtargets{padding:12px 16px 16px}
+  
   .dgrid .lbl .n{font-size:.88rem}
   .dgrid .lbl .x.keep{font-size:.7rem;line-height:1.2}
 }
@@ -522,9 +522,9 @@ button.trow{width:100%;background:none;border-left:0;border-right:0;border-botto
 .cb.drinkcb input:checked + .box{background:var(--warn);border-color:var(--warn)}
 .cb.drinkcb input:checked + .box::after{content:none}
 /* prep and review rows: label spans the first days, boxes take the rest */
-.dgrid .lbl.wide{grid-column:span 4}
-.dgrid .lbl.wide + .span{grid-column:span 4}
-.dgrid .lbl.wide .n{white-space:nowrap}
+
+
+
 
 /* compact Today box */
 .dash .todaycard{padding:16px 16px 14px;gap:12px}
@@ -540,14 +540,14 @@ button.trow{width:100%;background:none;border-left:0;border-right:0;border-botto
 .dash .tgroup .eyebrow{font-size:.64rem}
 .dash .trow{padding:4px 0}
 .dash .trow .cb{width:32px;height:32px}
-.dash .tmrw{padding-top:8px;font-size:.84rem}
-.dash .tmrw .eyebrow{font-size:.64rem}
-.dash .wtargets{padding:10px 16px 14px;gap:6px}
-.wtrow{align-items:baseline}
-.wtl{font-size:.84rem;font-weight:600}
-.wtl .wtn{margin-left:4px}
-.wtl .wtn .num{font-size:1rem;font-weight:600}
-.dash .wtsub{font-size:.8rem}
+
+
+
+
+
+
+
+
 
 /* workout screen: one input style, no column headers, each set reads "87.5 × 10" */
 .ex{gap:10px}
@@ -566,8 +566,7 @@ button.trow{width:100%;background:none;border-left:0;border-right:0;border-botto
 .setrow.done .sn{color:var(--green)}
 /* focused mode: during a workout the tab shows only the workout */
 #pane-strength.focus > section:first-of-type > .sec-head,
-#pane-strength.focus > section:not(:first-of-type),
-#pane-strength.focus .linkrow{display:none}
+#pane-strength.focus > section:not(:first-of-type){display:none}
 
 #st-main #ed-notes,#st-main #ed-date{background:var(--surface);border:1.5px solid var(--line-strong);border-radius:10px}
 
@@ -622,14 +621,14 @@ button.trow{width:100%;background:none;border-left:0;border-right:0;border-botto
 
 .dgrid .subhd.gap{padding:0;height:8px;background:var(--bg)}
 
-.weekbox{display:flex;flex-direction:column;align-items:center;gap:0}
-.thisweek{font-size:.78rem;padding:2px 0 0}
+
+
 
 /* header: title and week on one line, aligned; "Back to this week" floats under the dates without taking space */
 .top{flex-wrap:nowrap;align-items:center;gap:10px}
 .top h1{white-space:nowrap}
-.weekbox{position:relative}
-.thisweek{position:absolute;top:100%;left:50%;transform:translateX(-50%);white-space:nowrap;padding-top:2px}
+
+
 .tabs{margin-top:-8px}
 @media (max-width:440px){
   .top h1{font-size:1.15rem}
@@ -639,17 +638,17 @@ button.trow{width:100%;background:none;border-left:0;border-right:0;border-botto
 }
 
 /* Check-ins title lives in the grid's top-left corner, like the other boxed sections */
-.dgrid .hd.hdtitle{text-align:left;padding-left:18px;display:flex;align-items:center;padding-top:6px;padding-bottom:6px}
-.dgrid .hdtitle h2{font-size:1.05rem;font-weight:650;letter-spacing:-.005em;text-transform:none;color:var(--ink);white-space:nowrap}
-@media (max-width:440px){.dgrid .hd.hdtitle{padding-left:8px}}
+
+
+
 
 @media (max-width:440px){.pane{gap:22px}}
 
 /* no page title: tabs lead, the week picker heads the Today tab */
 .tabs{margin-top:0;align-items:center}
 .tabs .sync{margin-left:auto;font-size:.74rem}
-.weekrow{display:flex;justify-content:center}
-.weekrow .thisweek{top:100%}
+
+
 
 /* week picker sits beside the Check-ins heading */
 .ci-head{align-items:center}
@@ -714,11 +713,11 @@ input[type=number],input[type=date],input[type=text],textarea,select,.cfin{backg
 .tabs .sync:not([hidden])+.cog{margin-left:4px}
 .pgrid{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:8px 8px}
 .pgd{font-size:.86rem;font-weight:600;width:34px}
-.pgh{font-size:.68rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-bottom:-4px}
-.pgh-c{justify-self:center}
-.pgs button:first-child{padding:6px 9px;font-size:.84rem}
+
+
+
 .sseg button{padding:6px 0;min-width:30px;font-size:.92rem}
-.pgs{justify-self:start}
+
 .pgrid .pgc{padding:7px 12px;min-width:68px}
 .pgw{font-size:.88rem;font-weight:550;min-width:0}
 .pgw.rest{color:var(--faint);font-weight:400}
@@ -825,15 +824,15 @@ details,.hitem,.panel,section{scroll-margin:16px 0 20px}
 .sset .ts{font-size:.84rem;color:var(--muted);margin-top:-6px}
 .swk{display:flex;flex-direction:column;gap:12px;padding:14px}
 .swkin{padding:0}details.swk.swkin>summary{min-height:34px;align-items:center;padding-right:2px}
-.swkh{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.swkh b{font-size:1rem}
-.swkh select{width:auto;padding:6px 10px;font-size:.88rem}
-.sexr{display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid var(--line)}
-.sexr:first-of-type{border-top:0;padding-top:0}
-.sexr input[type=text]{width:100%;padding:9px 11px;font-size:.95rem}
-.sexn2{display:flex;align-items:center;gap:8px;font-size:.84rem;color:var(--muted);flex-wrap:wrap}
-.sexn2 input{width:52px;padding:7px 6px;text-align:center;font-size:.92rem}
-.sexn2 .sexdel{margin-left:auto}
+
+
+
+
+
+
+
+
+
 .sexdel{border:0;background:none;color:var(--muted);font-size:.84rem;cursor:pointer;padding:6px 2px}
 .sexdel:hover{color:var(--ink)}
 .daychips{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
@@ -854,7 +853,7 @@ details,.hitem,.panel,section{scroll-margin:16px 0 20px}
 .sw input:checked+span::after{transform:translateX(18px)}
 .sw input:focus-visible+span{outline:2px solid var(--green);outline-offset:2px}
 .serr{border:1px solid var(--warn);color:var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent);border-radius:10px;padding:10px 14px;font-size:.88rem}
-.sfoot{display:flex;flex-direction:column;gap:8px;font-size:.84rem;color:var(--muted)}
+
 .pwform,.delbox{display:flex;flex-direction:column;gap:8px}.delbox p{margin:0}.delbox input{width:100%;padding:9px 11px;font-size:.95rem}
 .btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}.linkbtn.delink{color:var(--danger)}.pwform input{width:100%;padding:9px 11px;font-size:.95rem}.pwrow{display:flex;gap:8px}
 @media (prefers-reduced-motion:reduce){.sw span,.sw span::after{transition:none}}
@@ -1350,11 +1349,6 @@ function workoutsByDay(weekKey){
   doneSessions().forEach(s=>{const d=Math.round((parseKey(s.date)-mon)/864e5);if(d>=0&&d<7)out[d].push(s)});
   return out;
 }
-function effDays(w,k){
-  if(k==="af"&&drinkMode(w)){const n=daysElapsed(w.week);return w.drink.map((v,d)=>d<n&&!v)}
-  if(k!=="strength"&&k!=="cardio")return w[k];
-  const wk=k==="strength"?workoutsByDay(w.week):cardioByDay(w.week);return w[k].map((v,d)=>v||wk[d].length>0);
-}
 
 let viewKey=currentKey();
 const getWeek=k=>weeks[k]||blankWeek(k);
@@ -1557,8 +1551,6 @@ function renderDaily(){
   $("daily").innerHTML=h;
 }
 // Today: the current day's plan, built from the same week record and workout log as everything else
-function tomorrowTxt(t){const n=(t+1)%7,p=PLAN[n];
-  return p.t;}
 function renderToday(){
   const sec=$("today"),cur=currentKey();
   const t=todayIdx(),w=getWeek(cur),tk=keyOf(new Date()),plan=PLAN[t],sDay=STRENGTH_DAY[t],cDay=SETTINGS.cardio.target>0&&SETTINGS.cardio.days.includes(t);
@@ -2028,7 +2020,6 @@ const exNote=it=>it.swappedFrom?`Instead of ${esc(EXERCISES[it.swappedFrom]||it.
 const repsTxt=(ex,sets,lo,hi)=>`${sets} × ${lo}–${hi}${EX_BY_ID[ex]&&EX_BY_ID[ex].perLeg?' <span class="perleg">per leg</span>':""}`;
 // a set written out in full ("42.5 kg × 8", "20 kg assist × 8"): history tiles and the share card use the same words
 const setLong=(it,l)=>`${fmtLift(l.w)} ${unitW()}${ASSISTED.has(it.ex)?" assist":""} × ${l.r==null?"–":l.r}`;
-const prevTxt=p=>p.it.log.filter(l=>l.done).map(setTxt).join(" · ");
 // double progression: every prescribed set completed, all at one weight, all at the top of the range
 function ready(it){
   const sets=it.log.slice(0,it.sets);
@@ -2350,7 +2341,6 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("fbsheet").hidde
 const secFeedback=()=>HOST&&HOST.sendFeedback?`<div class="fbset"><button type="button" class="linkbtn fblink" data-st="feedback">Send feedback</button></div>`:"";
 function closeSettings(){$("setsheet").hidden=true;document.body.style.overflow="";SD=null}
 const dayChips=(grp,sel)=>`<div class="daychips" role="group">${DAYS.map((d,i)=>`<button type="button" class="dchip" aria-pressed="${sel.includes(i)}" data-sday="${grp}" data-d="${i}" aria-label="${DAYS_LONG[i]}">${d}</button>`).join("")}</div>`;
-const swRow=(attr,on,label,extra)=>`<div class="shrow"><label class="sw"><input type="checkbox" ${attr} ${on?"checked":""} aria-label="${esc(label)}"><span></span></label><div class="grow"><b>${esc(label)}</b>${extra||""}</div></div>`;
 function secPrep(D){let h="";
   const daysShort=a=>a.length?[...a].sort((x,y)=>x-y).map(d=>DAYS[d]).join(" · "):"Pick days";
   const pRow=(k,label,on,attr,days,chips,offNote,tag)=>{const open=on&&SD.pexp===k;
@@ -2532,8 +2522,6 @@ function renderSettings(){
   h+=secAccount(D)+secFeedback();
   $("setbody").innerHTML=h;
 }
-const parseReps=v=>{const t=String(v).trim(),m=t.match(/^(\d{1,2})\s*(?:-|–|—|to)\s*(\d{1,2})$/i),one=t.match(/^(\d{1,2})$/);
-  if(m){const a=+m[1],b=+m[2];return a>=1&&b>=a&&b<=50?[a,b]:null}if(one){const a=+one[1];return a>=1&&a<=50?[a,a]:null}return null};
 // gym days are lettered in week order: the first gym day is Workout A, the next B, and so on
 // switching programme keeps the gym days already chosen (the first n if it has fewer sessions). With no days chosen
 // yet, it starts from the programme's suggestion; otherwise a programme needing more days leaves them for the person
@@ -3079,21 +3067,6 @@ TABS.forEach(t=>{$("tab-"+t).onclick=()=>{showTab(t);try{if(t==="week")history.r
 window.addEventListener("hashchange",()=>showTab((location.hash||"#week").slice(1)));
 
 /* ---------- export ---------- */
-function weekMarkdown(k){
-  const w=getWeek(k),s=stats(w),mon=parseKey(k);
-  const lines=[`# Weekly review · ${fmt(mon)} – ${fmt(addDays(mon,6))} ${addDays(mon,6).getFullYear()}`,"",
-    `Targets hit: ${s.hit}/${s.n} · Check-ins: ${s.done}/${s.total} (${s.pct}%)`,"",
-    `- Weight: ${w.weight==null?"—":fmtBody(w.weight)+" "+unitW()}`,`- Progress photo: ${w.photo?"Yes":"No"}`,"","## Scorecard",""];
-  habitsFor(w).forEach(h=>lines.push(h.k==="af"&&drinkMode(w)
-    ?`- ${h.name}: ${s.per[h.k]}/${h.target}  (drinking nights: ${w.drink.map((v,i)=>v?DAYS[i]:"").filter(Boolean).join(", ")||"none"})`
-    :`- ${h.name}: ${s.per[h.k]}/${h.target}${h.daily?"  ("+effDays(w,h.k).map((v,i)=>v?DAYS[i]:"").filter(Boolean).join(", ")+")":""}`));
-  const wk=workoutsByDay(k).flat();
-  const cw=cardioSessions().filter(c=>keyOf(mondayOf(parseKey(c.date)))===k);
-  if(cw.length){lines.push("","## Cardio","");cw.forEach(c=>lines.push(`- ${dateLabel(c.date)}: ${c.ctype}, ${cardioLine(c)}${cardioCounts(c)?"":" (not counted)"}`))}
-  if(wk.length){lines.push("","## Strength workouts","");wk.forEach(x=>{const p=setsDone(x);lines.push(`- ${dateLabel(x.date)}: Workout ${x.type} (${p.d}/${p.t} sets)`)})}
-  lines.push("","## What went well",w.well||"—","","## What got in the way",w.way||"—","","## One improvement for next week",w.improve||"—","");
-  return lines.join("\n");
-}
 function allCSV(){
   const q=v=>`"${String(v).replace(/"/g,'""')}"`;
   const head=["week_commencing","targets_hit","checkin_pct",...HABITS.map(h=>h.k),"weight_kg","photo","went_well","got_in_the_way","improvement"];

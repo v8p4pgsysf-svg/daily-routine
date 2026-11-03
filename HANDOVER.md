@@ -38,7 +38,10 @@ Get the hosted app (GitHub Pages + Supabase) ready for Jack to invite his girlfr
 - **After the domain**: pre-invite checks, a watch session with the first invitee, then decide on a backup nudge. Parked until there's evidence: "Other activity", feedback alerts, a cardio share card.
 
 ## Testing quick reference
-App: `npm i jsdom` in a scratch folder, then `NODE_PATH=<folder>/node_modules node tests/app.test.js src/weekly-routine.html`. Hosted: `tests/hosted/setup.sh <folder>`, then each suite in that folder (`run.py` is 70 checks) with `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`; put a `timeout` on each run. Rebuild (`python3 tools/build.py`) and re-run `setup.sh` before hosted runs, or they test the old build. Claude can't reach the live site or Supabase.
+`tests/run-all.sh` (about 8 minutes; `--quick` about 2) rebuilds and runs everything with time limits; it must end `ALL CLEAN`. Claude can't reach the live site or Supabase.
+
+## Done on 3 Nov (housekeeping, live)
+Older rationale moved to `rationale/` (search, don't read); `tests/run-all.sh` added; email-code sign-in removed (email and password only; Forgot password unchanged); unused functions and ~5 KB of dead styles removed, with screenshots of every screen identical before and after.
 
 ## Suggested First Move for Next Session
 Ask Jack whether he has bought the domain yet (and which name); if not, ask about the share-sheet check and the two-open history report before starting anything new.

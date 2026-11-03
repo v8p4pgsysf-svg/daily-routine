@@ -1,3 +1,5 @@
+Quickest: `tests/run-all.sh` from the repo root runs the app suite and all of these in one go.
+
 # Hosted app end-to-end test
 
 `run.py` drives the hosted app in Chromium (Playwright) against `mock-supabase.js`, a stand-in for supabase-js that enforces "own rows only" the way the real database's security rules do. It covers:
