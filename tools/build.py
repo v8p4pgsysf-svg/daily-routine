@@ -2,7 +2,7 @@
 """Builds the live app (docs/index.html + docs/sw.js) from src/weekly-routine.html.
 Usage: python3 tools/build.py
 docs/ also holds files the build doesn't touch: config.js, supabase.js, icons, manifest."""
-import re,sys,hashlib,pathlib
+import re,sys,time,hashlib,pathlib
 here=pathlib.Path(__file__).parent;root=here.parent
 src=pathlib.Path(sys.argv[1] if len(sys.argv)>1 else root/"src"/"weekly-routine.html").read_text()
 # the app's main script waits until someone has signed in
@@ -14,16 +14,16 @@ body=src[:m.start()]+'<script type="text/plain" id="app-src">'+app+'</script>'+s
 title=re.search(r"<title>(.*?)</title>",body).group(1)
 body=re.sub(r"<title>.*?</title>\n?","",body,count=1)
 body=body.replace('<meta name="claude:viewport-fit-sides" content="cover">\n','')
-# The version is a fingerprint of everything phones keep offline (the page, sw.js's own template, and every other file in
-# the cache list), so it changes exactly when one of them does: rebuilding unchanged code leaves docs/ untouched, and a
-# change to host.js or config.js alone still makes phones fetch the update.
+# The version is the build time (readable, and it's what feedback rows record), but it only moves when the fingerprint of
+# everything phones keep offline changes (the page, sw.js's template, every other file in the cache list). So rebuilding
+# unchanged code leaves docs/ untouched, and a change to host.js or config.js alone still makes phones fetch the update.
 CACHED=["host.js","config.js","supabase.js","manifest.webmanifest","icon-192.png","icon-512.png","apple-touch-icon.png"]
 def fingerprint(page):
     h=hashlib.sha256(page.encode()+(here/"sw.template.js").read_bytes())
     for n in CACHED:h.update((root/"docs"/n).read_bytes())
     return h.hexdigest()[:12]
 head=f'''<!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<meta name="app-version" content="{{ver}}">
+<meta name="app-version" content="{{ver}}"><meta name="app-fingerprint" content="{{fp}}">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>{title}</title>
 <meta name="theme-color" content="#F4F5F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111412" media="(prefers-color-scheme: dark)">
@@ -63,8 +63,11 @@ body:not(.in)>:not(#login):not(script){{display:none!important}}
 <div id="login" hidden></div>
 '''
 page=head+body+'\n<script src="host.js"></script>\n</body></html>\n'
-ver=fingerprint(page)
-out=page.replace("{ver}",ver,1)
+fp=fingerprint(page)
+old=(root/"docs"/"index.html").read_text() if (root/"docs"/"index.html").exists() else ""
+m_fp=re.search(r'app-fingerprint" content="([^"]+)',old);m_ver=re.search(r'app-version" content="([^"]+)',old)
+ver=m_ver.group(1) if m_fp and m_ver and m_fp.group(1)==fp else time.strftime("%Y%m%d%H%M%S")
+out=page.replace("{ver}",ver,1).replace("{fp}",fp,1)
 (root/"docs"/"index.html").write_text(out)
 sw=(here/"sw.template.js").read_text().replace("__VERSION__",ver)
 (root/"docs"/"sw.js").write_text(sw)
